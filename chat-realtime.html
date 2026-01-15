@@ -363,7 +363,7 @@
         function connect(username) {
             currentUser = username;
 
-            const socket = new SockJS('http://localhost:8080/ws');
+            const socket = new SockJS('https://zoobi-chat-backend-docker.onrender.com/ws');
             stompClient = Stomp.over(socket);
 
             stompClient.connect({}, onConnected, onError);
