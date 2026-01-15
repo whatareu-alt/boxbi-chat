@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💬 Real-Time Chat</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+            width: 100%;
+            height: 600px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #4ade80;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .username-page {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 60px 40px;
+            flex: 1;
+        }
+
+        .username-page h2 {
+            color: #667eea;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+
+        .username-form {
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .chat-page {
+            display: none;
+            flex-direction: column;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .chat-page.active {
+            display: flex;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px 30px;
+            overflow-y: auto;
+            background: #f8f9fa;
+        }
+
+        .chat-messages::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 4px;
+        }
+
+        .message-container {
+            margin-bottom: 20px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .event-message {
+            text-align: center;
+            padding: 8px 16px;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 20px;
+            color: #667eea;
+            font-size: 14px;
+            margin: 10px auto;
+            display: inline-block;
+        }
+
+        .chat-message {
+            display: flex;
+            gap: 12px;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .message-content {
+            flex: 1;
+        }
+
+        .message-sender {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+            font-size: 14px;
+        }
+
+        .message-text {
+            background: white;
+            padding: 12px 16px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            color: #444;
+            word-wrap: break-word;
+        }
+
+        .message-time {
+            font-size: 11px;
+            color: #999;
+            margin-top: 4px;
+        }
+
+        .chat-input {
+            padding: 20px 30px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 12px;
+        }
+
+        .input-group input {
+            flex: 1;
+            padding: 14px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            font-size: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .send-button {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .send-button:hover {
+            transform: scale(1.1);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💬 Real-Time Chat</h1>
+            <div class="status" id="connection-status">
+                <div class="status-dot"></div>
+                <span>Connected</span>
+            </div>
+        </div>
+
+        <!-- Username Page -->
+        <div class="username-page" id="username-page">
+            <h2>Welcome! What's your name?</h2>
+            <form class="username-form" id="username-form">
+                <div class="form-group">
+                    <input type="text" id="username-input" placeholder="Enter your name..." autocomplete="off" required>
+                </div>
+                <button type="submit">Start Chatting 🚀</button>
+            </form>
+        </div>
+
+        <!-- Chat Page -->
+        <div class="chat-page" id="chat-page">
+            <div class="chat-messages" id="chat-messages">
+                <!-- Messages will appear here -->
+            </div>
+            <div class="chat-input">
+                <form class="input-group" id="message-form">
+                    <input type="text" id="message-input" placeholder="Type a message..." autocomplete="off" required>
+                    <button type="submit" class="send-button">📤</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- SockJS and STOMP libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+
+    <script>
+        let stompClient = null;
+        let currentUser = null;
+
+        const usernamePage = document.getElementById('username-page');
+        const chatPage = document.getElementById('chat-page');
+        const usernameForm = document.getElementById('username-form');
+        const messageForm = document.getElementById('message-form');
+        const messageInput = document.getElementById('message-input');
+        const chatMessages = document.getElementById('chat-messages');
+        const connectionStatus = document.getElementById('connection-status');
+
+        // Color generator for avatars
+        function getAvatarColor(name) {
+            const colors = ['#667eea', '#764ba2', '#f093fb', '#4facfe', '#43e97b', '#fa709a'];
+            const index = name.charCodeAt(0) % colors.length;
+            return colors[index];
+        }
+
+        // Get initials from name
+        function getInitials(name) {
+            return name.charAt(0).toUpperCase();
+        }
+
+        // Format timestamp
+        function formatTime(timestamp) {
+            const date = new Date(timestamp);
+            return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        // Connect to WebSocket
+        function connect(username) {
+            currentUser = username;
+
+            const socket = new SockJS('http://localhost:8080/ws');
+            stompClient = Stomp.over(socket);
+
+            stompClient.connect({}, onConnected, onError);
+        }
+
+        function onConnected() {
+            // Subscribe to the public topic
+            stompClient.subscribe('/topic/public', onMessageReceived);
+
+            // Tell server that user joined
+            stompClient.send("/app/chat.addUser",
+                {},
+                JSON.stringify({ sender: currentUser, type: 'JOIN' })
+            );
+
+            usernamePage.classList.add('hidden');
+            chatPage.classList.add('active');
+            messageInput.focus();
+
+            updateConnectionStatus(true);
+        }
+
+        function onError(error) {
+            console.error('WebSocket Error:', error);
+            updateConnectionStatus(false);
+        }
+
+        function updateConnectionStatus(connected) {
+            if (connected) {
+                connectionStatus.innerHTML = '<div class="status-dot"></div><span>Connected</span>';
+            } else {
+                connectionStatus.innerHTML = '<div class="status-dot" style="background: #ff4444; animation: none;"></div><span>Disconnected</span>';
+            }
+        }
+
+        function sendMessage(event) {
+            event.preventDefault();
+
+            const messageContent = messageInput.value.trim();
+
+            if (messageContent && stompClient) {
+                const chatMessage = {
+                    sender: currentUser,
+                    content: messageContent,
+                    type: 'CHAT'
+                };
+
+                stompClient.send("/app/chat.sendMessage", {}, JSON.stringify(chatMessage));
+                messageInput.value = '';
+            }
+        }
+
+        function onMessageReceived(payload) {
+            const message = JSON.parse(payload.body);
+
+            if (message.type === 'JOIN') {
+                addEventMessage(`${message.sender} joined the chat! 👋`);
+            } else if (message.type === 'LEAVE') {
+                addEventMessage(`${message.sender} left the chat 👋`);
+            } else {
+                addChatMessage(message);
+            }
+
+            // Scroll to bottom
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function addEventMessage(content) {
+            const messageContainer = document.createElement('div');
+            messageContainer.className = 'message-container';
+            messageContainer.innerHTML = `<div class="event-message">${content}</div>`;
+            chatMessages.appendChild(messageContainer);
+        }
+
+        function addChatMessage(message) {
+            const messageContainer = document.createElement('div');
+            messageContainer.className = 'message-container';
+
+            const avatarColor = getAvatarColor(message.sender);
+            const initials = getInitials(message.sender);
+            const timeStr = formatTime(message.timestamp);
+
+            messageContainer.innerHTML = `
+                <div class="chat-message">
+                    <div class="avatar" style="background: ${avatarColor}">
+                        ${initials}
+                    </div>
+                    <div class="message-content">
+                        <div class="message-sender">${message.sender}</div>
+                        <div class="message-text">${message.content}</div>
+                        <div class="message-time">${timeStr}</div>
+                    </div>
+                </div>
+            `;
+
+            chatMessages.appendChild(messageContainer);
+        }
+
+        // Event listeners
+        usernameForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username-input').value.trim();
+            if (username) {
+                connect(username);
+            }
+        });
+
+        messageForm.addEventListener('submit', sendMessage);
+
+        // Handle disconnect on page unload
+        window.addEventListener('beforeunload', () => {
+            if (stompClient !== null) {
+                stompClient.disconnect();
+            }
+        });
+    </script>
+</body>
+
+</html>
