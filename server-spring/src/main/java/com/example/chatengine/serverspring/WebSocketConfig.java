@@ -24,7 +24,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         // Register the /ws endpoint for WebSocket connections
         // Allow all origins for universal HTTP access
         registry.addEndpoint("/ws")
-                .setAllowedOriginPatterns("*")
+                .setAllowedOriginPatterns(
+                        "https://zoobichatapp.netlify.app",
+                        "http://localhost:*",
+                        "https://*.netlify.app")
                 .withSockJS();
     }
 }

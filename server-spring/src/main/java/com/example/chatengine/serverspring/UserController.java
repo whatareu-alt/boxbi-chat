@@ -17,7 +17,11 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@CrossOrigin(origins = "*") // Allow all origins for universal HTTP access
+@CrossOrigin(origins = {
+        "https://zoobichatapp.netlify.app",
+        "http://localhost:*",
+        "https://*.netlify.app"
+})
 public class UserController {
 
     @Autowired
