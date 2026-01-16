@@ -123,6 +123,79 @@
             border-bottom-color: #d4af37;
         }
 
+        /* Social Features */
+        .social-tabs {
+            display: flex;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 5px;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+
+        .social-tab {
+            flex: 1;
+            padding: 8px;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #aaa;
+        }
+
+        .social-tab.active {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-weight: bold;
+        }
+
+        .search-area {
+            padding: 10px;
+            display: none;
+        }
+
+        .search-area.active {
+            display: block;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 8px;
+            border-radius: 4px;
+            border: none;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            margin-bottom: 10px;
+        }
+
+        .request-item,
+        .search-result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            margin-bottom: 5px;
+            border-radius: 4px;
+        }
+
+        .btn-small {
+            padding: 4px 8px;
+            font-size: 11px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn-accept {
+            background: #4ade80;
+            color: #000;
+        }
+
+        .btn-add {
+            background: #60a5fa;
+            color: white;
+        }
+
         /* Sidebar and Chat Area */
         .chat-container {
             display: flex;
@@ -468,72 +541,62 @@
 </head>
 
 <body>
-    <!-- Authentication Page -->
-    <div id="auth-page">
-        <h1>🤖 Welcome to Boxbi Messenger</h1>
-        <p>Your AI-powered chat companion - Please login or sign up to continue</p>
 
-        <!-- Login Form -->
-        <form id="login-form">
-            <div class="form-group">
-                <label for="login-username">Username</label>
-                <input type="text" id="login-username" required>
-            </div>
-            <div class="form-group">
-                <label for="login-password">Password</label>
-                <input type="password" id="login-password" required>
-            </div>
-            <button type="submit" class="btn">Login</button>
-            <div class="error hidden" id="login-error"></div>
-        </form>
+    <div class="connecting">
+        Connecting...
+    </div>
 
-        <div class="toggle-auth">
-            Don't have an account? <a href="#" id="show-signup">Sign up</a>
-        </div>
-
-        <!-- Signup Form -->
-        <form id="signup-form" class="hidden">
-            <div class="form-group">
-                <label for="signup-username">Username</label>
-                <input type="text" id="signup-username" required>
-            </div>
-            <div class="form-group">
-                <label for="signup-email">Email</label>
-                <input type="email" id="signup-email" required>
-            </div>
-            <div class="form-group">
-                <label for="signup-firstname">First Name</label>
-                <input type="text" id="signup-firstname" required>
-            </div>
-            <div class="form-group">
-                <label for="signup-lastname">Last Name</label>
-                <input type="text" id="signup-lastname" required>
-            </div>
-            <div class="form-group">
-                <label for="signup-password">Password</label>
-                <input type="password" id="signup-password" required>
-            </div>
-            <button type="submit" class="btn">Sign Up</button>
-            <div class="error hidden" id="signup-error"></div>
-        </form>
-
-        <div class="toggle-auth hidden" id="show-login-link">
-            Already have an account? <a href="#" id="show-login">Login</a>
+    <!-- Login/Signup -->
+    <div id="username-page">
+        <div class="username-page-container">
+            <h1 class="title">Boxbi Messenger</h1>
+            <form id="usernameForm" name="usernameForm">
+                <div class="form-group">
+                    <input type="text" id="name" placeholder="Username" autocomplete="off" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="accent username-submit">Start Chatting</button>
+                </div>
+            </form>
         </div>
     </div>
 
     <!-- Chat Page -->
     <div id="chat-page" class="hidden">
         <div class="chat-header">
-            <h2>Boxbi Messenger Chat Room</h2>
+            <h2 id="chat-room-title">Global Chat Room</h2>
             <button id="logout-btn">Logout</button>
         </div>
         <div class="chat-container">
             <div id="users-sidebar">
-                <h3>Online Users</h3>
-                <div id="user-public" class="user-item active" onclick="selectUser(null)">
-                    <span>🌐 Global Chat</span>
+
+                <div class="social-tabs">
+                    <div class="social-tab active" onclick="switchTab('chats')">Chats</div>
+                    <div class="social-tab" onclick="switchTab('search')">Search</div>
+                    <div class="social-tab" onclick="switchTab('requests')">Reqs</div>
                 </div>
+
+                <div id="tab-chats" class="tab-content">
+                    <h3>Your Chats</h3>
+                    <div id="user-public" class="user-item active" onclick="selectUser(null)">
+                        <span>🌐 Global Chat</span>
+                    </div>
+                    <div id="friends-list"></div>
+                </div>
+
+                <div id="tab-search" class="tab-content" style="display:none;">
+                    <div class="search-area active">
+                        <input type="text" id="user-search" class="search-input" placeholder="Find users..."
+                            onkeyup="searchUsers(this.value)">
+                        <div id="search-results"></div>
+                    </div>
+                </div>
+
+                <div id="tab-requests" class="tab-content" style="display:none;">
+                    <h3>Friend Requests</h3>
+                    <div id="requests-list"></div>
+                </div>
+
             </div>
 
             <div class="chat-box">
@@ -556,125 +619,81 @@
         const API_URL = 'https://fullstack-chat-main-j598.onrender.com';
         let stompClient = null;
         let currentUser = null;
+        let selectedRecipient = null;
+        let activeUsers = new Set();
+        let privateMessages = {};
+        let friends = new Set();
 
-        // DOM Elements
-        const authPage = document.getElementById('auth-page');
-        const chatPage = document.getElementById('chat-page');
-        const loginForm = document.getElementById('login-form');
-        const signupForm = document.getElementById('signup-form');
-        const messageForm = document.getElementById('message-form');
-        const messageInput = document.getElementById('message-input');
-        const messagesDiv = document.getElementById('messages');
-        const logoutBtn = document.getElementById('logout-btn');
+        const colors = [
+            '#2196F3', '#32c787', '#00BCD4', '#ff5652',
+            '#ffc107', '#ff85af', '#FF9800', '#39bbb0'
+        ];
 
-        // Toggle between login and signup
-        document.getElementById('show-signup').addEventListener('click', (e) => {
-            e.preventDefault();
-            loginForm.classList.add('hidden');
-            document.querySelector('.toggle-auth').classList.add('hidden');
-            signupForm.classList.remove('hidden');
-            document.getElementById('show-login-link').classList.remove('hidden');
-        });
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+            document.getElementById(`tab-${tabName}`).style.display = 'block';
 
-        document.getElementById('show-login').addEventListener('click', (e) => {
-            e.preventDefault();
-            signupForm.classList.add('hidden');
-            document.getElementById('show-login-link').classList.add('hidden');
-            loginForm.classList.remove('hidden');
-            document.querySelector('.toggle-auth').classList.remove('hidden');
-        });
+            document.querySelectorAll('.social-tab').forEach(el => el.classList.remove('active'));
+            // simple active logic
+            const tabs = { 'chats': 0, 'search': 1, 'requests': 2 };
+            document.querySelectorAll('.social-tab')[tabs[tabName]].classList.add('active');
 
-        // Login
-        loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const username = document.getElementById('login-username').value;
-            const password = document.getElementById('login-password').value;
-
-            try {
-                const response = await fetch(`${API_URL}/login`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        username: username,
-                        secret: password
-                    })
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    currentUser = { username, secret: password, ...data };
-                    showError('login', '');
-                    enterChatRoom();
-                } else {
-                    showError('login', data.error || 'Login failed');
-                }
-            } catch (error) {
-                showError('login', 'Connection error. Make sure the server is running.');
-            }
-        });
-
-        // Signup
-        signupForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const username = document.getElementById('signup-username').value;
-            const email = document.getElementById('signup-email').value;
-            const firstName = document.getElementById('signup-firstname').value;
-            const lastName = document.getElementById('signup-lastname').value;
-            const password = document.getElementById('signup-password').value;
-
-            try {
-                const response = await fetch(`${API_URL}/signup`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        username: username,
-                        email: email,
-                        first_name: firstName,
-                        last_name: lastName,
-                        secret: password
-                    })
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    currentUser = { username, secret: password, ...data };
-                    showError('signup', '');
-                    enterChatRoom();
-                } else {
-                    showError('signup', data.error || 'Signup failed');
-                }
-            } catch (error) {
-                showError('signup', 'Connection error. Make sure the server is running.');
-            }
-        });
-
-        function showError(type, message) {
-            const errorDiv = document.getElementById(`${type}-error`);
-            if (message) {
-                errorDiv.textContent = message;
-                errorDiv.classList.remove('hidden');
-            } else {
-                errorDiv.classList.add('hidden');
-            }
+            if (tabName === 'requests') loadFriendRequests();
+            if (tabName === 'chats') loadFriends();
         }
 
-        function enterChatRoom() {
-            authPage.style.display = 'none';
-            chatPage.classList.remove('hidden'); // Use class for chat-page
-            connectWebSocket();
-        }
+        async function connect(event) {
+            event.preventDefault();
+            const username = document.querySelector('#name').value.trim();
 
-        function connectWebSocket() {
-            const socket = new SockJS(`${API_URL}/ws?username=${currentUser.username}`);
-            stompClient = Stomp.over(socket);
+            if (username) {
+                // Mock Login/Signup
+                try {
+                    // Login
+                    let response = await fetch(`${API_URL}/login`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username: username, secret: 'password' })
+                    });
 
-            stompClient.connect({}, onConnected, onError);
+                    if (!response.ok) {
+                        // Signup
+                        response = await fetch(`${API_URL}/signup`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                username: username,
+                                secret: 'password',
+                                email: `${username}@test.com`,
+                                firstName: username,
+                                lastName: 'User'
+                            })
+                        });
+                    }
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        currentUser = data; // { username... }
+
+                        document.querySelector('#username-page').classList.add('hidden');
+                        document.querySelector('#chat-page').classList.remove('hidden');
+
+                        const socket = new SockJS(`${API_URL}/ws?username=${currentUser.username}`);
+                        stompClient = Stomp.over(socket);
+
+                        stompClient.connect({}, onConnected, onError);
+
+                        loadFriends();
+                        loadFriendRequests();
+                    } else {
+                        alert("Login failed");
+                    }
+
+                } catch (e) {
+                    console.error(e);
+                    alert("Connection failed");
+                }
+            }
         }
 
         function onConnected() {
