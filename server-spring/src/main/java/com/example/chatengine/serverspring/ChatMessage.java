@@ -14,6 +14,8 @@ public class ChatMessage {
     @NotBlank(message = "Sender is required")
     private String sender;
 
+    private String recipient;
+
     private long timestamp;
 
     public ChatMessage() {
@@ -23,6 +25,7 @@ public class ChatMessage {
         this.type = type;
         this.content = content;
         this.sender = sender;
+        this.recipient = null;
         this.timestamp = System.currentTimeMillis();
     }
 
@@ -48,6 +51,14 @@ public class ChatMessage {
 
     public void setSender(String sender) {
         this.sender = sender;
+    }
+
+    public String getRecipient() {
+        return recipient;
+    }
+
+    public void setRecipient(String recipient) {
+        this.recipient = recipient;
     }
 
     public long getTimestamp() {

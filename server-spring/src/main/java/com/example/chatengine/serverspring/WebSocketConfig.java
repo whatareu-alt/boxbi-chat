@@ -14,9 +14,11 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void configureMessageBroker(@NonNull MessageBrokerRegistry config) {
         // Enable a simple in-memory message broker
-        config.enableSimpleBroker("/topic");
+        config.enableSimpleBroker("/topic", "/queue");
         // Prefix for messages FROM client TO server
         config.setApplicationDestinationPrefixes("/app");
+        // Prefix for private user messages
+        config.setUserDestinationPrefix("/user");
     }
 
     @Override
@@ -30,6 +32,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                         "https://www.boxbi.online",
                         "http://localhost:*",
                         "https://*.netlify.app")
+                .setHandshakeHandler(new CustomHandshakeHandler())
                 .withSockJS();
     }
 }

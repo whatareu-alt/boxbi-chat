@@ -7,9 +7,14 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.stereotype.Controller;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 @Controller
 public class ChatController {
+
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
 
     @MessageMapping("/chat.sendMessage")
     @SendTo("/topic/public")
@@ -19,6 +24,26 @@ public class ChatController {
         chatMessage.setSender(Encode.forHtml(chatMessage.getSender()));
         chatMessage.setTimestamp(System.currentTimeMillis());
         return chatMessage;
+    }
+
+    @MessageMapping("/chat.private")
+    public void sendPrivateMessage(@Valid @Payload ChatMessage chatMessage) {
+        // Sanitize message content
+        chatMessage.setContent(Encode.forHtml(chatMessage.getContent()));
+        chatMessage.setSender(Encode.forHtml(chatMessage.getSender()));
+        chatMessage.setTimestamp(System.currentTimeMillis());
+
+        // Send to specific user
+        messagingTemplate.convertAndSendToUser(
+                chatMessage.getRecipient(),
+                "/queue/private",
+                chatMessage);
+
+        // Also send back to sender so they see it in their chat history
+        messagingTemplate.convertAndSendToUser(
+                chatMessage.getSender(),
+                "/queue/private",
+                chatMessage);
     }
 
     @MessageMapping("/chat.addUser")
