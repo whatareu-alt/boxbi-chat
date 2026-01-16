@@ -815,10 +815,6 @@
             // Subscribe to private messages
             stompClient.subscribe(`/user/queue/private`, onPrivateMessageReceived);
 
-            // Add self to active users (for display purposes, server will confirm)
-            activeUsers.add(currentUser.username);
-            updateActiveUsersList();
-
             // Tell your username to the server
             stompClient.send('/app/chat.addUser', {}, JSON.stringify({
                 sender: currentUser.username,
@@ -972,33 +968,10 @@
         }
 
         function updateActiveUsersList() {
-            const sidebar = document.getElementById('users-sidebar');
-            // Clear all except global
-            Array.from(sidebar.children).forEach(child => {
-                if (child.id !== 'user-public' && child.tagName.toLowerCase() !== 'h3') {
-                    child.remove();
-                }
-            });
-
-            const sortedUsers = Array.from(activeUsers).sort((a, b) => a.localeCompare(b));
-
-            sortedUsers.forEach(user => {
-                if (user === currentUser.username) return; // Don't show self
-
-                let userDiv = document.getElementById(`user-${user}`);
-                if (!userDiv) {
-                    userDiv = document.createElement('div');
-                    userDiv.id = `user-${user}`;
-                    userDiv.className = 'user-item';
-                    userDiv.innerHTML = `👤 ${user}`;
-                    userDiv.onclick = () => selectUser(user);
-                    sidebar.appendChild(userDiv);
-                }
-                // Re-apply active state if this user is currently selected
-                if (selectedRecipient === user) {
-                    userDiv.classList.add('active');
-                }
-            });
+            // This function is no longer needed for the sidebar structure
+            // Active users are now managed through the friends list
+            // We'll keep it for backward compatibility but make it do nothing
+            console.log('updateActiveUsersList called - now managed by loadFriends()');
         }
 
         function displayMessage(message) {
