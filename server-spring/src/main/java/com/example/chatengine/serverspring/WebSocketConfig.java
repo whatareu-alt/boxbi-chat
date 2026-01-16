@@ -31,6 +31,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                         "https://zoobichatapp.netlify.app",
                         "https://boxbi.online",
                         "https://www.boxbi.online",
+                        "https://boxbi.netlify.app",
                         "http://localhost:*",
                         "https://*.netlify.app")
                 .setHandshakeHandler(new CustomHandshakeHandler())

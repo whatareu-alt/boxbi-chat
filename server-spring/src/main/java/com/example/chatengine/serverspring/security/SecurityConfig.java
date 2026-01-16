@@ -65,6 +65,7 @@ public class SecurityConfig {
                                 "https://zoobichatapp.netlify.app",
                                 "https://boxbi.online",
                                 "https://www.boxbi.online",
+                                "https://boxbi.netlify.app",
                                 "http://localhost:*",
                                 "https://*.netlify.app"));
                 configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
