@@ -143,23 +143,29 @@ public class UserController {
     }
 
     @CrossOrigin
-    @GetMapping("/users/search/{query}")
-    public List<Map<String, Object>> searchUsers(@PathVariable String query) {
+    @GetMapping("/users/search")
+    public List<Map<String, Object>> searchUsers(@RequestParam(defaultValue = "") String username) {
         List<Map<String, Object>> results = new ArrayList<>();
 
         // Sanitize search query
-        String sanitizedQuery = Encode.forHtml(query.trim());
+        String sanitizedQuery = Encode.forHtml(username.trim());
 
-        List<User> users = userRepository
-                .findByUsernameContainingIgnoreCaseOrFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCase(
-                        sanitizedQuery, sanitizedQuery, sanitizedQuery);
+        List<User> users;
+        if (sanitizedQuery.isEmpty()) {
+            // Return all users if no query provided
+            users = userRepository.findAll();
+        } else {
+            users = userRepository
+                    .findByUsernameContainingIgnoreCaseOrFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCase(
+                            sanitizedQuery, sanitizedQuery, sanitizedQuery);
+        }
 
         for (User user : users) {
             Map<String, Object> publicProfile = new HashMap<>();
             publicProfile.put("username", user.getUsername());
             publicProfile.put("email", user.getEmail());
-            publicProfile.put("first_name", user.getFirstName());
-            publicProfile.put("last_name", user.getLastName());
+            publicProfile.put("firstName", user.getFirstName());
+            publicProfile.put("lastName", user.getLastName());
             results.add(publicProfile);
         }
         return results;

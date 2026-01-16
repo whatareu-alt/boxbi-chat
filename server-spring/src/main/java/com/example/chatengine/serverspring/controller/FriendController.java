@@ -49,6 +49,9 @@ public class FriendController {
     @PostMapping("/accept")
     public ResponseEntity<?> acceptFriendRequest(@RequestBody Map<String, Long> payload) {
         Long requestId = payload.get("requestId");
+        if (requestId == null) {
+            return ResponseEntity.badRequest().body("Request ID is required");
+        }
         FriendRequest request = friendRequestRepository.findById(requestId)
                 .orElseThrow(() -> new RuntimeException("Request not found"));
 

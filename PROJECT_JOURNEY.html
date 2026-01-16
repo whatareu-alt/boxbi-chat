@@ -59,6 +59,7 @@
             font-weight: 700;
             background: linear-gradient(to right, #818cf8, #e879f9);
             -webkit-background-clip: text;
+            background-clip: text;
             -webkit-text-fill-color: transparent;
             margin-bottom: 1rem;
             position: relative;
@@ -74,6 +75,7 @@
         .student-info {
             display: inline-block;
             background: rgba(255, 255, 255, 0.05);
+            -webkit-backdrop-filter: blur(10px);
             backdrop-filter: blur(10px);
             padding: 1rem 2rem;
             border-radius: 50px;
@@ -221,6 +223,18 @@
             border-top: 1px solid rgba(255, 255, 255, 0.1);
             color: var(--text-muted);
         }
+
+        .architecture-note {
+            margin-top: 1rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .footer-subtitle {
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+            opacity: 0.6;
+        }
     </style>
 </head>
 
@@ -263,7 +277,7 @@
                 │ │ │ Security / JWT │ │ │
                 └─────────────────┘ └──────────────────┘ └─────────────────┘
             </div>
-            <p style="margin-top: 1rem; color: var(--text-muted); font-size: 0.9rem;">
+            <p class="architecture-note">
                 The architecture follows a microservices-ready pattern where the stateless backend handles real-time
                 events via STOMP/SockJS,
                 while the persistent layer (PostgreSQL) manages user data securely.
@@ -325,7 +339,8 @@
                     <h3>Database Integration</h3>
                     <p>Transitioned from in-memory storage to a robust SQL database. Integrated
                         <strong>PostgreSQL</strong> (prod) and <strong>H2</strong> (dev) using Spring Data JPA to store
-                        user profiles permanently.</p>
+                        user profiles permanently.
+                    </p>
                 </div>
                 <div class="timeline-item">
                     <div class="timeline-date">Phase 3: Security Hardening</div>
@@ -403,7 +418,7 @@
 
     <footer>
         <p>Boxbi Messenger Project Documentation • 2026</p>
-        <p style="font-size: 0.8rem; margin-top: 0.5rem; opacity: 0.6;">Built with ❤️ using Spring Boot & Modern Web
+        <p class="footer-subtitle">Built with ❤️ using Spring Boot & Modern Web
             Tech</p>
     </footer>
 
