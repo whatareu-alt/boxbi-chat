@@ -51,8 +51,20 @@ public class UserController {
             }
 
             // Check if user exists in DB
-            User user = userRepository.findByUsername(username)
-                    .orElseThrow(() -> new RuntimeException("Invalid credentials"));
+            // Using defensive approach to handle potential duplicates
+            java.util.List<User> users = userRepository.findAll().stream()
+                    .filter(u -> u.getUsername().equals(username))
+                    .toList();
+
+            if (users.isEmpty()) {
+                Map<String, Object> error = new HashMap<>();
+                error.put("error", "Invalid credentials");
+                return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
+            }
+
+            // If duplicates exist, use the first one (this shouldn't happen with proper
+            // constraints)
+            User user = users.get(0);
 
             // Verify password with BCrypt
             if (!passwordEncoder.matches(password, user.getSecret())) {
@@ -107,8 +119,12 @@ public class UserController {
                 return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
             }
 
-            // Check if user already exists
-            if (userRepository.findByUsername(username).isPresent()) {
+            // Check if user already exists (defensive check for duplicates)
+            java.util.List<User> existingUsers = userRepository.findAll().stream()
+                    .filter(u -> u.getUsername().equals(username))
+                    .toList();
+
+            if (!existingUsers.isEmpty()) {
                 Map<String, Object> error = new HashMap<>();
                 error.put("error", "Username already exists");
                 return new ResponseEntity<>(error, HttpStatus.CONFLICT);

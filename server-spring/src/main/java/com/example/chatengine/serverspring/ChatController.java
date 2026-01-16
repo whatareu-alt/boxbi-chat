@@ -35,6 +35,11 @@ public class ChatController {
 
     @MessageMapping("/chat.private")
     public void sendPrivateMessage(@Valid @Payload @NotNull ChatMessage chatMessage) {
+        System.out.println("\n=== 📨 PRIVATE MESSAGE RECEIVED ===");
+        System.out.println("From: " + chatMessage.getSender());
+        System.out.println("To: " + chatMessage.getRecipient());
+        System.out.println("Content: " + chatMessage.getContent());
+
         // Sanitize message content
         if (chatMessage.getContent() != null) {
             String sanitized = Encode.forHtml(chatMessage.getContent());
@@ -48,19 +53,34 @@ public class ChatController {
 
         // Send to specific user
         if (chatMessage.getRecipient() != null) {
-            messagingTemplate.convertAndSendToUser(
-                    chatMessage.getRecipient(),
-                    "/queue/private",
-                    chatMessage);
+            try {
+                System.out.println("→ Sending to recipient: " + chatMessage.getRecipient());
+                messagingTemplate.convertAndSendToUser(
+                        chatMessage.getRecipient(),
+                        "/queue/private",
+                        chatMessage);
+                System.out.println("✅ Sent to recipient successfully");
+            } catch (Exception e) {
+                System.err.println("❌ Error sending to recipient: " + e.getMessage());
+                e.printStackTrace();
+            }
 
             // Also send back to sender so they see it in their chat history
             if (chatMessage.getSender() != null) {
-                messagingTemplate.convertAndSendToUser(
-                        chatMessage.getSender(),
-                        "/queue/private",
-                        chatMessage);
+                try {
+                    System.out.println("← Sending back to sender: " + chatMessage.getSender());
+                    messagingTemplate.convertAndSendToUser(
+                            chatMessage.getSender(),
+                            "/queue/private",
+                            chatMessage);
+                    System.out.println("✅ Sent to sender successfully");
+                } catch (Exception e) {
+                    System.err.println("❌ Error sending to sender: " + e.getMessage());
+                    e.printStackTrace();
+                }
             }
         }
+        System.out.println("=== END MESSAGE HANDLING ===\n");
     }
 
     @MessageMapping("/chat.addUser")

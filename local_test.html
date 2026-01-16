@@ -818,6 +818,7 @@
 
         function onPrivateMessageReceived(payload) {
             const message = JSON.parse(payload.body);
+            console.log('📩 Received private message:', message);
             const otherUser = message.sender === currentUser.username ? message.recipient : message.sender;
 
             if (!privateMessages[otherUser]) {
@@ -826,8 +827,10 @@
             privateMessages[otherUser].push(message);
 
             if (selectedRecipient === otherUser) {
+                console.log('👁️ Displaying message for currently selected chat:', otherUser);
                 displayMessage(message);
             } else {
+                console.log('📝 Updating chat preview for:', otherUser);
                 // Update chat preview
                 updateChatPreview(otherUser, message.content);
             }
@@ -1065,7 +1068,7 @@
                     recipient: selectedRecipient,
                     content: messageContent,
                     type: 'CHAT',
-                    timestamp: new Date().toISOString()
+                    timestamp: new Date().getTime()  // Send milliseconds as number, not ISO string
                 };
 
                 stompClient.send("/app/chat.private", {}, JSON.stringify(chatMessage));
