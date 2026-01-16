@@ -9,4 +9,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     List<User> findByUsernameContainingIgnoreCaseOrFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCase(
             String username, String firstName, String lastName);
+
+    void deleteByLastActiveBefore(java.time.LocalDateTime dateTime);
 }

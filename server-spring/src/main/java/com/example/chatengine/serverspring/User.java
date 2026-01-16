@@ -26,6 +26,9 @@ public class User {
     private String firstName;
     private String lastName;
 
+    @jakarta.persistence.Column(name = "last_active")
+    private java.time.LocalDateTime lastActive;
+
     public User() {
     }
 
@@ -35,6 +38,7 @@ public class User {
         this.email = email;
         this.firstName = firstName;
         this.lastName = lastName;
+        this.lastActive = java.time.LocalDateTime.now();
     }
 
     public Long getId() {
@@ -83,5 +87,13 @@ public class User {
 
     public void setLastName(String lastName) {
         this.lastName = lastName;
+    }
+
+    public java.time.LocalDateTime getLastActive() {
+        return lastActive;
+    }
+
+    public void setLastActive(java.time.LocalDateTime lastActive) {
+        this.lastActive = lastActive;
     }
 }

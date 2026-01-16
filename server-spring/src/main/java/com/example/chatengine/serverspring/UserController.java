@@ -61,6 +61,10 @@ public class UserController {
                 return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
             }
 
+            // Update last active time
+            user.setLastActive(java.time.LocalDateTime.now());
+            userRepository.save(user);
+
             // Generate JWT token
             String token = jwtUtil.generateToken(user.getUsername());
 
