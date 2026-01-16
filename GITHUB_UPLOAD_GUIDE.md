@@ -5,7 +5,7 @@
 ### Option A: Download and Install (Recommended)
 
 1. **Download Git for Windows:**
-   - Go to: https://git-scm.com/download/win
+   - Go to: <https://git-scm.com/download/win>
    - Click "Click here to download" (64-bit version)
    - File will be: `Git-2.XX.X-64-bit.exe`
 
@@ -47,6 +47,7 @@ git config --list
 ```
 
 Example:
+
 ```powershell
 git config --global user.name "Raghav"
 git config --global user.email "raghav@example.com"
@@ -57,7 +58,7 @@ git config --global user.email "raghav@example.com"
 ## Step 3: Create GitHub Account (3 minutes)
 
 1. **Go to GitHub:**
-   - Visit: https://github.com
+   - Visit: <https://github.com>
    - Click "Sign up"
 
 2. **Fill in details:**
@@ -86,8 +87,9 @@ git config --global user.email "raghav@example.com"
    - Select "New repository"
 
 2. **Fill in repository details:**
+
    ```
-   Repository name: zoobi-chat
+   Repository name: boxbi-messenger
    Description: Zoobi - AI-powered real-time chat application
    Visibility: Public (so you can use free hosting)
    
@@ -163,11 +165,11 @@ git init
 git add .
 
 # Create first commit
-git commit -m "Initial commit - Zoobi chat application"
+git commit -m "Initial commit - Boxbi Messenger application"
 
 # Add GitHub repository as remote
 # Replace YOUR_USERNAME with your actual GitHub username!
-git remote add origin https://github.com/YOUR_USERNAME/zoobi-chat.git
+git remote add origin https://github.com/YOUR_USERNAME/boxbi-messenger.git
 
 # Rename branch to main (GitHub's default)
 git branch -M main
@@ -179,57 +181,72 @@ git push -u origin main
 ### Method 2: Step-by-Step with Explanations
 
 **Step 6.1: Navigate to project**
+
 ```powershell
 cd c:\Users\ragha\Downloads\fullstack-chat-main
 ```
 
 **Step 6.2: Initialize Git**
+
 ```powershell
 git init
 ```
+
 Output: `Initialized empty Git repository in...`
 
 **Step 6.3: Check status**
+
 ```powershell
 git status
 ```
+
 You'll see all your files listed in red (untracked)
 
 **Step 6.4: Add all files**
+
 ```powershell
 git add .
 ```
+
 The `.` means "add everything"
 
 **Step 6.5: Check status again**
+
 ```powershell
 git status
 ```
+
 Files should now be green (staged for commit)
 
 **Step 6.6: Create first commit**
+
 ```powershell
 git commit -m "Initial commit - Zoobi chat application"
 ```
+
 Output: Shows how many files were committed
 
 **Step 6.7: Connect to GitHub**
+
 ```powershell
 # Replace YOUR_USERNAME with your GitHub username!
 git remote add origin https://github.com/YOUR_USERNAME/zoobi-chat.git
 ```
 
 **Step 6.8: Rename branch to main**
+
 ```powershell
 git branch -M main
 ```
 
 **Step 6.9: Push to GitHub**
+
 ```powershell
 git push -u origin main
 ```
 
 **First time pushing?** You'll be asked to login:
+
 - A browser window will open
 - Login to GitHub
 - Authorize Git
@@ -260,22 +277,29 @@ git push -u origin main
 ## 🔧 Troubleshooting
 
 ### "git: command not found"
+
 **Solution:** Git is not installed or PowerShell needs restart
+
 - Install Git (Step 1)
 - Close and reopen PowerShell
 - Try again
 
 ### "Permission denied (publickey)"
+
 **Solution:** Use HTTPS instead of SSH
+
 - Make sure your remote URL starts with `https://`
 - Check with: `git remote -v`
 - If it shows `git@github.com`, change it:
+
   ```powershell
   git remote set-url origin https://github.com/YOUR_USERNAME/fullstack-chat-app.git
   ```
 
 ### "Authentication failed"
+
 **Solution:** Login to GitHub
+
 - When you run `git push`, a browser window should open
 - Login to GitHub
 - Authorize the application
@@ -286,18 +310,24 @@ git push -u origin main
   4. Use token as password when pushing
 
 ### "Repository not found"
+
 **Solution:** Check the repository URL
+
 - Make sure you replaced YOUR_USERNAME with your actual username
 - Check the repository exists on GitHub
 - Verify the URL: `git remote -v`
 
 ### "fatal: not a git repository"
+
 **Solution:** You're not in the project folder
+
 - Make sure you're in: `c:\Users\ragha\Downloads\fullstack-chat-main`
 - Run: `git init` first
 
 ### Files not uploading
+
 **Solution:** Check .gitignore
+
 - Make sure important files aren't ignored
 - Check: `git status` to see what's being tracked
 
@@ -306,38 +336,46 @@ git push -u origin main
 ## 📝 Common Git Commands (For Future Use)
 
 ### Check status
+
 ```powershell
 git status
 ```
+
 Shows what files have changed
 
 ### Add files
+
 ```powershell
 git add .                    # Add all files
 git add filename.txt         # Add specific file
 ```
 
 ### Commit changes
+
 ```powershell
 git commit -m "Description of changes"
 ```
 
 ### Push to GitHub
+
 ```powershell
 git push
 ```
 
 ### Pull from GitHub
+
 ```powershell
 git pull
 ```
 
 ### View commit history
+
 ```powershell
 git log
 ```
 
 ### Create a new branch
+
 ```powershell
 git checkout -b new-branch-name
 ```
@@ -410,10 +448,11 @@ After uploading to GitHub:
 ## 📞 Need Help?
 
 If you get stuck:
+
 1. Check the Troubleshooting section above
 2. Google the error message
 3. Ask on Stack Overflow
-4. Check GitHub's documentation: https://docs.github.com
+4. Check GitHub's documentation: <https://docs.github.com>
 
 ---
 
@@ -426,11 +465,12 @@ If you get stuck:
 3. Create GitHub account ✓
 4. Create repository ✓
 5. Run these commands:
+
    ```powershell
    git init
    git add .
    git commit -m "Initial commit"
-   git remote add origin https://github.com/YOUR_USERNAME/zoobi-chat.git
+   git remote add origin https://github.com/YOUR_USERNAME/boxbi-messenger.git
    git branch -M main
    git push -u origin main
    ```

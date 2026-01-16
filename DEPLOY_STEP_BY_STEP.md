@@ -1,7 +1,7 @@
-# 🚀 Deploy Zoobi Chat Globally - Simple Web Interface Method
+# 🚀 Deploy Boxbi Messenger Globally - Simple Web Interface Method
 
 **✅ Your code is already on GitHub!**  
-Repository: https://github.com/zoobichata/fullstack-chat-main
+Repository: <https://github.com/zoobichata/fullstack-chat-main>
 
 **Time Required:** 30-40 minutes  
 **Cost:** FREE  
@@ -24,7 +24,7 @@ Repository: https://github.com/zoobichata/fullstack-chat-main
 ### Step 1.1: Sign Up for Render
 
 1. Open a new browser tab
-2. Go to: **https://render.com**
+2. Go to: **<https://render.com>**
 3. Click **"Get Started"** or **"Sign Up"**
 4. Choose **"Sign up with GitHub"** (easiest option)
 5. Authorize Render to access your GitHub account
@@ -42,7 +42,7 @@ Repository: https://github.com/zoobichata/fullstack-chat-main
 Fill in these settings **EXACTLY**:
 
 ```
-Name: zoobi-chat-backend
+Name: boxbi-messenger-backend
 Region: Oregon (US West)
 Branch: main
 Root Directory: server-spring
@@ -53,6 +53,7 @@ Instance Type: Free
 ```
 
 **Important Settings:**
+
 - **Name:** `zoobi-chat-backend` (you can change this)
 - **Root Directory:** `server-spring` (MUST be exact!)
 - **Build Command:** `./mvnw clean install -DskipTests`
@@ -65,18 +66,20 @@ Instance Type: Free
 3. Add these two variables:
 
 **Variable 1:**
+
 ```
 Key: SERVER_PORT
 Value: 8080
 ```
 
 **Variable 2:**
+
 ```
 Key: SPRING_DATASOURCE_URL
 Value: jdbc:h2:file:./data/chat_db
 ```
 
-### Step 1.5: Deploy!
+### Step 1.5: Deploy
 
 1. Click **"Create Web Service"** button at the bottom
 2. Render will start building your app
@@ -90,6 +93,7 @@ Value: jdbc:h2:file:./data/chat_db
 ### Step 1.6: Get Your Backend URL
 
 Once deployment succeeds:
+
 1. At the top of the page, you'll see your URL
 2. It will look like: `https://zoobi-chat-backend.onrender.com`
 3. **COPY THIS URL!** Write it down - you'll need it!
@@ -109,18 +113,22 @@ We need to update the frontend to use your Render backend URL instead of localho
 
 ### Step 2.1: Edit chat-app.html on GitHub
 
-1. Go to your repository: https://github.com/zoobichata/fullstack-chat-main
+1. Go to your repository: <https://github.com/zoobichata/fullstack-chat-main>
 2. Click on the file **`chat-app.html`**
 3. Click the **pencil icon** (✏️) to edit
 4. Find **line 340** (use Ctrl+F to search for `const API_URL`)
 5. Change from:
+
    ```javascript
    const API_URL = 'http://localhost:8080';
    ```
+
    To (replace with YOUR Render URL):
+
    ```javascript
-   const API_URL = 'https://zoobi-chat-backend.onrender.com';
+   const API_URL = 'https://boxbi-messenger-backend.onrender.com';
    ```
+
 6. Scroll down and click **"Commit changes"**
 7. Add commit message: "Update API URL for production"
 8. Click **"Commit changes"** again
@@ -132,7 +140,7 @@ We need to update the frontend to use your Render backend URL instead of localho
 ### Step 3.1: Sign Up for Netlify
 
 1. Open a new browser tab
-2. Go to: **https://netlify.com**
+2. Go to: **<https://netlify.com>**
 3. Click **"Sign up"**
 4. Choose **"Sign up with GitHub"**
 5. Authorize Netlify to access your GitHub account
@@ -144,11 +152,13 @@ We need to update the frontend to use your Render backend URL instead of localho
 3. Choose **"Deploy with GitHub"**
 4. Find and select your repository: **`fullstack-chat-main`**
 5. Configure build settings:
+
    ```
    Branch to deploy: main
    Build command: (leave empty)
    Publish directory: .
    ```
+
 6. Click **"Deploy site"**
 
 ### Step 3.3: Wait for Deployment
@@ -168,7 +178,7 @@ We need to update the frontend to use your Render backend URL instead of localho
 1. Click **"Site settings"**
 2. Click **"Change site name"**
 3. Enter a custom name: `zoobi-chat`
-4. Your new URL: `https://zoobi-chat.netlify.app` ✅
+4. Your new URL: `https://boxbi-messenger.netlify.app` ✅
 
 ---
 
@@ -184,6 +194,7 @@ Your backend needs to allow requests from your Netlify domain.
 4. Click the **pencil icon** (✏️) to edit
 5. Find the line with `.setAllowedOriginPatterns("*")`
 6. Replace with (use YOUR Netlify URL):
+
    ```java
    .setAllowedOriginPatterns(
        "https://zoobi-chat.netlify.app",
@@ -191,6 +202,7 @@ Your backend needs to allow requests from your Netlify domain.
        "http://localhost:*"
    )
    ```
+
 7. Commit changes: "Update CORS for production"
 
 ### Step 4.2: Update UserController.java
@@ -199,6 +211,7 @@ Your backend needs to allow requests from your Netlify domain.
 2. Click the **pencil icon** (✏️) to edit
 3. Find the line `@CrossOrigin(origins = "*")`
 4. Replace with:
+
    ```java
    @CrossOrigin(origins = {
        "https://zoobi-chat.netlify.app",
@@ -206,6 +219,7 @@ Your backend needs to allow requests from your Netlify domain.
        "http://localhost:*"
    })
    ```
+
 5. Commit changes: "Update CORS for production"
 
 ### Step 4.3: Wait for Automatic Redeployment
@@ -223,7 +237,7 @@ Your backend needs to allow requests from your Netlify domain.
 
 1. Open a new browser tab
 2. Go to your Netlify URL: `https://zoobi-chat.netlify.app`
-3. You should see the Zoobi login page!
+3. You should see the Boxbi Messenger login page!
 
 ### Step 5.2: Create an Account
 
@@ -240,6 +254,7 @@ Your backend needs to allow requests from your Netlify domain.
 ### Step 5.3: Test Real-Time Chat
 
 **Option 1: Use Incognito Mode**
+
 1. Open an incognito/private window
 2. Go to your Netlify URL
 3. Sign up with a different username
@@ -247,6 +262,7 @@ Your backend needs to allow requests from your Netlify domain.
 5. Messages should appear instantly! ✅
 
 **Option 2: Use Your Phone**
+
 1. Open your phone browser
 2. Go to your Netlify URL
 3. Sign up with a different account
@@ -255,16 +271,18 @@ Your backend needs to allow requests from your Netlify domain.
 
 ---
 
-## 🌍 Share with the World!
+## 🌍 Share with the World
 
 Your app is now LIVE and accessible from anywhere!
 
 **Share this URL with anyone:**
+
 ```
 https://zoobi-chat.netlify.app
 ```
 
 They can:
+
 - ✅ Access from any device (phone, tablet, computer)
 - ✅ Access from anywhere in the world
 - ✅ Create accounts and chat in real-time
@@ -274,12 +292,14 @@ They can:
 
 ## 📊 Your Deployment Summary
 
-### URLs:
+### URLs
+
 - **Frontend (Netlify):** `https://zoobi-chat.netlify.app`
 - **Backend (Render):** `https://zoobi-chat-backend.onrender.com`
 - **GitHub:** `https://github.com/zoobichata/fullstack-chat-main`
 
-### Features:
+### Features
+
 - ✅ Real-time messaging
 - ✅ User authentication
 - ✅ HTTPS (secure)
@@ -287,7 +307,8 @@ They can:
 - ✅ Mobile-friendly
 - ✅ FREE hosting!
 
-### Important Notes:
+### Important Notes
+
 - ⚠️ **Render Free Tier:** App sleeps after 15 minutes of inactivity
 - ⚠️ **Wake-up Time:** First request after sleep takes ~30 seconds
 - ✅ **Netlify:** Always fast (CDN-powered)
@@ -300,6 +321,7 @@ They can:
 ### "CORS Error" in Browser Console
 
 **Solution:**
+
 1. Make sure you updated CORS in both files
 2. Check that Render redeployed successfully
 3. Clear browser cache (Ctrl+Shift+Delete)
@@ -308,6 +330,7 @@ They can:
 ### "Connection Error" When Logging In
 
 **Solution:**
+
 1. Check if backend is awake (visit the Render URL)
 2. Verify API_URL in chat-app.html matches your Render URL
 3. Check browser console (F12) for detailed errors
@@ -316,6 +339,7 @@ They can:
 ### "WebSocket Connection Failed"
 
 **Solution:**
+
 1. Ensure backend URL uses `https://` not `http://`
 2. Verify CORS allows your Netlify domain
 3. Check Render logs for errors
@@ -324,6 +348,7 @@ They can:
 ### Backend Won't Deploy on Render
 
 **Solution:**
+
 1. Check Render build logs for errors
 2. Verify Root Directory is set to `server-spring`
 3. Ensure Build Command is correct
@@ -332,6 +357,7 @@ They can:
 ### Frontend Shows Old API URL
 
 **Solution:**
+
 1. Make sure you committed changes to GitHub
 2. Check that Netlify redeployed
 3. Clear browser cache
@@ -341,7 +367,8 @@ They can:
 
 ## 💰 Cost Breakdown
 
-### Free Tier (What You're Using Now):
+### Free Tier (What You're Using Now)
+
 - **Render:** FREE
   - 750 hours/month free
   - Sleeps after 15 min inactivity
@@ -356,7 +383,8 @@ They can:
 
 **Total: $0/month** 🎉
 
-### If You Want to Upgrade (Optional):
+### If You Want to Upgrade (Optional)
+
 - **Render Starter:** $7/month
   - No sleeping
   - Always fast
@@ -370,23 +398,27 @@ They can:
 ## 🚀 Next Steps (Optional Upgrades)
 
 ### 1. Add Custom Domain
+
 1. Buy domain from Namecheap (~$10/year)
 2. In Netlify: Domain settings → Add custom domain
 3. Update DNS records as instructed
 4. Free SSL included!
 
 ### 2. Upgrade to PostgreSQL Database
+
 1. In Render: New + → PostgreSQL
 2. Link to your web service
 3. Update application.properties
 4. More reliable than H2
 
 ### 3. Add Password Hashing
+
 1. Add Spring Security dependency
 2. Use BCrypt for passwords
 3. More secure authentication
 
 ### 4. Keep Backend Always Awake
+
 1. Upgrade to Render Starter ($7/month)
 2. Or use a free uptime monitor (UptimeRobot)
 3. Pings your backend every 5 minutes
@@ -396,12 +428,14 @@ They can:
 ## ✅ Deployment Checklist
 
 ### Pre-Deployment
+
 - [x] Code working locally
 - [x] Code on GitHub
 - [ ] Render account created
 - [ ] Netlify account created
 
 ### Backend (Render)
+
 - [ ] Web service created
 - [ ] Build/start commands configured
 - [ ] Environment variables set
@@ -409,6 +443,7 @@ They can:
 - [ ] Backend URL copied
 
 ### Frontend (Netlify)
+
 - [ ] Site deployed
 - [ ] API_URL updated in code
 - [ ] Changes committed to GitHub
@@ -416,6 +451,7 @@ They can:
 - [ ] Custom name set (optional)
 
 ### Production Ready
+
 - [ ] CORS updated in WebSocketConfig.java
 - [ ] CORS updated in UserController.java
 - [ ] Backend redeployed
@@ -426,11 +462,12 @@ They can:
 
 ---
 
-## 🎉 Congratulations!
+## 🎉 Congratulations
 
-You've successfully deployed Zoobi Chat globally! 🌍
+You've successfully deployed Boxbi Messenger globally! 🌍
 
 Your app is now:
+
 - ✅ Accessible from anywhere in the world
 - ✅ Secure with HTTPS
 - ✅ Fast with CDN
@@ -438,13 +475,15 @@ Your app is now:
 - ✅ Completely FREE!
 
 **Share your app:**
+
 ```
 https://zoobi-chat.netlify.app
 ```
 
 **Need help?**
-- Render Docs: https://render.com/docs
-- Netlify Docs: https://docs.netlify.com
+
+- Render Docs: <https://render.com/docs>
+- Netlify Docs: <https://docs.netlify.com>
 - Check browser console (F12) for errors
 
 ---

@@ -1,5 +1,5 @@
 ╔══════════════════════════════════════════════════════════════════════╗
-║                    🤖 ZOOBI CHAT - QUICK START                      ║
+║                    🤖 BOXBI MESSENGER - QUICK START                 ║
 ║                    Universal HTTP Access Enabled                     ║
 ╚══════════════════════════════════════════════════════════════════════╝
 
@@ -19,7 +19,7 @@
    ✅ Server is now running on http://localhost:8080
 
 ┌─────────────────────────────────────────────────────────────────────┐
-│ 💬 OPEN ZOOBI CHAT                                                  │
+│ 💬 OPEN BOXBI MESSENGER                                             │
 └─────────────────────────────────────────────────────────────────────┘
 
 METHOD 1: Double-click the file
@@ -35,7 +35,7 @@ METHOD 3: Share on local network
    3. Share the HTML file with others
 
 ┌─────────────────────────────────────────────────────────────────────┐
-│ 📝 USING ZOOBI                                                       │
+│ 📝 USING BOXBI MESSENGER                                             │
 └─────────────────────────────────────────────────────────────────────┘
 
 NEW USERS:
@@ -65,7 +65,7 @@ IN THE CHAT:
 ✅ WebSocket connections allowed from all origins (*)
 ✅ REST API accessible from all origins (*)
 ✅ H2 database initialized
-✅ Zoobi chat tested and working
+✅ Boxbi Messenger chat tested and working
 
 ┌─────────────────────────────────────────────────────────────────────┐
 │ 🔧 TROUBLESHOOTING                                                   │
@@ -111,7 +111,7 @@ Database Console:
   • Pass: (empty)
 
 ┌─────────────────────────────────────────────────────────────────────┐
-│ 🌐 SHARING ZOOBI WITH OTHERS                                         │
+│ 🌐 SHARING BOXBI MESSENGER WITH OTHERS                               │
 └─────────────────────────────────────────────────────────────────────┘
 
 SAME COMPUTER:
@@ -148,7 +148,7 @@ For production, implement:
 
 ═══════════════════════════════════════════════════════════════════════
 
-🤖 Welcome to Zoobi - Your AI-powered chat companion!
+🤖 Welcome to Boxbi Messenger - Your AI-powered chat companion!
 
 For detailed setup instructions, see: SETUP_GUIDE.md
 To deploy globally, see: GLOBAL_DEPLOYMENT_GUIDE.md
