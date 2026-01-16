@@ -71,7 +71,7 @@ public class FriendController {
         List<Map<String, Object>> result = new ArrayList<>();
         for (FriendRequest req : requests) {
             Map<String, Object> map = new HashMap<>();
-            map.put("requestId", req.getId());
+            map.put("id", req.getId());
             map.put("sender", req.getSender().getUsername());
             result.add(map);
         }

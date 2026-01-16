@@ -852,13 +852,23 @@
             try {
                 // Use search with empty query to get all users
                 const response = await fetch(`${API_URL}/users/search?username=`);
+
+                if (!response.ok) {
+                    throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+                }
+
                 const users = await response.json();
+
+                if (!Array.isArray(users)) {
+                    console.error('Expected array of users, got:', users);
+                    throw new Error('Invalid response format from server');
+                }
 
                 allUsersCache = users.filter(u => u.username !== currentUser.username);
                 displayAllUsers(allUsersCache);
             } catch (e) {
                 console.error('Load all users error:', e);
-                document.getElementById('empty-users').innerHTML = '<h3>Error loading users</h3><p>Please try again</p>';
+                document.getElementById('empty-users').innerHTML = `<h3>Error loading users</h3><p>${e.message}</p>`;
             }
         }
 

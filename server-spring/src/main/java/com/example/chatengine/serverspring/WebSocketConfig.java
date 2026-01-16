@@ -27,6 +27,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         // Allow all origins for universal HTTP access
         registry.addEndpoint("/ws")
                 .setAllowedOriginPatterns(
+                        "*",
                         "https://zoobichatapp.netlify.app",
                         "https://boxbi.online",
                         "https://www.boxbi.online",

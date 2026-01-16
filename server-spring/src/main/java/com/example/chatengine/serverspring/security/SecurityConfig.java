@@ -42,7 +42,8 @@ public class SecurityConfig {
                                 .csrf(csrf -> csrf.disable())
                                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                                 .authorizeHttpRequests(auth -> auth
-                                                .requestMatchers("/login", "/signup", "/ws/**", "/h2-console/**", "/users/**", "/friends/**")
+                                                .requestMatchers("/login", "/signup", "/ws/**", "/h2-console/**",
+                                                                "/users/**", "/friends/**")
                                                 .permitAll()
                                                 .anyRequest().authenticated())
                                 .sessionManagement(session -> session
@@ -60,6 +61,7 @@ public class SecurityConfig {
         public CorsConfigurationSource corsConfigurationSource() {
                 CorsConfiguration configuration = new CorsConfiguration();
                 configuration.setAllowedOriginPatterns(Arrays.asList(
+                                "*",
                                 "https://zoobichatapp.netlify.app",
                                 "https://boxbi.online",
                                 "https://www.boxbi.online",
