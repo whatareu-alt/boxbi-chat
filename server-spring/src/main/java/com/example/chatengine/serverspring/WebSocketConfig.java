@@ -27,7 +27,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                 .setAllowedOriginPatterns(
                         "https://zoobichatapp.netlify.app",
                         "http://localhost:*",
-                        "https://*.netlify.app")
+                        "https://*.netlify.app",
+                        "https://boxbi.online",
+                        "https://www.boxbi.online")
                 .withSockJS();
     }
 }
