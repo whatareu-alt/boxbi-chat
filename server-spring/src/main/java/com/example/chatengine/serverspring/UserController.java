@@ -19,10 +19,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @CrossOrigin(origins = {
         "https://zoobichatapp.netlify.app",
-        "http://localhost:*",
-        "https://*.netlify.app",
         "https://boxbi.online",
-        "https://www.boxbi.online"
+        "https://www.boxbi.online",
+        "http://localhost:*",
+        "https://*.netlify.app"
 })
 public class UserController {
 

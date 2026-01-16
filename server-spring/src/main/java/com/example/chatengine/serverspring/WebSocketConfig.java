@@ -26,10 +26,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         registry.addEndpoint("/ws")
                 .setAllowedOriginPatterns(
                         "https://zoobichatapp.netlify.app",
-                        "http://localhost:*",
-                        "https://*.netlify.app",
                         "https://boxbi.online",
-                        "https://www.boxbi.online")
+                        "https://www.boxbi.online",
+                        "http://localhost:*",
+                        "https://*.netlify.app")
                 .withSockJS();
     }
 }
