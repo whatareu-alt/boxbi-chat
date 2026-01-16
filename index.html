@@ -597,6 +597,14 @@
         <div class="toggle-auth hidden" id="show-login-link">
             Already have an account? <a href="#" id="show-login">Login</a>
         </div>
+
+        <!-- Admin Reset Button -->
+        <div style="margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px; text-align: center;">
+            <button id="admin-reset-btn" type="button"
+                style="background: transparent; color: #dc3545; border: 1px solid #dc3545; padding: 5px 10px; border-radius: 5px; font-size: 12px; cursor: pointer; opacity: 0.6; transition: all 0.2s;">
+                ⚠️ Reset Database (Admin)
+            </button>
+        </div>
     </div>
 
     <!-- Main Chat App -->
@@ -782,6 +790,30 @@
                 errorDiv.classList.add('hidden');
             }
         }
+
+        // Admin Reset Handler
+        document.getElementById('admin-reset-btn').addEventListener('click', async () => {
+            const secret = prompt("⚠️ WARNING: This will DELETE ALL USERS and DATA!\nEnter Admin Secret Key to continue:");
+
+            if (secret) {
+                try {
+                    const response = await fetch(`${API_URL}/admin/reset?secret=${encodeURIComponent(secret)}`, {
+                        method: 'DELETE'
+                    });
+
+                    if (response.ok) {
+                        alert("✅ Database has been reset successfully. All users deleted.");
+                        location.reload();
+                    } else {
+                        const data = await response.json();
+                        alert("❌ Reset failed: " + (data.error || "Invalid secret key"));
+                    }
+                } catch (e) {
+                    console.error(e);
+                    alert("❌ Connection error");
+                }
+            }
+        });
 
         function enterChatRoom() {
             document.getElementById('auth-page').style.display = 'none';
