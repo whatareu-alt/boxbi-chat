@@ -196,6 +196,14 @@
             color: white;
         }
 
+        .tab-content {
+            display: block;
+        }
+
+        .tab-content.hidden {
+            display: none;
+        }
+
         /* Sidebar and Chat Area */
         .chat-container {
             display: flex;
@@ -542,7 +550,7 @@
 
 <body>
 
-    <div class="connecting">
+    <div class="connecting hidden">
         Connecting...
     </div>
 
@@ -623,7 +631,7 @@
                     <div id="friends-list"></div>
                 </div>
 
-                <div id="tab-search" class="tab-content" style="display:none;">
+                <div id="tab-search" class="tab-content hidden">
                     <div class="search-area active">
                         <input type="text" id="user-search" class="search-input" placeholder="Find users..."
                             onkeyup="searchUsers(this.value)">
@@ -631,7 +639,7 @@
                     </div>
                 </div>
 
-                <div id="tab-requests" class="tab-content" style="display:none;">
+                <div id="tab-requests" class="tab-content hidden">
                     <h3>Friend Requests</h3>
                     <div id="requests-list"></div>
                 </div>
@@ -669,13 +677,24 @@
         ];
 
         function switchTab(tabName) {
-            document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
-            document.getElementById(`tab-${tabName}`).style.display = 'block';
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
 
+            // Show selected tab
+            const selectedTab = document.getElementById(`tab-${tabName}`);
+            if (selectedTab) {
+                selectedTab.classList.remove('hidden');
+            }
+
+            // Update active tab button
             document.querySelectorAll('.social-tab').forEach(el => el.classList.remove('active'));
             const tabs = { 'chats': 0, 'search': 1, 'requests': 2 };
-            document.querySelectorAll('.social-tab')[tabs[tabName]].classList.add('active');
+            const tabButtons = document.querySelectorAll('.social-tab');
+            if (tabButtons[tabs[tabName]]) {
+                tabButtons[tabs[tabName]].classList.add('active');
+            }
 
+            // Load data for specific tabs
             if (tabName === 'requests') loadFriendRequests();
             if (tabName === 'chats') loadFriends();
         }
@@ -779,6 +798,9 @@
         }
 
         function connectWebSocket() {
+            // Show connecting screen
+            document.querySelector('.connecting').classList.remove('hidden');
+
             const socket = new SockJS(`${API_URL}/ws?username=${currentUser.username}`);
             stompClient = Stomp.over(socket);
             stompClient.connect({}, onConnected, onError);
