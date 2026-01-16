@@ -365,7 +365,7 @@
 
             // Determine API URL based on environment
             const isLocal = window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-            const socketUrl = isLocal ? 'http://localhost:8080/ws' : 'https://fullstack-chat-main-atn4.onrender.com/ws';
+            const socketUrl = isLocal ? 'http://localhost:8080/ws' : 'https://fullstack-chat-main-j598.onrender.com/ws';
 
             const socket = new SockJS(socketUrl);
             stompClient = Stomp.over(socket);
