@@ -1,20 +1,21 @@
 package com.example.chatengine.serverspring;
 
+import com.example.chatengine.serverspring.dto.AuthResponse;
+import com.example.chatengine.serverspring.dto.LoginRequest;
+import com.example.chatengine.serverspring.dto.SignupRequest;
+import com.example.chatengine.serverspring.security.JwtUtil;
+import jakarta.validation.Valid;
+import org.owasp.encoder.Encode;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.*;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @CrossOrigin(origins = {
@@ -29,46 +30,54 @@ public class UserController {
     @Autowired
     private UserRepository userRepository;
 
-    @CrossOrigin
-    @RequestMapping(path = "/login", method = RequestMethod.POST)
-    public ResponseEntity<Map<String, Object>> getLogin(@RequestBody HashMap<String, String> request) {
-        try {
-            String username = request.get("username");
-            String secret = request.get("secret");
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
-            if (username == null || username.trim().isEmpty()) {
+    @Autowired
+    private JwtUtil jwtUtil;
+
+    @CrossOrigin
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
+        try {
+            // Sanitize input
+            String username = Encode.forHtml(request.getUsername().trim());
+            String password = request.getSecret();
+
+            if (username.isEmpty()) {
                 Map<String, Object> error = new HashMap<>();
                 error.put("error", "Username is required");
                 return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
             }
 
             // Check if user exists in DB
-            Optional<User> userOpt = userRepository.findByUsername(username);
+            User user = userRepository.findByUsername(username)
+                    .orElseThrow(() -> new RuntimeException("Invalid credentials"));
 
-            if (userOpt.isEmpty()) {
-                Map<String, Object> error = new HashMap<>();
-                error.put("error", "User not found");
-                return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
-            }
-
-            User user = userOpt.get();
-
-            // Verify password/secret
-            if (secret != null && !secret.equals(user.getSecret())) {
+            // Verify password with BCrypt
+            if (!passwordEncoder.matches(password, user.getSecret())) {
                 Map<String, Object> error = new HashMap<>();
                 error.put("error", "Invalid credentials");
                 return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
             }
 
-            // Return user data (without secret)
-            Map<String, Object> response = new HashMap<>();
-            response.put("username", user.getUsername());
-            response.put("email", user.getEmail());
-            response.put("first_name", user.getFirstName());
-            response.put("last_name", user.getLastName());
-            response.put("id", user.getId());
+            // Generate JWT token
+            String token = jwtUtil.generateToken(user.getUsername());
+
+            // Return user data with JWT token
+            AuthResponse response = new AuthResponse(
+                    token,
+                    user.getUsername(),
+                    user.getEmail(),
+                    user.getFirstName(),
+                    user.getLastName(),
+                    user.getId());
 
             return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (RuntimeException e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("error", e.getMessage());
+            return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
         } catch (Exception e) {
             e.printStackTrace();
             Map<String, Object> error = new HashMap<>();
@@ -78,16 +87,17 @@ public class UserController {
     }
 
     @CrossOrigin
-    @RequestMapping(path = "/signup", method = RequestMethod.POST)
-    public ResponseEntity<Map<String, Object>> newSignup(@RequestBody HashMap<String, String> request) {
+    @PostMapping("/signup")
+    public ResponseEntity<?> signup(@Valid @RequestBody SignupRequest request) {
         try {
-            String username = request.get("username");
-            String secret = request.get("secret");
-            String email = request.get("email");
-            String firstName = request.get("first_name");
-            String lastName = request.get("last_name");
+            // Sanitize input
+            String username = Encode.forHtml(request.getUsername().trim());
+            String email = Encode.forHtml(request.getEmail().trim());
+            String firstName = request.getFirstName() != null ? Encode.forHtml(request.getFirstName().trim()) : "";
+            String lastName = request.getLastName() != null ? Encode.forHtml(request.getLastName().trim()) : "";
+            String password = request.getSecret();
 
-            if (username == null || username.trim().isEmpty()) {
+            if (username.isEmpty()) {
                 Map<String, Object> error = new HashMap<>();
                 error.put("error", "Username is required");
                 return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
@@ -100,17 +110,24 @@ public class UserController {
                 return new ResponseEntity<>(error, HttpStatus.CONFLICT);
             }
 
+            // Hash password with BCrypt
+            String hashedPassword = passwordEncoder.encode(password);
+
             // Create new user in DB
-            User newUser = new User(username, secret, email, firstName, lastName);
+            User newUser = new User(username, hashedPassword, email, firstName, lastName);
             userRepository.save(newUser);
 
-            // Return user data (without secret)
-            Map<String, Object> response = new HashMap<>();
-            response.put("username", username);
-            response.put("email", email);
-            response.put("first_name", firstName);
-            response.put("last_name", lastName);
-            response.put("id", newUser.getId());
+            // Generate JWT token
+            String token = jwtUtil.generateToken(newUser.getUsername());
+
+            // Return user data with JWT token
+            AuthResponse response = new AuthResponse(
+                    token,
+                    newUser.getUsername(),
+                    newUser.getEmail(),
+                    newUser.getFirstName(),
+                    newUser.getLastName(),
+                    newUser.getId());
 
             return new ResponseEntity<>(response, HttpStatus.CREATED);
         } catch (Exception e) {
@@ -122,13 +139,16 @@ public class UserController {
     }
 
     @CrossOrigin
-    @RequestMapping(path = "/users/search/{query}", method = RequestMethod.GET)
+    @GetMapping("/users/search/{query}")
     public List<Map<String, Object>> searchUsers(@PathVariable String query) {
         List<Map<String, Object>> results = new ArrayList<>();
 
+        // Sanitize search query
+        String sanitizedQuery = Encode.forHtml(query.trim());
+
         List<User> users = userRepository
-                .findByUsernameContainingIgnoreCaseOrFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCase(query,
-                        query, query);
+                .findByUsernameContainingIgnoreCaseOrFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCase(
+                        sanitizedQuery, sanitizedQuery, sanitizedQuery);
 
         for (User user : users) {
             Map<String, Object> publicProfile = new HashMap<>();

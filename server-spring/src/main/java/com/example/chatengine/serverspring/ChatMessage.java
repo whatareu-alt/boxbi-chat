@@ -1,9 +1,19 @@
 package com.example.chatengine.serverspring;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
 public class ChatMessage {
+    @NotBlank(message = "Message type is required")
     private String type;
+
+    @NotBlank(message = "Message content is required")
+    @Size(max = 5000, message = "Message content must not exceed 5000 characters")
     private String content;
+
+    @NotBlank(message = "Sender is required")
     private String sender;
+
     private long timestamp;
 
     public ChatMessage() {
