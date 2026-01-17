@@ -35,9 +35,15 @@ PORT=[auto-assigned]
 
 ```
 
-### Direct Connection Command
+### Direct Connection Command (Bash/Linux/Mac)
 ```bash
 PGPASSWORD=dzaejcShyRJlIavGYFzZZgkSoogpcJHE psql -h yamabiko.proxy.rlwy.net -U postgres -p 16153 -d railway
+```
+
+### Direct Connection Command (Windows PowerShell)
+
+```powershell
+$env:PGPASSWORD='dzaejcShyRJlIavGYFzZZgkSoogpcJHE'; psql -h yamabiko.proxy.rlwy.net -U postgres -p 16153 -d railway
 ```
 
 You need to manually add:
