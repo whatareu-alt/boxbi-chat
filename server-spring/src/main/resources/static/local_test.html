@@ -411,6 +411,88 @@
             background: #ccc;
             cursor: not-allowed;
         }
+
+        /* Tabs */
+        .sidebar-tabs {
+            display: flex;
+            border-bottom: 1px solid #e0e0e0;
+            background: white;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            font-weight: 500;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            color: #0066ff;
+            border-bottom-color: #0066ff;
+            background: #f0f7ff;
+        }
+
+        .tab-content {
+            display: none;
+            flex: 1;
+            overflow-y: auto;
+            flex-direction: column;
+        }
+
+        .tab-content.active {
+            display: flex;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            width: 400px;
+            max-width: 90%;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .multi-select-list {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin: 10px 0;
+            padding: 8px;
+        }
+
+        .select-item {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            gap: 10px;
+            cursor: pointer;
+        }
+
+        .select-item:hover {
+            background: #f5f5f5;
+        }
     </style>
 </head>
 
@@ -508,6 +590,28 @@
         </div>
     </div>
 
+    <!-- Create Group Modal -->
+    <div id="create-group-modal" class="modal">
+        <div class="modal-content">
+            <h2 style="margin-bottom: 15px;">Create New Group</h2>
+            <div class="form-group">
+                <label>Group Name</label>
+                <input type="text" id="group-name-input" placeholder="Enter group name...">
+            </div>
+            <div class="form-group">
+                <label>Select Members</label>
+                <div class="multi-select-list" id="group-user-select">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button onclick="document.getElementById('create-group-modal').style.display='none'" class="btn"
+                    style="background: #ccc; color: #333;">Cancel</button>
+                <button onclick="submitCreateGroup()" class="btn">Create Group</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Chat App -->
     <div id="chat-app" class="chat-app">
         <!-- Users Sidebar -->
@@ -533,21 +637,42 @@
                 </div>
             </div>
 
-            <!-- Friend Requests Panel (Hidden by default) -->
-            <div id="requests-panel"
-                style="display: none; background: #f8f9fa; border-bottom: 1px solid #eee; padding: 10px;">
-                <h3 style="margin: 0 0 10px 0; font-size: 14px; text-transform: uppercase; color: #666;">Friend Requests
-                </h3>
-                <div id="pending-requests-list" style="max-height: 150px; overflow-y: auto;">
-                    <div style="color: #999; font-size: 12px; text-align: center;">No pending requests</div>
+            <!-- Sidebar Tabs -->
+            <div class="sidebar-tabs">
+                <button class="tab-btn active" onclick="switchTab('chats')">Chats</button>
+                <button class="tab-btn" onclick="switchTab('groups')">Groups</button>
+            </div>
+
+            <!-- CHATS TAB -->
+            <div id="tab-chats" class="tab-content active">
+                <div id="requests-panel"
+                    style="display: none; background: #f8f9fa; border-bottom: 1px solid #eee; padding: 10px;">
+                    <h3 style="margin: 0 0 10px 0; font-size: 14px; text-transform: uppercase; color: #666;">Friend
+                        Requests
+                    </h3>
+                    <div id="pending-requests-list" style="max-height: 150px; overflow-y: auto;">
+                        <div style="color: #999; font-size: 12px; text-align: center;">No pending requests</div>
+                    </div>
+                </div>
+
+                <div class="search-box">
+                    <input type="text" id="user-search" placeholder="Search users..." onkeyup="filterUsers(this.value)">
+                </div>
+                <div class="users-list" id="users-list">
+                    <div class="empty-state">Loading users...</div>
                 </div>
             </div>
 
-            <div class="search-box">
-                <input type="text" id="user-search" placeholder="Search users..." onkeyup="filterUsers(this.value)">
-            </div>
-            <div class="users-list" id="users-list">
-                <div class="empty-state">Loading users...</div>
+            <!-- GROUPS TAB -->
+            <div id="tab-groups" class="tab-content">
+                <div style="padding: 10px;">
+                    <button class="btn" style="padding: 8px;" onclick="openCreateGroupModal()">
+                        + Create New Group
+                    </button>
+                </div>
+                <div class="users-list" id="groups-list">
+                    <div class="empty-state">Loading groups...</div>
+                </div>
             </div>
         </div>
 
@@ -590,7 +715,25 @@
         let stompClient = null;
         let currentUser = null;
         let selectedRecipient = null;
+        let activeGroupId = null; // Track active group
         let allUsers = [];
+        let myGroups = [];
+        let currentTab = 'chats';
+
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            if (tab === 'chats') {
+                document.querySelector('.tab-btn:nth-child(1)').classList.add('active');
+                document.getElementById('tab-chats').classList.add('active');
+            } else {
+                document.querySelector('.tab-btn:nth-child(2)').classList.add('active');
+                document.getElementById('tab-groups').classList.add('active');
+                fetchMyGroups();
+            }
+        }
 
         // Auto-login from saved session
         window.addEventListener('DOMContentLoaded', () => {
@@ -755,6 +898,7 @@
             // Load users and pending requests
             loadUsers();
             loadPendingRequests();
+            fetchMyGroups();
         }
 
         function onError(error) {
@@ -929,13 +1073,58 @@
             displayUsers(filtered);
         }
 
+        async function fetchMyGroups() {
+            try {
+                const response = await fetch(`${API_URL}/groups/user/${currentUser.username}`);
+                if (response.ok) {
+                    myGroups = await response.json();
+                    displayGroups(myGroups);
+                    // Subscribe to existing groups if connected
+                    if (stompClient && stompClient.connected) {
+                        myGroups.forEach(group => {
+                            // Idempotent subscribe could be handled by STOMP lib or check if already subbed
+                            // For simplicity, just subscribe (STOMP usually handles duplicates or we can ignore)
+                            stompClient.subscribe(`/topic/group.${group.id}`, onGroupMessageReceived);
+                        });
+                    }
+                }
+            } catch (e) {
+                console.error('Error fetching groups:', e);
+            }
+        }
+
+        function displayGroups(groups) {
+            const list = document.getElementById('groups-list');
+            if (groups.length === 0) {
+                list.innerHTML = '<div class="empty-state">No groups found</div>';
+                return;
+            }
+            list.innerHTML = '';
+            groups.forEach(group => {
+                const item = document.createElement('div');
+                item.className = 'user-item';
+                item.id = `group-${group.id}`;
+                item.onclick = () => selectGroup(group);
+                item.innerHTML = `
+                    <div class="user-avatar" style="background: #e11d48">#</div>
+                    <div class="user-info">
+                        <div class="user-name">${group.name}</div>
+                        <div class="user-status">Created by ${group.createdBy}</div>
+                    </div>
+                 `;
+                list.appendChild(item);
+            });
+        }
+
         async function selectUser(username) {
             selectedRecipient = username;
+            activeGroupId = null; // Reset activeGroupId when selecting a user
 
             // Update header
             document.getElementById('chat-name').textContent = username;
             document.getElementById('chat-status').textContent = 'Online';
             document.getElementById('chat-avatar').textContent = username[0].toUpperCase();
+            document.getElementById('chat-avatar').style.background = '#0ea5e9'; // Default user avatar color
 
             // Check if friend to enable/disable input
             const isFriend = friendsList.includes(username);
@@ -968,6 +1157,89 @@
             loadChatHistory(username);
         }
 
+        function selectGroup(group) {
+            selectedRecipient = null; // Clear individual recipient
+            activeGroupId = group.id;
+
+            // Update header
+            document.getElementById('chat-name').textContent = group.name;
+            document.getElementById('chat-status').textContent = 'Group Chat';
+            document.getElementById('chat-avatar').textContent = '#';
+            document.getElementById('chat-avatar').style.background = '#e11d48';
+
+            const input = document.getElementById('message-input');
+            const btn = document.getElementById('send-btn');
+            input.disabled = false;
+            input.placeholder = "Message group...";
+            btn.disabled = false;
+            btn.style.opacity = "1";
+            btn.style.cursor = "pointer";
+
+            // Highlight
+            document.querySelectorAll('.user-item').forEach(el => el.classList.remove('active'));
+            document.getElementById(`group-${group.id}`).classList.add('active');
+
+            // Load history
+            loadGroupHistory(group.id);
+        }
+
+        async function loadGroupHistory(groupId) {
+            try {
+                const response = await fetch(`${API_URL}/groups/${groupId}/messages`);
+                if (response.ok) {
+                    const messages = await response.json();
+                    document.getElementById('messages').innerHTML = ''; // Clear
+                    messages.forEach(displayMessage);
+                }
+            } catch (e) {
+                console.error('Error loading group history:', e);
+            }
+        }
+
+        function onGroupMessageReceived(payload) {
+            const message = JSON.parse(payload.body);
+            // If viewing this group, display it
+            if (activeGroupId === message.groupId) {
+                displayMessage(message);
+            }
+        }
+
+        // Update header
+        document.getElementById('chat-name').textContent = username;
+        document.getElementById('chat-status').textContent = 'Online';
+        document.getElementById('chat-avatar').textContent = username[0].toUpperCase();
+
+        // Check if friend to enable/disable input
+        const isFriend = friendsList.includes(username);
+        const input = document.getElementById('message-input');
+        const btn = document.getElementById('send-btn');
+
+        if (isFriend) {
+            input.disabled = false;
+            input.placeholder = "Type a message...";
+            btn.disabled = false;
+            btn.style.opacity = "1";
+            btn.style.cursor = "pointer";
+        } else {
+            input.disabled = true;
+            input.placeholder = "Accepted friend request required to chat";
+            btn.disabled = true;
+            btn.style.opacity = "0.5";
+            btn.style.cursor = "not-allowed";
+        }
+
+        // Clear messages
+        document.getElementById('messages').innerHTML = '';
+
+        // Highlight selected user
+        document.querySelectorAll('.user-item').forEach(el => el.classList.remove('active'));
+        const userEl = document.getElementById(`user-${username}`);
+        if (userEl) userEl.classList.add('active');
+
+        // Load chat history
+        loadChatHistory(username);
+        }
+
         async function loadChatHistory(contact) {
             try {
                 const response = await fetch(`${API_URL}/messages/${contact}?currentUser=${currentUser.username}`);
@@ -986,16 +1258,27 @@
             e.preventDefault();
             const messageContent = document.getElementById('message-input').value.trim();
 
-            if (messageContent && stompClient && selectedRecipient) {
-                const chatMessage = {
-                    sender: currentUser.username,
-                    recipient: selectedRecipient,
-                    content: messageContent,
-                    type: 'CHAT',
-                    timestamp: Date.now()
-                };
-
-                stompClient.send("/app/chat.private", {}, JSON.stringify(chatMessage));
+            if (messageContent && stompClient) {
+                if (activeGroupId) {
+                    // Send Group Message
+                    const chatMessage = {
+                        sender: currentUser.username,
+                        groupId: activeGroupId,
+                        content: messageContent,
+                        type: 'CHAT'
+                    };
+                    stompClient.send("/app/chat.group", {}, JSON.stringify(chatMessage));
+                } else if (selectedRecipient) {
+                    // Send Private Message
+                    const chatMessage = {
+                        sender: currentUser.username,
+                        recipient: selectedRecipient,
+                        content: messageContent,
+                        type: 'CHAT',
+                        timestamp: Date.now()
+                    };
+                    stompClient.send("/app/chat.private", {}, JSON.stringify(chatMessage));
+                }
                 document.getElementById('message-input').value = '';
             }
         });
@@ -1061,6 +1344,61 @@
                 setTimeout(() => {
                     btn.style.transform = 'none';
                 }, 1000);
+            }
+        }
+
+        function openCreateGroupModal() {
+            document.getElementById('create-group-modal').style.display = 'flex';
+            const list = document.getElementById('group-user-select');
+            list.innerHTML = '';
+
+            // Filter out self
+            const users = allUsers;
+
+            users.forEach(user => {
+                const div = document.createElement('div');
+                div.className = 'select-item';
+                div.innerHTML = `
+                    <input type="checkbox" value="${user.username}" id="chk-${user.username}">
+                    <label for="chk-${user.username}" style="cursor:pointer">${user.username}</label>
+                 `;
+                // Allow clicking row to toggle
+                div.onclick = (e) => {
+                    if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'LABEL') {
+                        const chk = document.getElementById(`chk-${user.username}`);
+                        chk.checked = !chk.checked;
+                    }
+                };
+                list.appendChild(div);
+            });
+        }
+
+        async function submitCreateGroup() {
+            const name = document.getElementById('group-name-input').value.trim();
+            if (!name) { alert('Please enter a group name'); return; }
+
+            const members = [];
+            document.querySelectorAll('#group-user-select input:checked').forEach(chk => {
+                members.push(chk.value);
+            });
+            members.push(currentUser.username); // Add self
+
+            try {
+                const response = await fetch(`${API_URL}/groups/create`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: name, createdBy: currentUser.username, members: members })
+                });
+
+                if (response.ok) {
+                    document.getElementById('create-group-modal').style.display = 'none';
+                    document.getElementById('group-name-input').value = '';
+                    fetchMyGroups();
+                } else {
+                    alert('Failed to create group');
+                }
+            } catch (e) {
+                console.error(e);
             }
         }
 

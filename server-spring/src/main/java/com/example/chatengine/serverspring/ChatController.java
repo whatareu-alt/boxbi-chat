@@ -44,6 +44,9 @@ public class ChatController {
     @Autowired
     private FriendRequestRepository friendRequestRepository;
 
+    @Autowired
+    private GroupMemberRepository groupMemberRepository;
+
     @MessageMapping("/chat.sendMessage")
     @SendTo("/topic/public")
     public ChatMessage sendMessage(@Valid @Payload @NotNull ChatMessage chatMessage) {
@@ -125,6 +128,43 @@ public class ChatController {
             }
         }
         System.out.println("=== END MESSAGE HANDLING ===\n");
+    }
+
+    @MessageMapping("/chat.group")
+    public void sendGroupMessage(@Valid @Payload @NotNull ChatMessage chatMessage) {
+        System.out.println("\n=== 👥 GROUP MESSAGE RECEIVED ===");
+        System.out.println("Group ID: " + chatMessage.getGroupId());
+        System.out.println("From: " + chatMessage.getSender());
+        System.out.println("Content: " + chatMessage.getContent());
+
+        if (chatMessage.getGroupId() == null) {
+            System.err.println("❌ Error: Group ID is missing");
+            return;
+        }
+
+        // Sanitize
+        if (chatMessage.getContent() != null) {
+            chatMessage.setContent(Encode.forHtml(chatMessage.getContent()));
+        }
+        if (chatMessage.getSender() != null) {
+            chatMessage.setSender(Encode.forHtml(chatMessage.getSender()));
+        }
+        chatMessage.setTimestamp(System.currentTimeMillis());
+
+        // Save to DB
+        try {
+            messageRepository.save(chatMessage);
+            System.out.println("💾 Group message saved");
+        } catch (Exception e) {
+            System.err.println("❌ Error saving group message: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        // Broadcast to group topic
+        String destination = "/topic/group." + chatMessage.getGroupId();
+        messagingTemplate.convertAndSend(destination, chatMessage);
+        System.out.println("📢 Sent to topic: " + destination);
+        System.out.println("=== END GROUP MESSAGE HANDLING ===\n");
     }
 
     @MessageMapping("/chat.addUser")

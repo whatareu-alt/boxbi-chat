@@ -28,6 +28,9 @@ public class ChatMessage {
     @Column(length = 50)
     private String recipient;
 
+    @Column(name = "group_id")
+    private Long groupId;
+
     @Column(nullable = false)
     private long timestamp;
 
@@ -39,6 +42,7 @@ public class ChatMessage {
         this.content = content;
         this.sender = sender;
         this.recipient = null;
+        this.groupId = null;
         this.timestamp = System.currentTimeMillis();
     }
 
@@ -80,6 +84,14 @@ public class ChatMessage {
 
     public void setRecipient(String recipient) {
         this.recipient = recipient;
+    }
+
+    public Long getGroupId() {
+        return groupId;
+    }
+
+    public void setGroupId(Long groupId) {
+        this.groupId = groupId;
     }
 
     public long getTimestamp() {
