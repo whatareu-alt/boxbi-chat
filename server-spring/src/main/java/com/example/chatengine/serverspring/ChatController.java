@@ -23,6 +23,7 @@ import java.util.List;
 @RestController
 @Controller
 @CrossOrigin(origins = {
+        "https://chatappboxbi.netlify.app",
         "https://zoobichatapp.netlify.app",
         "https://boxbi.online",
         "https://www.boxbi.online",
