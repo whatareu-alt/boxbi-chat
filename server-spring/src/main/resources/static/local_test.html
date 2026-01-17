@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Boxbi Messenger</title>
+    <title>Boxbi Messenger (LOCAL TEST)</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
         * {
@@ -15,7 +15,8 @@
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: #f5f5f5;
+            background: #e0e7ff;
+            /* Light blue background for local test distinction */
             height: 100vh;
             display: flex;
             justify-content: center;
@@ -30,6 +31,8 @@
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
             width: 400px;
             max-width: 90%;
+            border: 2px solid #4f46e5;
+            /* Distinct border for local */
         }
 
         .auth-page h1 {
@@ -122,6 +125,8 @@
             border-radius: 12px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
             overflow: hidden;
+            border: 2px solid #4f46e5;
+            /* Distinct border for local */
         }
 
         .chat-app.active {
@@ -413,8 +418,8 @@
 
     <!-- Auth Page -->
     <div id="auth-page" class="auth-page">
-        <h1>💬 Boxbi Messenger</h1>
-        <p>Secure and simple messaging</p>
+        <h1>💬 Boxbi Messenger (LOCAL)</h1>
+        <p>Connected to localhost:8080</p>
 
         <!-- Login Form -->
         <form id="login-form">
@@ -562,12 +567,13 @@
     <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
 
     <script>
-        const API_URL = 'https://fullstack-chat-main-1-znle.onrender.com';
+        // LOCALHOST API URL (Same Origin)
+        const API_URL = 'http://localhost:8080';
+
         let stompClient = null;
         let currentUser = null;
         let selectedRecipient = null;
         let allUsers = [];
-        let friendsList = [];
 
         // Auto-login from saved session
         window.addEventListener('DOMContentLoaded', () => {
@@ -670,6 +676,51 @@
             }
         }
 
+        // Admin Reset Functions
+        function showAdminReset() {
+            document.getElementById('admin-modal').style.display = 'flex';
+        }
+
+        function hideAdminReset() {
+            document.getElementById('admin-modal').style.display = 'none';
+            document.getElementById('admin-secret').value = '';
+            document.getElementById('admin-error').style.display = 'none';
+        }
+
+        async function executeAdminReset() {
+            const secret = document.getElementById('admin-secret').value;
+            const errorDiv = document.getElementById('admin-error');
+
+            if (!secret) {
+                errorDiv.textContent = 'Please enter the secret code';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/admin/reset`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ secret: secret })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    alert(`✅ Success! Deleted ${data.usersDeleted} users and ${data.messagesDeleted} messages.`);
+                    hideAdminReset();
+                    location.reload();
+                } else {
+                    const error = await response.json();
+                    errorDiv.textContent = error.error || 'Reset failed';
+                    errorDiv.style.display = 'block';
+                }
+            } catch (e) {
+                console.error(e);
+                errorDiv.textContent = 'Connection failed';
+                errorDiv.style.display = 'block';
+            }
+        }
+
         function enterChat() {
             document.getElementById('auth-page').style.display = 'none';
             document.getElementById('chat-app').classList.add('active');
@@ -700,6 +751,96 @@
 
             if (selectedRecipient === otherUser) {
                 displayMessage(message);
+            }
+        }
+
+        // Friend Request Functions
+        function toggleFriendRequests() {
+            const panel = document.getElementById('requests-panel');
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        }
+
+        async function loadPendingRequests() {
+            try {
+                const response = await fetch(`${API_URL}/friends/requests/pending?username=${currentUser.username}`);
+                if (response.ok) {
+                    const requests = await response.json();
+                    const badge = document.getElementById('request-badge');
+                    const list = document.getElementById('pending-requests-list');
+
+                    if (requests.length > 0) {
+                        badge.textContent = requests.length;
+                        badge.style.display = 'flex';
+
+                        list.innerHTML = requests.map(req => `
+                            <div style="background: white; padding: 8px; border-radius: 6px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+                                <span style="font-weight: 600; font-size: 13px;">${req.sender}</span>
+                                <div style="display: flex; gap: 5px;">
+                                    <button onclick="acceptRequest(${req.id})" style="background: #4ade80; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">Accept</button>
+                                    <button onclick="rejectRequest(${req.id})" style="background: #ef4444; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">Reject</button>
+                                </div>
+                            </div>
+                        `).join('');
+                    } else {
+                        badge.style.display = 'none';
+                        list.innerHTML = '<div style="color: #999; font-size: 12px; text-align: center;">No pending requests</div>';
+                    }
+                }
+            } catch (e) {
+                console.error("Error loading requests:", e);
+            }
+        }
+
+        async function sendFriendRequest(receiver) {
+            try {
+                const response = await fetch(`${API_URL}/friends/request`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sender: currentUser.username, receiver: receiver })
+                });
+
+                if (response.ok) {
+                    alert(`✅ Friend request sent to ${receiver}!`);
+                    loadUsers(); // Refresh to update status
+                } else {
+                    const error = await response.json();
+                    alert(`❌ ${error.error || 'Failed to send request'}`);
+                }
+            } catch (e) {
+                console.error(e);
+                alert('Connection error');
+            }
+        }
+
+        async function acceptRequest(id) {
+            try {
+                await fetch(`${API_URL}/friends/accept/${id}`, { method: 'POST' });
+                loadPendingRequests();
+                loadUsers();
+                loadFriendsList();
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function rejectRequest(id) {
+            try {
+                await fetch(`${API_URL}/friends/reject/${id}`, { method: 'POST' });
+                loadPendingRequests();
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        let friendsList = [];
+        async function loadFriendsList() {
+            try {
+                const response = await fetch(`${API_URL}/friends/list?username=${currentUser.username}`);
+                if (response.ok) {
+                    friendsList = await response.json();
+                }
+            } catch (e) {
+                console.error(e);
             }
         }
 
@@ -735,6 +876,7 @@
                 if (isFriend) {
                     statusHtml = '<span style="color: #4ade80; font-size: 12px; font-weight: 600;">Friend ✅</span>';
                 } else {
+                    // Start of render_diff logic adaptation: 
                     // Add friend button that stops propagation so we don't select the user
                     statusHtml = `<button onclick="sendFriendRequest('${user.username}'); event.stopPropagation();" style="background: #3b82f6; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">Add Friend</button>`;
                 }
@@ -873,153 +1015,19 @@
             return div.innerHTML;
         }
 
-        // Friend Request Functions
-        function toggleFriendRequests() {
-            const panel = document.getElementById('requests-panel');
-            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
-        }
-
-        async function loadPendingRequests() {
-            try {
-                const response = await fetch(`${API_URL}/friends/requests/pending?username=${currentUser.username}`);
-                if (response.ok) {
-                    const requests = await response.json();
-                    const badge = document.getElementById('request-badge');
-                    const list = document.getElementById('pending-requests-list');
-
-                    if (requests.length > 0) {
-                        badge.textContent = requests.length;
-                        badge.style.display = 'flex';
-
-                        list.innerHTML = requests.map(req => `
-                            <div style="background: white; padding: 8px; border-radius: 6px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-                                <span style="font-weight: 600; font-size: 13px;">${req.sender}</span>
-                                <div style="display: flex; gap: 5px;">
-                                    <button onclick="acceptRequest(${req.id})" style="background: #4ade80; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">Accept</button>
-                                    <button onclick="rejectRequest(${req.id})" style="background: #ef4444; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">Reject</button>
-                                </div>
-                            </div>
-                        `).join('');
-                    } else {
-                        badge.style.display = 'none';
-                        list.innerHTML = '<div style="color: #999; font-size: 12px; text-align: center;">No pending requests</div>';
-                    }
-                }
-            } catch (e) {
-                console.error("Error loading requests:", e);
-            }
-        }
-
-        async function sendFriendRequest(receiver) {
-            try {
-                const response = await fetch(`${API_URL}/friends/request`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ sender: currentUser.username, receiver: receiver })
-                });
-
-                if (response.ok) {
-                    alert(`✅ Friend request sent to ${receiver}!`);
-                    loadUsers(); // Refresh to update status
-                } else {
-                    const error = await response.json();
-                    alert(`❌ ${error.error || 'Failed to send request'}`);
-                }
-            } catch (e) {
-                console.error(e);
-                alert('Connection error');
-            }
-        }
-
-        async function acceptRequest(id) {
-            try {
-                await fetch(`${API_URL}/friends/accept/${id}`, { method: 'POST' });
-                loadPendingRequests();
-                loadUsers();
-                loadFriendsList();
-            } catch (e) {
-                console.error(e);
-            }
-        }
-
-        async function rejectRequest(id) {
-            try {
-                await fetch(`${API_URL}/friends/reject/${id}`, { method: 'POST' });
-                loadPendingRequests();
-            } catch (e) {
-                console.error(e);
-            }
-        }
-
-        async function loadFriendsList() {
-            try {
-                const response = await fetch(`${API_URL}/friends/list?username=${currentUser.username}`);
-                if (response.ok) {
-                    friendsList = await response.json();
-                }
-            } catch (e) {
-                console.error(e);
-            }
-        }
-
-        // Logout
-        document.getElementById('logout-btn').addEventListener('click', () => {
+        function logout() {
+            // Disconnect WebSocket
             if (stompClient) {
                 stompClient.disconnect();
             }
             localStorage.removeItem('currentUser');
-            location.reload();
-        });
+            currentUser = null;
+            document.getElementById('chat-app').classList.remove('active');
+            document.getElementById('auth-page').style.display = 'block';
+            document.getElementById('login-form').reset();
 
-        // Admin Reset Functions
-        function showAdminReset() {
-            document.getElementById('admin-modal').style.display = 'flex';
-            document.getElementById('admin-secret').value = '';
-            document.getElementById('admin-error').style.display = 'none';
-        }
-
-        function hideAdminReset() {
-            document.getElementById('admin-modal').style.display = 'none';
-        }
-
-        async function executeAdminReset() {
-            const secret = document.getElementById('admin-secret').value.trim();
-            const errorDiv = document.getElementById('admin-error');
-
-            if (!secret) {
-                errorDiv.textContent = 'Please enter admin secret code';
-                errorDiv.style.display = 'block';
-                return;
-            }
-
-            if (!confirm('⚠️ WARNING: This will delete ALL users and messages permanently. Are you sure?')) {
-                return;
-            }
-
-            try {
-                const response = await fetch(`${API_URL}/admin/reset`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ secret })
-                });
-
-                if (response.ok) {
-                    const result = await response.json();
-                    alert(`✅ Database reset successful!\n\n` +
-                        `Users deleted: ${result.usersDeleted}\n` +
-                        `Messages deleted: ${result.messagesDeleted}`);
-                    hideAdminReset();
-                    location.reload();
-                } else {
-                    const error = await response.json();
-                    errorDiv.textContent = error.error || 'Reset failed';
-                    errorDiv.style.display = 'block';
-                }
-            } catch (e) {
-                console.error(e);
-                errorDiv.textContent = 'Server connection failed';
-                errorDiv.style.display = 'block';
-            }
+            // Clear location reload to prevent re-login
+            window.location.reload();
         }
     </script>
 </body>
