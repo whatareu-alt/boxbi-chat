@@ -506,6 +506,11 @@
                         <span id="request-badge"
                             style="position: absolute; top: -5px; right: -5px; background: #dc3545; color: white; border-radius: 50%; width: 15px; height: 15px; font-size: 10px; display: none; justify-content: center; align-items: center;">0</span>
                     </button>
+                    <button id="refresh-btn" onclick="refreshData()"
+                        style="background: none; border: none; font-size: 20px; cursor: pointer; transition: transform 0.3s;"
+                        title="Refresh Data">
+                        🔄
+                    </button>
                     <button onclick="logout()" style="background: none; border: none; font-size: 20px; cursor: pointer;"
                         title="Logout">🚪</button>
                 </div>
@@ -959,6 +964,38 @@
                 }
             } catch (e) {
                 console.error(e);
+            }
+        }
+
+        async function refreshData() {
+            const btn = document.getElementById('refresh-btn');
+            btn.style.transform = 'rotate(360deg)';
+
+            console.log('🔄 Refreshing data...');
+
+            try {
+                // Reload users and friend status
+                await loadFriendsList();
+                await loadUsers();
+                await loadPendingRequests();
+
+                // If chat is open, refresh history
+                if (selectedRecipient) {
+                    loadChatHistory(selectedRecipient);
+                }
+
+                // Check connection
+                if (!stompClient || !stompClient.connected) {
+                    console.log('🔄 Reconnecting WebSocket...');
+                    enterChat();
+                }
+
+            } catch (e) {
+                console.error('Refresh failed:', e);
+            } finally {
+                setTimeout(() => {
+                    btn.style.transform = 'none';
+                }, 1000);
             }
         }
 
