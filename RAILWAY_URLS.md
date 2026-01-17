@@ -26,10 +26,18 @@
 These are automatically set by Railway when you add PostgreSQL:
 
 ```
-DATABASE_URL=postgresql://postgres:[password]@postgres-production-ceff0.up.railway.app:5432/railway
+```
+
+DATABASE_URL=postgresql://postgres:dzaejcShyRJlIavGYFzZZgkSoogpcJHE@yamabiko.proxy.rlwy.net:16153/railway
 DB_USERNAME=postgres
-DB_PASSWORD=[auto-generated]
+DB_PASSWORD=dzaejcShyRJlIavGYFzZZgkSoogpcJHE
 PORT=[auto-assigned]
+
+```
+
+### Direct Connection Command
+```bash
+PGPASSWORD=dzaejcShyRJlIavGYFzZZgkSoogpcJHE psql -h yamabiko.proxy.rlwy.net -U postgres -p 16153 -d railway
 ```
 
 You need to manually add:
