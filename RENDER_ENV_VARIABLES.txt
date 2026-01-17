@@ -1,0 +1,39 @@
+# ============================================================
+# FIXED: RENDER-SAFE ENVIRONMENT VARIABLES
+# ============================================================
+# Updated JWT_SECRET without special characters that break Render
+# ============================================================
+
+JWT_SECRET=boxbi-messenger-jwt-secret-2026-production-secure-random-key-48chars
+JWT_EXPIRATION=86400000
+SPRING_DATASOURCE_URL=jdbc:postgresql://dpg-d5lhv394tr6s73bvglpg-a/boxbi_messenger_db
+SPRING_DATASOURCE_USERNAME=boxbi_messenger_db_user
+SPRING_DATASOURCE_PASSWORD=Hw9tLa99wqyN2ZC4IqTuLsha8sgPhy9a
+SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.postgresql.Driver
+SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
+SPRING_H2_CONSOLE_ENABLED=false
+SPRING_JPA_HIBERNATE_DDL_AUTO=update
+
+# ============================================================
+# WHAT WAS FIXED:
+# ============================================================
+# The old JWT_SECRET had special characters like < > & ' that
+# caused Render's environment variable parser to fail.
+# 
+# New JWT_SECRET uses only:
+# - Letters (a-z, A-Z)
+# - Numbers (0-9)  
+# - Hyphens (-)
+#
+# This is 68 characters long (well above the 32 minimum)
+# and is safe for Render's environment variable system.
+# ============================================================
+
+# ============================================================
+# COPY THESE INTO RENDER:
+# ============================================================
+# 1. Go to Render → Create Web Service
+# 2. For each variable above, click "Add Environment Variable"
+# 3. Copy the KEY (left side) and VALUE (right side)
+# 4. Click "Create Web Service"
+# ============================================================
