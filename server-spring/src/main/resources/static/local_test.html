@@ -1079,6 +1079,78 @@
             // Clear location reload to prevent re-login
             window.location.reload();
         }
+
+        // Admin Reset Functions
+        function showAdminReset() {
+            document.getElementById('admin-modal').style.display = 'flex';
+            document.getElementById('admin-secret').value = '';
+            document.getElementById('admin-error').style.display = 'none';
+        }
+
+        function hideAdminReset() {
+            document.getElementById('admin-modal').style.display = 'none';
+        }
+
+        async function executeAdminReset(type) {
+            const secret = document.getElementById('admin-secret').value.trim();
+            const errorDiv = document.getElementById('admin-error');
+
+            if (!secret) {
+                errorDiv.textContent = 'Please enter admin secret code';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            // Client-side partial validation for immediate feedback
+            const EXPECTED_SECRET = "BOXBI_ADMIN_2026_SECURE";
+
+            if (type === 'local') {
+                if (secret !== EXPECTED_SECRET) {
+                    errorDiv.textContent = 'Invalid secret code';
+                    errorDiv.style.display = 'block';
+                    return;
+                }
+
+                if (!confirm('⚠️ This will delete all saved login sessions and local preferences. Are you sure?')) {
+                    return;
+                }
+
+                localStorage.clear();
+                sessionStorage.clear();
+                hideAdminReset();
+                alert('✅ Local app data has been cleared.');
+                location.reload();
+                return;
+            }
+
+            // DB Reset
+            if (!confirm('⚠️ WARNING: This will delete ALL users and messages permanently. Are you sure?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/admin/reset`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ secret })
+                });
+
+                if (response.ok) {
+                    alert('✅ System has been reset successfully');
+                    localStorage.removeItem('currentUser');
+                    sessionStorage.removeItem('currentUser');
+                    location.reload();
+                } else {
+                    const error = await response.text();
+                    errorDiv.textContent = 'Invalid secret code';
+                    errorDiv.style.display = 'block';
+                }
+            } catch (e) {
+                console.error(e);
+                errorDiv.textContent = 'Connection error';
+                errorDiv.style.display = 'block';
+            }
+        }
     </script>
 </body>
 
