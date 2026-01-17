@@ -38,6 +38,9 @@ public class ChatController {
     @Autowired
     private MessageRepository messageRepository;
 
+    @Autowired
+    private FriendRequestRepository friendRequestRepository;
+
     @MessageMapping("/chat.sendMessage")
     @SendTo("/topic/public")
     public ChatMessage sendMessage(@Valid @Payload @NotNull ChatMessage chatMessage) {
@@ -58,6 +61,16 @@ public class ChatController {
         System.out.println("From: " + chatMessage.getSender());
         System.out.println("To: " + chatMessage.getRecipient());
         System.out.println("Content: " + chatMessage.getContent());
+
+        // Check if users are friends before allowing message
+        boolean areFriends = friendRequestRepository.areFriends(
+                chatMessage.getSender(),
+                chatMessage.getRecipient());
+
+        if (!areFriends) {
+            System.out.println("⚠️ Message BLOCKED: Users are not friends");
+            return; // Don't send message if not friends
+        }
 
         // Sanitize message content
         if (chatMessage.getContent() != null) {
