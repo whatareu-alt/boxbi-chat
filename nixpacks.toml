@@ -1,11 +1,8 @@
 [phases.setup]
-nixPkgs = ["nodejs"]
-
-[phases.install]
-cmds = ["npm install -g http-server"]
+nixPkgs = ["python3"]
 
 [phases.build]
 cmds = ["echo 'No build needed for static site'"]
 
 [start]
-cmd = "http-server . -p $PORT"
+cmd = "python3 -m http.server $PORT"
