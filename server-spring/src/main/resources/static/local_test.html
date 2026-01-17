@@ -13,14 +13,87 @@
             box-sizing: border-box;
         }
 
+        :root {
+            --primary-color: #0066ff;
+            --primary-dark: #0052cc;
+            --bg-color: #e0e7ff;
+            --white: #ffffff;
+            --text-main: #1a1a1a;
+            --text-secondary: #666666;
+            --border-color: #e0e0e0;
+            --danger-color: #dc3545;
+            --success-color: #4ade80;
+        }
+
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: #e0e7ff;
-            /* Light blue background for local test distinction */
+            background: var(--bg-color);
             height: 100vh;
+            /* Mobile viewport fix */
+            height: 100dvh;
             display: flex;
             justify-content: center;
             align-items: center;
+            overflow: hidden;
+            /* Prevent body scroll */
+        }
+
+        /* Responsive Improvements */
+        @media (max-width: 768px) {
+            body {
+                padding: 0;
+                align-items: flex-start;
+            }
+
+            .chat-app {
+                width: 100%;
+                height: 100dvh;
+                /* Full screen on mobile */
+                max-width: none;
+                border-radius: 0;
+                border: none;
+                flex-direction: column;
+            }
+
+            .users-sidebar {
+                width: 100%;
+                flex: 1;
+                display: flex;
+            }
+
+            .chat-area {
+                width: 100%;
+                height: 100%;
+                position: absolute;
+                top: 0;
+                left: 0;
+                background: white;
+                transform: translateX(100%);
+                transition: transform 0.3s ease-in-out;
+                z-index: 20;
+            }
+
+            /* When chat is active, slide it in */
+            .chat-app.mobile-chat-active .chat-area {
+                transform: translateX(0);
+            }
+
+            /* Hide sidebar visually/interactively when chat is open to avoid scrolling issues */
+            .chat-app.mobile-chat-active .users-sidebar {
+                display: none;
+            }
+
+            .back-button {
+                display: flex !important;
+            }
+
+            /* Touch targets */
+            .btn,
+            .tab-btn,
+            .user-item,
+            button {
+                min-height: 44px;
+            }
         }
 
         /* Auth Container */
@@ -680,13 +753,17 @@
         <div class="chat-area">
             <div class="chat-header">
                 <div class="chat-header-info">
+                    <button class="back-button" onclick="exitChatView()"
+                        style="display: none; background: none; border: none; font-size: 24px; cursor: pointer; margin-right: 10px; color: #333;">
+                        ←
+                    </button>
                     <div class="user-avatar" id="chat-avatar">?</div>
                     <div>
                         <h3 id="chat-name">Select a user to chat</h3>
                         <div class="status" id="chat-status"></div>
                     </div>
                 </div>
-                <button class="logout-btn" id="logout-btn">Logout</button>
+                <button class="logout-btn" id="logout-btn" onclick="logout()">Logout</button>
             </div>
 
             <div class="messages-container" id="messages">
@@ -836,50 +913,6 @@
             }
         }
 
-        // Admin Reset Functions
-        function showAdminReset() {
-            document.getElementById('admin-modal').style.display = 'flex';
-        }
-
-        function hideAdminReset() {
-            document.getElementById('admin-modal').style.display = 'none';
-            document.getElementById('admin-secret').value = '';
-            document.getElementById('admin-error').style.display = 'none';
-        }
-
-        async function executeAdminReset() {
-            const secret = document.getElementById('admin-secret').value;
-            const errorDiv = document.getElementById('admin-error');
-
-            if (!secret) {
-                errorDiv.textContent = 'Please enter the secret code';
-                errorDiv.style.display = 'block';
-                return;
-            }
-
-            try {
-                const response = await fetch(`${API_URL}/admin/reset`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ secret: secret })
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    alert(`✅ Success! Deleted ${data.usersDeleted} users and ${data.messagesDeleted} messages.`);
-                    hideAdminReset();
-                    location.reload();
-                } else {
-                    const error = await response.json();
-                    errorDiv.textContent = error.error || 'Reset failed';
-                    errorDiv.style.display = 'block';
-                }
-            } catch (e) {
-                console.error(e);
-                errorDiv.textContent = 'Connection failed';
-                errorDiv.style.display = 'block';
-            }
-        }
 
         function enterChat() {
             document.getElementById('auth-page').style.display = 'none';
@@ -1116,9 +1149,18 @@
             });
         }
 
+        function exitChatView() {
+            document.getElementById('chat-app').classList.remove('mobile-chat-active');
+            selectedRecipient = null;
+            activeGroupId = null;
+        }
+
         async function selectUser(username) {
             selectedRecipient = username;
             activeGroupId = null; // Reset activeGroupId when selecting a user
+
+            // Enable Mobile View
+            document.getElementById('chat-app').classList.add('mobile-chat-active');
 
             // Update header
             document.getElementById('chat-name').textContent = username;
@@ -1160,6 +1202,9 @@
         function selectGroup(group) {
             selectedRecipient = null; // Clear individual recipient
             activeGroupId = group.id;
+
+            // Enable Mobile View
+            document.getElementById('chat-app').classList.add('mobile-chat-active');
 
             // Update header
             document.getElementById('chat-name').textContent = group.name;
@@ -1204,41 +1249,6 @@
             }
         }
 
-        // Update header
-        document.getElementById('chat-name').textContent = username;
-        document.getElementById('chat-status').textContent = 'Online';
-        document.getElementById('chat-avatar').textContent = username[0].toUpperCase();
-
-        // Check if friend to enable/disable input
-        const isFriend = friendsList.includes(username);
-        const input = document.getElementById('message-input');
-        const btn = document.getElementById('send-btn');
-
-        if (isFriend) {
-            input.disabled = false;
-            input.placeholder = "Type a message...";
-            btn.disabled = false;
-            btn.style.opacity = "1";
-            btn.style.cursor = "pointer";
-        } else {
-            input.disabled = true;
-            input.placeholder = "Accepted friend request required to chat";
-            btn.disabled = true;
-            btn.style.opacity = "0.5";
-            btn.style.cursor = "not-allowed";
-        }
-
-        // Clear messages
-        document.getElementById('messages').innerHTML = '';
-
-        // Highlight selected user
-        document.querySelectorAll('.user-item').forEach(el => el.classList.remove('active'));
-        const userEl = document.getElementById(`user-${username}`);
-        if (userEl) userEl.classList.add('active');
-
-        // Load chat history
-        loadChatHistory(username);
-        }
 
         async function loadChatHistory(contact) {
             try {
