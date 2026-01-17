@@ -26,9 +26,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         // Register the /ws endpoint for WebSocket connections
         // Allow origins for Railway deployment and local development
         registry.addEndpoint("/ws")
-                .setAllowedOriginPatterns(
-                        "https://*.railway.app",
-                        "http://localhost:*")
+                .setAllowedOriginPatterns("*")
                 .setHandshakeHandler(new CustomHandshakeHandler())
                 .withSockJS();
     }

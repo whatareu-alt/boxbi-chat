@@ -10,14 +10,32 @@ import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.stereotype.Controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
 
 import java.util.Objects;
+import java.util.List;
 
+@RestController
 @Controller
+@CrossOrigin(origins = {
+        "https://zoobichatapp.netlify.app",
+        "https://boxbi.online",
+        "https://www.boxbi.online",
+        "http://localhost:*",
+        "https://*.netlify.app"
+})
 public class ChatController {
 
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
+
+    @Autowired
+    private MessageRepository messageRepository;
 
     @MessageMapping("/chat.sendMessage")
     @SendTo("/topic/public")
@@ -50,6 +68,15 @@ public class ChatController {
             chatMessage.setSender(Objects.requireNonNullElse(sanitized, "Anonymous"));
         }
         chatMessage.setTimestamp(System.currentTimeMillis());
+
+        // Save message to database for persistence
+        try {
+            messageRepository.save(chatMessage);
+            System.out.println("💾 Message saved to database");
+        } catch (Exception e) {
+            System.err.println("❌ Error saving message to database: " + e.getMessage());
+            e.printStackTrace();
+        }
 
         // Send to specific user
         if (chatMessage.getRecipient() != null) {
@@ -101,5 +128,20 @@ public class ChatController {
         chatMessage.setType("JOIN");
         chatMessage.setTimestamp(System.currentTimeMillis());
         return chatMessage;
+    }
+
+    // REST endpoint to get chat history
+    @GetMapping("/messages/{contact}")
+    public ResponseEntity<List<ChatMessage>> getChatHistory(
+            @PathVariable String contact,
+            @RequestParam String currentUser) {
+        try {
+            List<ChatMessage> messages = messageRepository.findConversationBetween(currentUser, contact);
+            return ResponseEntity.ok(messages);
+        } catch (Exception e) {
+            System.err.println("❌ Error fetching chat history: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
     }
 }
