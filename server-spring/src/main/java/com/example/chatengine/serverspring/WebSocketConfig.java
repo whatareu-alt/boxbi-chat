@@ -24,16 +24,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(@NonNull StompEndpointRegistry registry) {
         // Register the /ws endpoint for WebSocket connections
-        // Allow origins for Railway, Netlify, and local development
+        // Allow origins for Railway deployment and local development
         registry.addEndpoint("/ws")
                 .setAllowedOriginPatterns(
-                        "*",
                         "https://*.railway.app",
-                        "https://zoobichatapp.netlify.app",
-                        "https://boxbi.online",
-                        "https://www.boxbi.online",
-                        "https://boxbi.netlify.app",
-                        "https://*.netlify.app",
                         "http://localhost:*")
                 .setHandshakeHandler(new CustomHandshakeHandler())
                 .withSockJS();
