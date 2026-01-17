@@ -463,6 +463,32 @@
         <div class="toggle-auth hidden" id="show-login-link">
             Have an account? <a href="#" id="show-login">Sign in</a>
         </div>
+
+        <!-- Admin Reset Button -->
+        <div style="text-align: center; margin-top: 20px;">
+            <button onclick="showAdminReset()"
+                style="padding: 8px 16px; background: #dc3545; color: white; border: none; border-radius: 6px; font-size: 12px; cursor: pointer; opacity: 0.7;">Admin
+                Reset</button>
+        </div>
+    </div>
+
+    <!-- Admin Reset Modal -->
+    <div id="admin-modal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center;">
+        <div style="background: white; padding: 30px; border-radius: 12px; max-width: 400px; width: 90%;">
+            <h2 style="margin: 0 0 10px 0; font-size: 20px;">🔐 Admin Reset</h2>
+            <p style="color: #666; font-size: 14px; margin-bottom: 20px;">Enter admin secret code to reset all data</p>
+            <input type="password" id="admin-secret" placeholder="Enter secret code"
+                style="width: 100%; padding: 10px; border: 1.5px solid #e0e0e0; border-radius: 8px; font-size: 14px; margin-bottom: 16px;">
+            <div id="admin-error" style="color: #d32f2f; font-size: 12px; margin-bottom: 12px; display: none;"></div>
+            <div style="display: flex; gap: 12px;">
+                <button onclick="hideAdminReset()"
+                    style="flex: 1; padding: 10px; background: #f5f5f5; color: #333; border: none; border-radius: 8px; font-size: 14px; cursor: pointer;">Cancel</button>
+                <button onclick="executeAdminReset()"
+                    style="flex: 1; padding: 10px; background: #dc3545; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;">Reset
+                    All Data</button>
+            </div>
+        </div>
     </div>
 
     <!-- Chat App -->
@@ -781,6 +807,57 @@
             }
             location.reload();
         });
+
+        // Admin Reset Functions
+        function showAdminReset() {
+            document.getElementById('admin-modal').style.display = 'flex';
+            document.getElementById('admin-secret').value = '';
+            document.getElementById('admin-error').style.display = 'none';
+        }
+
+        function hideAdminReset() {
+            document.getElementById('admin-modal').style.display = 'none';
+        }
+
+        async function executeAdminReset() {
+            const secret = document.getElementById('admin-secret').value.trim();
+            const errorDiv = document.getElementById('admin-error');
+
+            if (!secret) {
+                errorDiv.textContent = 'Please enter admin secret code';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            if (!confirm('⚠️ WARNING: This will delete ALL users and messages permanently. Are you sure?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/admin/reset`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ secret })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    alert(`✅ Database reset successful!\n\n` +
+                        `Users deleted: ${result.usersDeleted}\n` +
+                        `Messages deleted: ${result.messagesDeleted}`);
+                    hideAdminReset();
+                    location.reload();
+                } else {
+                    const error = await response.json();
+                    errorDiv.textContent = error.error || 'Reset failed';
+                    errorDiv.style.display = 'block';
+                }
+            } catch (e) {
+                console.error(e);
+                errorDiv.textContent = 'Server connection failed';
+                errorDiv.style.display = 'block';
+            }
+        }
     </script>
 </body>
 
