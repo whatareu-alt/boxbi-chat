@@ -10,7 +10,8 @@
 
 ### Database
 
-- **Host**: postgres-production-ceff0.up.railway.app
+- **Host**: yamabiko.proxy.rlwy.net
+- **Port**: 16153
 - **Type**: PostgreSQL
 - **Connection**: Managed by Railway (DATABASE_URL environment variable)
 
