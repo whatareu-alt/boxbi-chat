@@ -357,7 +357,7 @@ Instance Type: Free
 SERVER_PORT=8080
 SPRING_DATASOURCE_URL=jdbc:postgresql://dpg-d5ktua9r0fns738qgob0-a/boxbi_messenger_db
 SPRING_DATASOURCE_USERNAME=boxbi_messenger_db_user
-SPRING_DATASOURCE_PASSWORD=8zxR2m76y5sNjpyBTRgZRJ7rwLvoCyuM
+SPRING_DATASOURCE_PASSWORD=[REDACTED_FOR_SECURITY]
 SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.postgresql.Driver
 SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
 ```
