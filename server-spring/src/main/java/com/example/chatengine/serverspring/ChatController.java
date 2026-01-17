@@ -28,6 +28,7 @@ import java.util.List;
         "https://boxbi.online",
         "https://www.boxbi.online",
         "https://boxmsg.netlify.app",
+        "https://boxbichat.netlify.app",
         "http://localhost:*",
         "http://127.0.0.1:*",
         "http://localhost:5500",
@@ -43,9 +44,6 @@ public class ChatController {
 
     @Autowired
     private FriendRequestRepository friendRequestRepository;
-
-    @Autowired
-    private GroupMemberRepository groupMemberRepository;
 
     @MessageMapping("/chat.sendMessage")
     @SendTo("/topic/public")

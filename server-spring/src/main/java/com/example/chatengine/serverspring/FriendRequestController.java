@@ -15,6 +15,7 @@ import java.util.*;
         "https://boxbi.online",
         "https://www.boxbi.online",
         "https://boxmsg.netlify.app",
+        "https://boxbichat.netlify.app",
         "http://localhost:*",
         "http://127.0.0.1:*",
         "http://localhost:5500",
