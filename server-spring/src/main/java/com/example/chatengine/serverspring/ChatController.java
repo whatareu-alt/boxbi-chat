@@ -27,6 +27,7 @@ import java.util.List;
         "https://zoobichatapp.netlify.app",
         "https://boxbi.online",
         "https://www.boxbi.online",
+        "https://boxmsg.netlify.app",
         "http://localhost:*",
         "https://*.netlify.app"
 })

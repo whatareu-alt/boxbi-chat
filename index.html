@@ -567,6 +567,7 @@
         let currentUser = null;
         let selectedRecipient = null;
         let allUsers = [];
+        let friendsList = [];
 
         // Toggle between login and signup
         document.getElementById('show-signup').addEventListener('click', (e) => {
@@ -666,7 +667,9 @@
         function onConnected() {
             console.log('✅ Connected to WebSocket');
             stompClient.subscribe('/user/queue/private', onMessageReceived);
+            // Load users and pending requests
             loadUsers();
+            loadPendingRequests();
         }
 
         function onError(error) {
@@ -685,6 +688,9 @@
 
         async function loadUsers() {
             try {
+                // Also get friends list to check status first
+                await loadFriendsList();
+
                 const response = await fetch(`${API_URL}/users/search?username=`);
                 const users = await response.json();
 
@@ -706,6 +712,16 @@
 
             usersList.innerHTML = '';
             users.forEach(user => {
+                const isFriend = friendsList.includes(user.username);
+                let statusHtml = '';
+
+                if (isFriend) {
+                    statusHtml = '<span style="color: #4ade80; font-size: 12px; font-weight: 600;">Friend ✅</span>';
+                } else {
+                    // Add friend button that stops propagation so we don't select the user
+                    statusHtml = `<button onclick="sendFriendRequest('${user.username}'); event.stopPropagation();" style="background: #3b82f6; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">Add Friend</button>`;
+                }
+
                 const userItem = document.createElement('div');
                 userItem.className = 'user-item';
                 userItem.id = `user-${user.username}`;
@@ -715,7 +731,10 @@
                     <div class="user-avatar">${user.username[0].toUpperCase()}</div>
                     <div class="user-info">
                         <div class="user-name">${user.username}</div>
-                        <div class="user-status">Online</div>
+                        <div class="status-row" style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+                            <div class="user-status">Online</div>
+                            <div>${statusHtml}</div>
+                        </div>
                     </div>
                 `;
                 usersList.appendChild(userItem);
@@ -742,9 +761,24 @@
             document.getElementById('chat-status').textContent = 'Online';
             document.getElementById('chat-avatar').textContent = username[0].toUpperCase();
 
-            // Enable input
-            document.getElementById('message-input').disabled = false;
-            document.getElementById('send-btn').disabled = false;
+            // Check if friend to enable/disable input
+            const isFriend = friendsList.includes(username);
+            const input = document.getElementById('message-input');
+            const btn = document.getElementById('send-btn');
+
+            if (isFriend) {
+                input.disabled = false;
+                input.placeholder = "Type a message...";
+                btn.disabled = false;
+                btn.style.opacity = "1";
+                btn.style.cursor = "pointer";
+            } else {
+                input.disabled = true;
+                input.placeholder = "Accepted friend request required to chat";
+                btn.disabled = true;
+                btn.style.opacity = "0.5";
+                btn.style.cursor = "not-allowed";
+            }
 
             // Clear messages
             document.getElementById('messages').innerHTML = '';
@@ -820,6 +854,95 @@
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
+        }
+
+        // Friend Request Functions
+        function toggleFriendRequests() {
+            const panel = document.getElementById('requests-panel');
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        }
+
+        async function loadPendingRequests() {
+            try {
+                const response = await fetch(`${API_URL}/friends/requests/pending?username=${currentUser.username}`);
+                if (response.ok) {
+                    const requests = await response.json();
+                    const badge = document.getElementById('request-badge');
+                    const list = document.getElementById('pending-requests-list');
+
+                    if (requests.length > 0) {
+                        badge.textContent = requests.length;
+                        badge.style.display = 'flex';
+
+                        list.innerHTML = requests.map(req => `
+                            <div style="background: white; padding: 8px; border-radius: 6px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+                                <span style="font-weight: 600; font-size: 13px;">${req.sender}</span>
+                                <div style="display: flex; gap: 5px;">
+                                    <button onclick="acceptRequest(${req.id})" style="background: #4ade80; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">Accept</button>
+                                    <button onclick="rejectRequest(${req.id})" style="background: #ef4444; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">Reject</button>
+                                </div>
+                            </div>
+                        `).join('');
+                    } else {
+                        badge.style.display = 'none';
+                        list.innerHTML = '<div style="color: #999; font-size: 12px; text-align: center;">No pending requests</div>';
+                    }
+                }
+            } catch (e) {
+                console.error("Error loading requests:", e);
+            }
+        }
+
+        async function sendFriendRequest(receiver) {
+            try {
+                const response = await fetch(`${API_URL}/friends/request`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sender: currentUser.username, receiver: receiver })
+                });
+
+                if (response.ok) {
+                    alert(`✅ Friend request sent to ${receiver}!`);
+                    loadUsers(); // Refresh to update status
+                } else {
+                    const error = await response.json();
+                    alert(`❌ ${error.error || 'Failed to send request'}`);
+                }
+            } catch (e) {
+                console.error(e);
+                alert('Connection error');
+            }
+        }
+
+        async function acceptRequest(id) {
+            try {
+                await fetch(`${API_URL}/friends/accept/${id}`, { method: 'POST' });
+                loadPendingRequests();
+                loadUsers();
+                loadFriendsList();
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function rejectRequest(id) {
+            try {
+                await fetch(`${API_URL}/friends/reject/${id}`, { method: 'POST' });
+                loadPendingRequests();
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function loadFriendsList() {
+            try {
+                const response = await fetch(`${API_URL}/friends/list?username=${currentUser.username}`);
+                if (response.ok) {
+                    friendsList = await response.json();
+                }
+            } catch (e) {
+                console.error(e);
+            }
         }
 
         // Logout

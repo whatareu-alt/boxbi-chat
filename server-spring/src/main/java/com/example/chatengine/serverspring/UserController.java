@@ -23,6 +23,7 @@ import java.util.Map;
         "https://zoobichatapp.netlify.app",
         "https://boxbi.online",
         "https://www.boxbi.online",
+        "https://boxmsg.netlify.app",
         "http://localhost:*",
         "https://*.netlify.app"
 })
