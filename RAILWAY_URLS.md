@@ -16,8 +16,8 @@
 
 ### Frontend
 
-- **Current**: `index.html` configured to use backend URL
-- **Deploy to**: Railway or Netlify
+- **URL**: <https://fullstack-chat-main-production.up.railway.app>
+- **Deploy to**: Railway
 - **API_URL**: <https://zoobi-chat-backend-production.up.railway.app>
 
 ## Environment Variables (Railway Backend)
