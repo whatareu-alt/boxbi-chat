@@ -1,8 +1,11 @@
 [phases.setup]
 nixPkgs = ["nodejs"]
 
+[phases.install]
+cmds = ["npm install -g http-server"]
+
 [phases.build]
 cmds = ["echo 'No build needed for static site'"]
 
 [start]
-cmd = "npx http-server . -p $PORT"
+cmd = "http-server . -p $PORT"
