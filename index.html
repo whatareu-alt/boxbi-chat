@@ -426,8 +426,20 @@
                 <label for="login-password">Password</label>
                 <input type="password" id="login-password" required autocomplete="current-password">
             </div>
+
+            <div style="display: flex; align-items: center; margin-bottom: 20px; gap: 8px;">
+                <input type="checkbox" id="remember-me" checked style="width: auto;">
+                <label for="remember-me" style="margin: 0; font-size: 13px; color: #666; cursor: pointer;">Remember
+                    Me</label>
+            </div>
+
             <button type="submit" class="btn">Sign In</button>
             <div class="error hidden" id="login-error"></div>
+
+            <div style="margin-top: 15px; text-align: center;">
+                <a href="#" onclick="showAdminReset(); return false;"
+                    style="font-size: 12px; color: #999; text-decoration: none;">Reset App Data (Admin)</a>
+            </div>
         </form>
 
         <div class="toggle-auth">
@@ -576,7 +588,7 @@
 
         // Auto-login from saved session
         window.addEventListener('DOMContentLoaded', () => {
-            const savedUser = localStorage.getItem('currentUser');
+            const savedUser = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
             if (savedUser) {
                 try {
                     currentUser = JSON.parse(savedUser);
@@ -585,6 +597,7 @@
                 } catch (e) {
                     console.error('Failed to parse saved user:', e);
                     localStorage.removeItem('currentUser');
+                    sessionStorage.removeItem('currentUser');
                 }
             }
         });
@@ -621,7 +634,14 @@
 
                 if (response.ok) {
                     currentUser = await response.json();
-                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+
+                    const rememberMe = document.getElementById('remember-me').checked;
+                    if (rememberMe) {
+                        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    } else {
+                        sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    }
+
                     showError('login', '');
                     enterChat();
                 } else {
@@ -1005,6 +1025,7 @@
                 stompClient.disconnect();
             }
             localStorage.removeItem('currentUser');
+            sessionStorage.removeItem('currentUser');
             location.reload();
         });
 
