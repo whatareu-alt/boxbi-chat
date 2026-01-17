@@ -43,7 +43,9 @@ public class SecurityConfig {
                                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                                 .authorizeHttpRequests(auth -> auth
                                                 .requestMatchers("/login", "/signup", "/ws/**", "/h2-console/**",
-                                                                "/users/**", "/friends/**", "/admin/**", "/messages/**")
+                                                                "/users/**", "/friends/**", "/admin/**", "/messages/**",
+                                                                "/", "/index.html", "/local_test.html", "/static/**",
+                                                                "/*.html")
                                                 .permitAll()
                                                 .anyRequest().authenticated())
                                 .sessionManagement(session -> session
@@ -67,6 +69,8 @@ public class SecurityConfig {
                                 "https://www.boxbi.online",
                                 "https://boxbi.netlify.app",
                                 "http://localhost:*",
+                                "http://127.0.0.1:*",
+                                "http://localhost:5500",
                                 "https://*.netlify.app"));
                 configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
                 configuration.setAllowedHeaders(Arrays.asList("*"));

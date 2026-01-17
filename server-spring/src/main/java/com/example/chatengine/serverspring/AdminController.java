@@ -16,12 +16,14 @@ import java.util.Map;
         "https://www.boxbi.online",
         "https://boxmsg.netlify.app",
         "http://localhost:*",
+        "http://127.0.0.1:*",
+        "http://localhost:5500",
         "https://*.netlify.app"
 })
 public class AdminController {
 
     // Secret admin code - CHANGE THIS TO YOUR OWN SECRET!
-    private static final String ADMIN_SECRET = "BOXBI_ADMIN_2026_SECURE";
+    private static final String ADMIN_SECRET = "boxbi@#$%&123";
 
     @Autowired
     private UserRepository userRepository;

@@ -16,6 +16,8 @@ import java.util.*;
         "https://www.boxbi.online",
         "https://boxmsg.netlify.app",
         "http://localhost:*",
+        "http://127.0.0.1:*",
+        "http://localhost:5500",
         "https://*.netlify.app"
 })
 public class FriendRequestController {
