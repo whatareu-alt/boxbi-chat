@@ -232,8 +232,8 @@
     <script>
         // API URL CONFIGURATION
         let API_URL;
-        if (window.location.hostname.includes('netlify.app')) {
-            // If running on Netlify, connect to Render Backend
+        if (window.location.hostname.includes('netlify.app') || window.location.hostname.includes('boxbi.online')) {
+            // If running on Netlify or custom domain, connect to Render Backend
             API_URL = 'https://boxbi-backend.onrender.com';
         } else {
             // If running Locally or on Render (Monolith), use current origin
