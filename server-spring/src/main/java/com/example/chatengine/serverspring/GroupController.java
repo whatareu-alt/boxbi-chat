@@ -11,16 +11,8 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/groups")
 @CrossOrigin(origins = {
-        "https://chatappboxbi.netlify.app",
-        "https://zoobichatapp.netlify.app",
-        "https://boxbi.online",
-        "https://www.boxbi.online",
-        "https://boxmsg.netlify.app",
-        "https://boxbichat.netlify.app",
         "http://localhost:*",
-        "http://127.0.0.1:*",
-        "http://localhost:5500",
-        "https://*.netlify.app"
+        "http://127.0.0.1:*"
 })
 public class GroupController {
 
@@ -35,30 +27,40 @@ public class GroupController {
 
     @PostMapping("/create")
     public ResponseEntity<?> createGroup(@RequestBody Map<String, Object> payload) {
-        String name = (String) payload.get("name");
-        String createdBy = (String) payload.get("createdBy");
-        @SuppressWarnings("unchecked")
-        List<String> members = (List<String>) payload.get("members");
+        try {
+            System.out.println("Received create group request: " + payload);
+            String name = (String) payload.get("name");
+            String createdBy = (String) payload.get("createdBy");
+            @SuppressWarnings("unchecked")
+            List<String> members = (List<String>) payload.get("members");
 
-        if (name == null || createdBy == null) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Name and createdBy are required"));
-        }
+            if (name == null || name.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Group name is required"));
+            }
+            if (createdBy == null || createdBy.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Creator username is required"));
+            }
 
-        ChatGroup group = new ChatGroup(name, createdBy);
-        group = groupRepository.save(group);
+            ChatGroup group = new ChatGroup(name, createdBy);
+            group = groupRepository.save(group);
+            System.out.println("Group created with ID: " + group.getId());
 
-        // Add creator as member
-        groupMemberRepository.save(new GroupMember(group, createdBy));
+            // Add creator as member
+            groupMemberRepository.save(new GroupMember(group, createdBy));
 
-        // Add other members
-        if (members != null) {
-            for (String member : members) {
-                if (!member.equals(createdBy)) {
-                    groupMemberRepository.save(new GroupMember(group, member));
+            // Add other members
+            if (members != null) {
+                for (String member : members) {
+                    if (member != null && !member.isEmpty() && !member.equals(createdBy)) {
+                        groupMemberRepository.save(new GroupMember(group, member));
+                    }
                 }
             }
+            return ResponseEntity.ok(group);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(Map.of("error", "Failed to create group: " + e.getMessage()));
         }
-        return ResponseEntity.ok(group);
     }
 
     @GetMapping("/user/{username}")

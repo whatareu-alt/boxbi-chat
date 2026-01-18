@@ -65,14 +65,8 @@ public class SecurityConfig {
                 CorsConfiguration configuration = new CorsConfiguration();
                 configuration.setAllowedOriginPatterns(Arrays.asList(
                                 "*",
-                                "https://zoobichatapp.netlify.app",
-                                "https://boxbi.online",
-                                "https://www.boxbi.online",
-                                "https://boxbi.netlify.app",
                                 "http://localhost:*",
-                                "http://127.0.0.1:*",
-                                "http://localhost:5500",
-                                "https://*.netlify.app"));
+                                "http://127.0.0.1:*"));
                 configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
                 configuration.setAllowedHeaders(Arrays.asList("*"));
                 configuration.setAllowCredentials(true);
