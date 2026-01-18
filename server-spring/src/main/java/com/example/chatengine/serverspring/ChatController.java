@@ -95,7 +95,7 @@ public class ChatController {
             try {
                 System.out.println("→ Sending to recipient: " + chatMessage.getRecipient());
                 messagingTemplate.convertAndSendToUser(
-                        chatMessage.getRecipient(),
+                        Objects.requireNonNull(chatMessage.getRecipient()),
                         "/queue/private",
                         chatMessage);
                 System.out.println("✅ Sent to recipient successfully");
@@ -109,7 +109,7 @@ public class ChatController {
                 try {
                     System.out.println("← Sending back to sender: " + chatMessage.getSender());
                     messagingTemplate.convertAndSendToUser(
-                            chatMessage.getSender(),
+                            Objects.requireNonNull(chatMessage.getSender()),
                             "/queue/private",
                             chatMessage);
                     System.out.println("✅ Sent to sender successfully");
