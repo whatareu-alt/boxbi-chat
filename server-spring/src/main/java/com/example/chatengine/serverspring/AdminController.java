@@ -11,7 +11,9 @@ import java.util.Map;
 @RestController
 @CrossOrigin(origins = {
         "http://localhost:*",
-        "http://127.0.0.1:*"
+        "http://127.0.0.1:*",
+        "https://boxbichat.netlify.app",
+        "https://boxbi.online"
 })
 public class AdminController {
 

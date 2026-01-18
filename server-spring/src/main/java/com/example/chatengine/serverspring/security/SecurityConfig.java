@@ -66,7 +66,9 @@ public class SecurityConfig {
                 configuration.setAllowedOriginPatterns(Arrays.asList(
                                 "*",
                                 "http://localhost:*",
-                                "http://127.0.0.1:*"));
+                                "http://127.0.0.1:*",
+                                "https://boxbichat.netlify.app",
+                                "https://boxbi.online"));
                 configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
                 configuration.setAllowedHeaders(Arrays.asList("*"));
                 configuration.setAllowCredentials(true);
