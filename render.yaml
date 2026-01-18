@@ -1,10 +1,9 @@
 services:
   - type: web
     name: boxbi-backend
-    runtime: java
+    env: docker
+    dockerfilePath: server-spring/Dockerfile
     envVars:
-      - key: SERVER_PORT
-        value: 8080
       - key: DB_HOST
         fromDatabase:
           name: boxbi-db
@@ -16,7 +15,7 @@ services:
       - key: DB_NAME
         fromDatabase:
           name: boxbi-db
-          property: databaseName
+          property: database
       - key: SPRING_DATASOURCE_USERNAME
         fromDatabase:
           name: boxbi-db
@@ -29,8 +28,6 @@ services:
         value: org.postgresql.Driver
       - key: SPRING_JPA_DATABASE_PLATFORM
         value: org.hibernate.dialect.PostgreSQLDialect
-    buildCommand: chmod +x mvnw && ./mvnw clean package -DskipTests
-    startCommand: java -jar -Dspring.datasource.url=jdbc:postgresql://$DB_HOST:$DB_PORT/$DB_NAME target/server-spring-0.0.1-SNAPSHOT.jar
     plan: free
 
 databases:
