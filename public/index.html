@@ -785,8 +785,15 @@
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
 
-    // DYNAMIC API URL (Works for Local & Production)
-    const API_URL = window.location.origin;
+    // API URL CONFIGURATION
+    let API_URL;
+    if (window.location.hostname.includes('netlify.app')) {
+    // If running on Netlify, connect to Render Backend
+    API_URL = 'https://boxbi-backend.onrender.com';
+    } else {
+    // If running Locally or on Render (Monolith), use current origin
+    API_URL = window.location.origin;
+    }
 
     let stompClient = null;
     let currentUser = null;
