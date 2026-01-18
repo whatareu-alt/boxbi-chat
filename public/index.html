@@ -785,727 +785,732 @@
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
 
-    <script>
-        // LOCAL API URL
-        const API_URL = 'http://localhost:8081';
-
-        let stompClient = null;
-        let currentUser = null;
-        let selectedRecipient = null;
-        let activeGroupId = null; // Track active group
-        let allUsers = [];
-        let myGroups = [];
-        let currentTab = 'chats';
-
-        function switchTab(tab) {
-            currentTab = tab;
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-
-            if (tab === 'chats') {
-                document.querySelector('.tab-btn:nth-child(1)').classList.add('active');
-                document.getElementById('tab-chats').classList.add('active');
-            } else {
-                document.querySelector('.tab-btn:nth-child(2)').classList.add('active');
-                document.getElementById('tab-groups').classList.add('active');
-                fetchMyGroups();
-            }
-        }
-
-        // Auto-login from saved session
-        window.addEventListener('DOMContentLoaded', () => {
-            const savedUser = localStorage.getItem('currentUser');
-            if (savedUser) {
-                try {
-                    currentUser = JSON.parse(savedUser);
-                    console.log('🔄 Auto-logging in as:', currentUser.username);
-                    enterChat();
-                } catch (e) {
-                    console.error('Failed to parse saved user:', e);
-                    localStorage.removeItem('currentUser');
-                }
-            }
-        });
-
-        // Toggle between login and signup
-        document.getElementById('show-signup').addEventListener('click', (e) => {
-            e.preventDefault();
-            document.getElementById('login-form').classList.add('hidden');
-            document.querySelector('.toggle-auth').classList.add('hidden');
-            document.getElementById('signup-form').classList.remove('hidden');
-            document.getElementById('show-login-link').classList.remove('hidden');
-        });
-
-        document.getElementById('show-login').addEventListener('click', (e) => {
-            e.preventDefault();
-            document.getElementById('signup-form').classList.add('hidden');
-            document.getElementById('show-login-link').classList.add('hidden');
-            document.getElementById('login-form').classList.remove('hidden');
-            document.querySelector('.toggle-auth').classList.remove('hidden');
-        });
-
-        // Login
-        document.getElementById('login-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const username = document.getElementById('login-username').value.trim();
-            const password = document.getElementById('login-password').value;
-
-            try {
-                const response = await fetch(`${API_URL}/login`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, secret: password })
-                });
-
-                if (response.ok) {
-                    currentUser = await response.json();
-                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
-                    showError('login', '');
-                    enterChat();
-                } else {
-                    const error = await response.json();
-                    showError('login', error.error || 'Invalid credentials');
-                }
-            } catch (e) {
-                console.error(e);
-                showError('login', 'Server connection failed');
-            }
-        });
-
-        // Signup
-        document.getElementById('signup-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const username = document.getElementById('signup-username').value.trim();
-            const email = document.getElementById('signup-email').value.trim();
-            const firstName = document.getElementById('signup-firstname').value.trim();
-            const lastName = document.getElementById('signup-lastname').value.trim();
-            const password = document.getElementById('signup-password').value;
-
-            try {
-                const response = await fetch(`${API_URL}/signup`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, email, firstName, lastName, secret: password })
-                });
-
-                if (response.ok) {
-                    currentUser = await response.json();
-                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
-                    showError('signup', '');
-                    enterChat();
-                } else {
-                    const error = await response.json();
-                    showError('signup', error.error || 'Signup failed');
-                }
-            } catch (e) {
-                console.error(e);
-                showError('signup', 'Server connection failed');
-            }
-        });
-
-        function showError(type, message) {
-            const errorDiv = document.getElementById(`${type}-error`);
-            if (message) {
-                errorDiv.textContent = message;
-                errorDiv.classList.remove('hidden');
-            } else {
-                errorDiv.classList.add('hidden');
-            }
-        }
-
-
-        function enterChat() {
-            document.getElementById('auth-page').style.display = 'none';
-            document.getElementById('chat-app').classList.add('active');
-            document.getElementById('current-username').textContent = currentUser.username;
-
-            // Connect to WebSocket
-            const socket = new SockJS(`${API_URL}/ws?username=${currentUser.username}`);
-            stompClient = Stomp.over(socket);
-            stompClient.connect({}, onConnected, onError);
-        }
-
-        function onConnected() {
-            console.log('✅ Connected to WebSocket');
-            stompClient.subscribe('/user/queue/private', onMessageReceived);
-            // Load users and pending requests
-            loadUsers();
-            loadPendingRequests();
-            fetchMyGroups();
-        }
-
-        function onError(error) {
-            console.error('WebSocket error:', error);
-            alert('Could not connect to chat server');
-        }
-
-        function onMessageReceived(payload) {
-            const message = JSON.parse(payload.body);
-            const otherUser = message.sender === currentUser.username ? message.recipient : message.sender;
-
-            if (selectedRecipient === otherUser) {
-                displayMessage(message);
-            }
-        }
-
-        // Friend Request Functions
-        function toggleFriendRequests() {
-            const panel = document.getElementById('requests-panel');
-            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
-        }
-
-        async function loadPendingRequests() {
-            try {
-                const response = await fetch(`${API_URL}/friends/requests/pending?username=${currentUser.username}`);
-                if (response.ok) {
-                    const requests = await response.json();
-                    const badge = document.getElementById('request-badge');
-                    const list = document.getElementById('pending-requests-list');
-
-                    if (requests.length > 0) {
-                        badge.textContent = requests.length;
-                        badge.style.display = 'flex';
-
-                        list.innerHTML = requests.map(req => `
-                            <div style="background: white; padding: 8px; border-radius: 6px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-                                <span style="font-weight: 600; font-size: 13px;">${req.sender}</span>
-                                <div style="display: flex; gap: 5px;">
-                                    <button onclick="acceptRequest(${req.id})" style="background: #4ade80; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">Accept</button>
-                                    <button onclick="rejectRequest(${req.id})" style="background: #ef4444; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">Reject</button>
-                                </div>
-                            </div>
-                        `).join('');
-                    } else {
-                        badge.style.display = 'none';
-                        list.innerHTML = '<div style="color: #999; font-size: 12px; text-align: center;">No pending requests</div>';
-                    }
-                }
-            } catch (e) {
-                console.error("Error loading requests:", e);
-            }
-        }
-
-        async function sendFriendRequest(receiver) {
-            try {
-                const response = await fetch(`${API_URL}/friends/request`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ sender: currentUser.username, receiver: receiver })
-                });
-
-                if (response.ok) {
-                    alert(`✅ Friend request sent to ${receiver}!`);
-                    loadUsers(); // Refresh to update status
-                } else {
-                    const error = await response.json();
-                    alert(`❌ ${error.error || 'Failed to send request'}`);
-                }
-            } catch (e) {
-                console.error(e);
-                alert('Connection error');
-            }
-        }
-
-        async function acceptRequest(id) {
-            try {
-                await fetch(`${API_URL}/friends/accept/${id}`, { method: 'POST' });
-                loadPendingRequests();
-                loadUsers();
-                loadFriendsList();
-            } catch (e) {
-                console.error(e);
-            }
-        }
-
-        async function rejectRequest(id) {
-            try {
-                await fetch(`${API_URL}/friends/reject/${id}`, { method: 'POST' });
-                loadPendingRequests();
-            } catch (e) {
-                console.error(e);
-            }
-        }
-
-        let friendsList = [];
-        async function loadFriendsList() {
-            try {
-                const response = await fetch(`${API_URL}/friends/list?username=${currentUser.username}`);
-                if (response.ok) {
-                    friendsList = await response.json();
-                }
-            } catch (e) {
-                console.error(e);
-            }
-        }
-
-        async function loadUsers() {
-            try {
-                // Also get friends list to check status first
-                await loadFriendsList();
-
-                const response = await fetch(`${API_URL}/users/search?username=`);
-                const users = await response.json();
-
-                allUsers = users.filter(u => u.username !== currentUser.username);
-                displayUsers(allUsers);
-            } catch (e) {
-                console.error('Load users error:', e);
-                document.getElementById('users-list').innerHTML = '<div class="empty-state">Error loading users</div>';
-            }
-        }
-
-        function displayUsers(users) {
-            const usersList = document.getElementById('users-list');
-
-            if (users.length === 0) {
-                usersList.innerHTML = '<div class="empty-state">No users found</div>';
-                return;
-            }
-
-            usersList.innerHTML = '';
-            users.forEach(user => {
-                const isFriend = friendsList.includes(user.username);
-                let statusHtml = '';
-
-                if (isFriend) {
-                    statusHtml = '<span style="color: #4ade80; font-size: 12px; font-weight: 600;">Friend ✅</span>';
-                } else {
-                    // Start of render_diff logic adaptation: 
-                    // Add friend button that stops propagation so we don't select the user
-                    statusHtml = `<button onclick="sendFriendRequest('${user.username}'); event.stopPropagation();" style="background: #3b82f6; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">Add Friend</button>`;
-                }
-
-                const userItem = document.createElement('div');
-                userItem.className = 'user-item';
-                userItem.id = `user-${user.username}`;
-                userItem.onclick = () => selectUser(user.username);
-
-                userItem.innerHTML = `
-                    <div class="user-avatar">${user.username[0].toUpperCase()}</div>
-                    <div class="user-info">
-                        <div class="user-name">${user.username}</div>
-                        <div class="status-row" style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
-                            <div class="user-status">Online</div>
-                            <div>${statusHtml}</div>
-                        </div>
-                    </div>
-                `;
-                usersList.appendChild(userItem);
-            });
-        }
-
-        function filterUsers(query) {
-            if (!query) {
-                displayUsers(allUsers);
-                return;
-            }
-
-            const filtered = allUsers.filter(user =>
-                user.username.toLowerCase().includes(query.toLowerCase())
-            );
-            displayUsers(filtered);
-        }
-
-        async function fetchMyGroups() {
-            try {
-                const response = await fetch(`${API_URL}/groups/user/${currentUser.username}`);
-                if (response.ok) {
-                    myGroups = await response.json();
-                    displayGroups(myGroups);
-                    // Subscribe to existing groups if connected
-                    if (stompClient && stompClient.connected) {
-                        myGroups.forEach(group => {
-                            // Idempotent subscribe could be handled by STOMP lib or check if already subbed
-                            // For simplicity, just subscribe (STOMP usually handles duplicates or we can ignore)
-                            stompClient.subscribe(`/topic/group.${group.id}`, onGroupMessageReceived);
-                        });
-                    }
-                }
-            } catch (e) {
-                console.error('Error fetching groups:', e);
-            }
-        }
-
-        function displayGroups(groups) {
-            const list = document.getElementById('groups-list');
-            if (groups.length === 0) {
-                list.innerHTML = '<div class="empty-state">No groups found</div>';
-                return;
-            }
-            list.innerHTML = '';
-            groups.forEach(group => {
-                const item = document.createElement('div');
-                item.className = 'user-item';
-                item.id = `group-${group.id}`;
-                item.onclick = () => selectGroup(group);
-                item.innerHTML = `
-                    <div class="user-avatar" style="background: #e11d48">#</div>
-                    <div class="user-info">
-                        <div class="user-name">${group.name}</div>
-                        <div class="user-status">Created by ${group.createdBy}</div>
-                    </div>
-                 `;
-                list.appendChild(item);
-            });
-        }
-
-        function exitChatView() {
-            document.getElementById('chat-app').classList.remove('mobile-chat-active');
-            selectedRecipient = null;
-            activeGroupId = null;
-        }
-
-        async function selectUser(username) {
-            selectedRecipient = username;
-            activeGroupId = null; // Reset activeGroupId when selecting a user
-
-            // Enable Mobile View
-            document.getElementById('chat-app').classList.add('mobile-chat-active');
-
-            // Update header
-            document.getElementById('chat-name').textContent = username;
-            document.getElementById('chat-status').textContent = 'Online';
-            document.getElementById('chat-avatar').textContent = username[0].toUpperCase();
-            document.getElementById('chat-avatar').style.background = '#0ea5e9'; // Default user avatar color
-
-            // Check if friend to enable/disable input
-            const isFriend = friendsList.includes(username);
-            const input = document.getElementById('message-input');
-            const btn = document.getElementById('send-btn');
-
-            if (isFriend) {
-                input.disabled = false;
-                input.placeholder = "Type a message...";
-                btn.disabled = false;
-                btn.style.opacity = "1";
-                btn.style.cursor = "pointer";
-            } else {
-                input.disabled = true;
-                input.placeholder = "Accepted friend request required to chat";
-                btn.disabled = true;
-                btn.style.opacity = "0.5";
-                btn.style.cursor = "not-allowed";
-            }
-
-            // Clear messages
-            document.getElementById('messages').innerHTML = '';
-
-            // Highlight selected user
-            document.querySelectorAll('.user-item').forEach(el => el.classList.remove('active'));
-            const userEl = document.getElementById(`user-${username}`);
-            if (userEl) userEl.classList.add('active');
-
-            // Load chat history
-            loadChatHistory(username);
-        }
-
-        function selectGroup(group) {
-            selectedRecipient = null; // Clear individual recipient
-            activeGroupId = group.id;
-
-            // Enable Mobile View
-            document.getElementById('chat-app').classList.add('mobile-chat-active');
-
-            // Update header
-            document.getElementById('chat-name').textContent = group.name;
-            document.getElementById('chat-status').textContent = 'Group Chat';
-            document.getElementById('chat-avatar').textContent = '#';
-            document.getElementById('chat-avatar').style.background = '#e11d48';
-
-            const input = document.getElementById('message-input');
-            const btn = document.getElementById('send-btn');
-            input.disabled = false;
-            input.placeholder = "Message group...";
-            btn.disabled = false;
-            btn.style.opacity = "1";
-            btn.style.cursor = "pointer";
-
-            // Highlight
-            document.querySelectorAll('.user-item').forEach(el => el.classList.remove('active'));
-            document.getElementById(`group-${group.id}`).classList.add('active');
-
-            // Load history
-            loadGroupHistory(group.id);
-        }
-
-        async function loadGroupHistory(groupId) {
-            try {
-                const response = await fetch(`${API_URL}/groups/${groupId}/messages`);
-                if (response.ok) {
-                    const messages = await response.json();
-                    document.getElementById('messages').innerHTML = ''; // Clear
-                    messages.forEach(displayMessage);
-                }
-            } catch (e) {
-                console.error('Error loading group history:', e);
-            }
-        }
-
-        function onGroupMessageReceived(payload) {
-            const message = JSON.parse(payload.body);
-            // If viewing this group, display it
-            if (activeGroupId === message.groupId) {
-                displayMessage(message);
-            }
-        }
-
-
-        async function loadChatHistory(contact) {
-            try {
-                const response = await fetch(`${API_URL}/messages/${contact}?currentUser=${currentUser.username}`);
-                if (response.ok) {
-                    const messages = await response.json();
-                    console.log(`Loaded ${messages.length} messages`);
-                    messages.forEach(displayMessage);
-                }
-            } catch (e) {
-                console.error('Error loading history:', e);
-            }
-        }
-
-        // Send message
-        document.getElementById('message-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const messageContent = document.getElementById('message-input').value.trim();
-
-            if (messageContent && stompClient) {
-                if (activeGroupId) {
-                    // Send Group Message
-                    const chatMessage = {
-                        sender: currentUser.username,
-                        groupId: activeGroupId,
-                        content: messageContent,
-                        type: 'CHAT'
-                    };
-                    stompClient.send("/app/chat.group", {}, JSON.stringify(chatMessage));
-                } else if (selectedRecipient) {
-                    // Send Private Message
-                    const chatMessage = {
-                        sender: currentUser.username,
-                        recipient: selectedRecipient,
-                        content: messageContent,
-                        type: 'CHAT',
-                        timestamp: Date.now()
-                    };
-                    stompClient.send("/app/chat.private", {}, JSON.stringify(chatMessage));
-                }
-                document.getElementById('message-input').value = '';
-            }
-        });
-
-        function displayMessage(message) {
-            const messagesDiv = document.getElementById('messages');
-
-            const messageDiv = document.createElement('div');
-            messageDiv.className = 'message';
-            if (message.sender === currentUser.username) {
-                messageDiv.classList.add('own');
-            }
-
-            const time = new Date(message.timestamp).toLocaleTimeString('en-US', {
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-
-            messageDiv.innerHTML = `
-                <div class="message-content">
-                    <div class="message-sender">${message.sender}</div>
-                    ${escapeHtml(message.content)}
-                    <div class="message-time">${time}</div>
-                </div>
-            `;
-
-            messagesDiv.appendChild(messageDiv);
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
-        }
-
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
-        async function refreshData() {
-            const btn = document.getElementById('refresh-btn');
-            btn.style.transform = 'rotate(360deg)';
-
-            console.log('🔄 Refreshing data...');
-
-            try {
-                // Reload users and friend status
-                await loadFriendsList();
-                await loadUsers();
-                await loadPendingRequests();
-
-                // If chat is open, refresh history
-                if (selectedRecipient) {
-                    loadChatHistory(selectedRecipient);
-                }
-
-                // Check connection
-                if (!stompClient || !stompClient.connected) {
-                    console.log('🔄 Reconnecting WebSocket...');
-                    enterChat();
-                }
-
-            } catch (e) {
-                console.error('Refresh failed:', e);
-            } finally {
-                setTimeout(() => {
-                    btn.style.transform = 'none';
-                }, 1000);
-            }
-        }
-
-        function openCreateGroupModal() {
-            document.getElementById('create-group-modal').style.display = 'flex';
-            const list = document.getElementById('group-user-select');
-            list.innerHTML = '';
-
-            // Filter out self
-            const users = allUsers;
-
-            users.forEach(user => {
-                const div = document.createElement('div');
-                div.className = 'select-item';
-                div.innerHTML = `
-                    <input type="checkbox" value="${user.username}" id="chk-${user.username}">
-                    <label for="chk-${user.username}" style="cursor:pointer">${user.username}</label>
-                 `;
-                // Allow clicking row to toggle
-                div.onclick = (e) => {
-                    if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'LABEL') {
-                        const chk = document.getElementById(`chk-${user.username}`);
-                        chk.checked = !chk.checked;
-                    }
-                };
-                list.appendChild(div);
-            });
-        }
-
-        async function submitCreateGroup() {
-            const name = document.getElementById('group-name-input').value.trim();
-            if (!name) { alert('Please enter a group name'); return; }
-
-            const members = [];
-            document.querySelectorAll('#group-user-select input:checked').forEach(chk => {
-                members.push(chk.value);
-            });
-            members.push(currentUser.username); // Add self
-
-            try {
-                const response = await fetch(`${API_URL}/groups/create`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name: name, createdBy: currentUser.username, members: members })
-                });
-
-                if (response.ok) {
-                    document.getElementById('create-group-modal').style.display = 'none';
-                    document.getElementById('group-name-input').value = '';
-                    fetchMyGroups();
-                    alert('Group created successfully!');
-                } else {
-                    try {
-                        const errorData = await response.json();
-                        alert('Failed to create group: ' + (errorData.error || 'Unknown error'));
-                    } catch (parseError) {
-                        alert('Failed to create group: Server returned ' + response.status);
-                    }
-                }
-            } catch (e) {
-                console.error(e);
-                alert('Connection error: ' + e.message);
-            }
-        }
-
-        function logout() {
-            // Disconnect WebSocket
-            if (stompClient) {
-                stompClient.disconnect();
-            }
-            localStorage.removeItem('currentUser');
-            sessionStorage.removeItem('currentUser');
-            currentUser = null;
-            document.getElementById('chat-app').classList.remove('active');
-            document.getElementById('auth-page').style.display = 'block';
-            document.getElementById('login-form').reset();
-
-            // Clear location reload to prevent re-login
-            window.location.reload();
-        }
-
-        // Admin Reset Functions
-        function showAdminReset() {
-            document.getElementById('admin-modal').style.display = 'flex';
-            document.getElementById('admin-secret').value = '';
-            document.getElementById('admin-error').style.display = 'none';
-        }
-
-        function hideAdminReset() {
-            document.getElementById('admin-modal').style.display = 'none';
-        }
-
-        async function executeAdminReset(type) {
-            const secret = document.getElementById('admin-secret').value.trim();
-            const errorDiv = document.getElementById('admin-error');
-
-            if (!secret) {
-                errorDiv.textContent = 'Please enter admin secret code';
-                errorDiv.style.display = 'block';
-                return;
-            }
-
-            // Client-side partial validation for immediate feedback
-            const EXPECTED_SECRET = "boxbi@#$%&123";
-
-            if (type === 'local') {
-                if (secret !== EXPECTED_SECRET) {
-                    errorDiv.textContent = 'Invalid secret code';
-                    errorDiv.style.display = 'block';
-                    return;
-                }
-
-                if (!confirm('⚠️ This will delete all saved login sessions and local preferences. Are you sure?')) {
-                    return;
-                }
-
-                localStorage.clear();
-                sessionStorage.clear();
-                hideAdminReset();
-                alert('✅ Local app data has been cleared.');
-                location.reload();
-                return;
-            }
-
-            // DB Reset
-            if (!confirm('⚠️ WARNING: This will delete ALL users and messages permanently. Are you sure?')) {
-                return;
-            }
-
-            try {
-                const response = await fetch(`${API_URL}/admin/reset`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ secret })
-                });
-
-                if (response.ok) {
-                    alert('✅ System has been reset successfully');
-                    localStorage.removeItem('currentUser');
-                    sessionStorage.removeItem('currentUser');
-                    location.reload();
-                } else {
-                    const error = await response.text();
-                    errorDiv.textContent = 'Invalid secret code';
-                    errorDiv.style.display = 'block';
-                }
-            } catch (e) {
-                console.error(e);
-                errorDiv.textContent = 'Connection error';
-                errorDiv.style.display = 'block';
-            }
-        }
+    // DYNAMIC API URL (Works for Local & Production)
+    const API_URL = window.location.origin;
+
+    let stompClient = null;
+    let currentUser = null;
+    let selectedRecipient = null;
+    let activeGroupId = null; // Track active group
+    let allUsers = [];
+    let myGroups = [];
+    let currentTab = 'chats';
+
+    function switchTab(tab) {
+    currentTab = tab;
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+    if (tab === 'chats') {
+    document.querySelector('.tab-btn:nth-child(1)').classList.add('active');
+    document.getElementById('tab-chats').classList.add('active');
+    } else {
+    document.querySelector('.tab-btn:nth-child(2)').classList.add('active');
+    document.getElementById('tab-groups').classList.add('active');
+    fetchMyGroups();
+    }
+    }
+
+    // Auto-login from saved session
+    window.addEventListener('DOMContentLoaded', () => {
+    const savedUser = localStorage.getItem('currentUser');
+    if (savedUser) {
+    try {
+    currentUser = JSON.parse(savedUser);
+    console.log('🔄 Auto-logging in as:', currentUser.username);
+    enterChat();
+    } catch (e) {
+    console.error('Failed to parse saved user:', e);
+    localStorage.removeItem('currentUser');
+    }
+    }
+    });
+
+    // Toggle between login and signup
+    document.getElementById('show-signup').addEventListener('click', (e) => {
+    e.preventDefault();
+    document.getElementById('login-form').classList.add('hidden');
+    document.querySelector('.toggle-auth').classList.add('hidden');
+    document.getElementById('signup-form').classList.remove('hidden');
+    document.getElementById('show-login-link').classList.remove('hidden');
+    });
+
+    document.getElementById('show-login').addEventListener('click', (e) => {
+    e.preventDefault();
+    document.getElementById('signup-form').classList.add('hidden');
+    document.getElementById('show-login-link').classList.add('hidden');
+    document.getElementById('login-form').classList.remove('hidden');
+    document.querySelector('.toggle-auth').classList.remove('hidden');
+    });
+
+    // Login
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const username = document.getElementById('login-username').value.trim();
+    const password = document.getElementById('login-password').value;
+
+    try {
+    const response = await fetch(`${API_URL}/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, secret: password })
+    });
+
+    if (response.ok) {
+    currentUser = await response.json();
+    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+    showError('login', '');
+    enterChat();
+    } else {
+    const error = await response.json();
+    showError('login', error.error || 'Invalid credentials');
+    }
+    } catch (e) {
+    console.error(e);
+    showError('login', 'Server connection failed');
+    }
+    });
+
+    // Signup
+    document.getElementById('signup-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const username = document.getElementById('signup-username').value.trim();
+    const email = document.getElementById('signup-email').value.trim();
+    const firstName = document.getElementById('signup-firstname').value.trim();
+    const lastName = document.getElementById('signup-lastname').value.trim();
+    const password = document.getElementById('signup-password').value;
+
+    try {
+    const response = await fetch(`${API_URL}/signup`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, email, firstName, lastName, secret: password })
+    });
+
+    if (response.ok) {
+    currentUser = await response.json();
+    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+    showError('signup', '');
+    enterChat();
+    } else {
+    const error = await response.json();
+    showError('signup', error.error || 'Signup failed');
+    }
+    } catch (e) {
+    console.error(e);
+    showError('signup', 'Server connection failed');
+    }
+    });
+
+    function showError(type, message) {
+    const errorDiv = document.getElementById(`${type}-error`);
+    if (message) {
+    errorDiv.textContent = message;
+    errorDiv.classList.remove('hidden');
+    } else {
+    errorDiv.classList.add('hidden');
+    }
+    }
+
+
+    function enterChat() {
+    document.getElementById('auth-page').style.display = 'none';
+    document.getElementById('chat-app').classList.add('active');
+    document.getElementById('current-username').textContent = currentUser.username;
+
+    // Connect to WebSocket
+    const socket = new SockJS(`${API_URL}/ws?username=${currentUser.username}`);
+    stompClient = Stomp.over(socket);
+    stompClient.connect({}, onConnected, onError);
+    }
+
+    function onConnected() {
+    console.log('✅ Connected to WebSocket');
+    stompClient.subscribe('/user/queue/private', onMessageReceived);
+    // Load users and pending requests
+    loadUsers();
+    loadPendingRequests();
+    fetchMyGroups();
+    }
+
+    function onError(error) {
+    console.error('WebSocket error:', error);
+    alert('Could not connect to chat server');
+    }
+
+    function onMessageReceived(payload) {
+    const message = JSON.parse(payload.body);
+    const otherUser = message.sender === currentUser.username ? message.recipient : message.sender;
+
+    if (selectedRecipient === otherUser) {
+    displayMessage(message);
+    }
+    }
+
+    // Friend Request Functions
+    function toggleFriendRequests() {
+    const panel = document.getElementById('requests-panel');
+    panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+    }
+
+    async function loadPendingRequests() {
+    try {
+    const response = await fetch(`${API_URL}/friends/requests/pending?username=${currentUser.username}`);
+    if (response.ok) {
+    const requests = await response.json();
+    const badge = document.getElementById('request-badge');
+    const list = document.getElementById('pending-requests-list');
+
+    if (requests.length > 0) {
+    badge.textContent = requests.length;
+    badge.style.display = 'flex';
+
+    list.innerHTML = requests.map(req => `
+    <div
+        style="background: white; padding: 8px; border-radius: 6px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+        <span style="font-weight: 600; font-size: 13px;">${req.sender}</span>
+        <div style="display: flex; gap: 5px;">
+            <button onclick="acceptRequest(${req.id})"
+                style="background: #4ade80; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">Accept</button>
+            <button onclick="rejectRequest(${req.id})"
+                style="background: #ef4444; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">Reject</button>
+        </div>
+    </div>
+    `).join('');
+    } else {
+    badge.style.display = 'none';
+    list.innerHTML = '<div style="color: #999; font-size: 12px; text-align: center;">No pending requests</div>';
+    }
+    }
+    } catch (e) {
+    console.error("Error loading requests:", e);
+    }
+    }
+
+    async function sendFriendRequest(receiver) {
+    try {
+    const response = await fetch(`${API_URL}/friends/request`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sender: currentUser.username, receiver: receiver })
+    });
+
+    if (response.ok) {
+    alert(`✅ Friend request sent to ${receiver}!`);
+    loadUsers(); // Refresh to update status
+    } else {
+    const error = await response.json();
+    alert(`❌ ${error.error || 'Failed to send request'}`);
+    }
+    } catch (e) {
+    console.error(e);
+    alert('Connection error');
+    }
+    }
+
+    async function acceptRequest(id) {
+    try {
+    await fetch(`${API_URL}/friends/accept/${id}`, { method: 'POST' });
+    loadPendingRequests();
+    loadUsers();
+    loadFriendsList();
+    } catch (e) {
+    console.error(e);
+    }
+    }
+
+    async function rejectRequest(id) {
+    try {
+    await fetch(`${API_URL}/friends/reject/${id}`, { method: 'POST' });
+    loadPendingRequests();
+    } catch (e) {
+    console.error(e);
+    }
+    }
+
+    let friendsList = [];
+    async function loadFriendsList() {
+    try {
+    const response = await fetch(`${API_URL}/friends/list?username=${currentUser.username}`);
+    if (response.ok) {
+    friendsList = await response.json();
+    }
+    } catch (e) {
+    console.error(e);
+    }
+    }
+
+    async function loadUsers() {
+    try {
+    // Also get friends list to check status first
+    await loadFriendsList();
+
+    const response = await fetch(`${API_URL}/users/search?username=`);
+    const users = await response.json();
+
+    allUsers = users.filter(u => u.username !== currentUser.username);
+    displayUsers(allUsers);
+    } catch (e) {
+    console.error('Load users error:', e);
+    document.getElementById('users-list').innerHTML = '<div class="empty-state">Error loading users</div>';
+    }
+    }
+
+    function displayUsers(users) {
+    const usersList = document.getElementById('users-list');
+
+    if (users.length === 0) {
+    usersList.innerHTML = '<div class="empty-state">No users found</div>';
+    return;
+    }
+
+    usersList.innerHTML = '';
+    users.forEach(user => {
+    const isFriend = friendsList.includes(user.username);
+    let statusHtml = '';
+
+    if (isFriend) {
+    statusHtml = '<span style="color: #4ade80; font-size: 12px; font-weight: 600;">Friend ✅</span>';
+    } else {
+    // Start of render_diff logic adaptation:
+    // Add friend button that stops propagation so we don't select the user
+    statusHtml = `<button onclick="sendFriendRequest('${user.username}'); event.stopPropagation();"
+        style="background: #3b82f6; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">Add
+        Friend</button>`;
+    }
+
+    const userItem = document.createElement('div');
+    userItem.className = 'user-item';
+    userItem.id = `user-${user.username}`;
+    userItem.onclick = () => selectUser(user.username);
+
+    userItem.innerHTML = `
+    <div class="user-avatar">${user.username[0].toUpperCase()}</div>
+    <div class="user-info">
+        <div class="user-name">${user.username}</div>
+        <div class="status-row"
+            style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+            <div class="user-status">Online</div>
+            <div>${statusHtml}</div>
+        </div>
+    </div>
+    `;
+    usersList.appendChild(userItem);
+    });
+    }
+
+    function filterUsers(query) {
+    if (!query) {
+    displayUsers(allUsers);
+    return;
+    }
+
+    const filtered = allUsers.filter(user =>
+    user.username.toLowerCase().includes(query.toLowerCase())
+    );
+    displayUsers(filtered);
+    }
+
+    async function fetchMyGroups() {
+    try {
+    const response = await fetch(`${API_URL}/groups/user/${currentUser.username}`);
+    if (response.ok) {
+    myGroups = await response.json();
+    displayGroups(myGroups);
+    // Subscribe to existing groups if connected
+    if (stompClient && stompClient.connected) {
+    myGroups.forEach(group => {
+    // Idempotent subscribe could be handled by STOMP lib or check if already subbed
+    // For simplicity, just subscribe (STOMP usually handles duplicates or we can ignore)
+    stompClient.subscribe(`/topic/group.${group.id}`, onGroupMessageReceived);
+    });
+    }
+    }
+    } catch (e) {
+    console.error('Error fetching groups:', e);
+    }
+    }
+
+    function displayGroups(groups) {
+    const list = document.getElementById('groups-list');
+    if (groups.length === 0) {
+    list.innerHTML = '<div class="empty-state">No groups found</div>';
+    return;
+    }
+    list.innerHTML = '';
+    groups.forEach(group => {
+    const item = document.createElement('div');
+    item.className = 'user-item';
+    item.id = `group-${group.id}`;
+    item.onclick = () => selectGroup(group);
+    item.innerHTML = `
+    <div class="user-avatar" style="background: #e11d48">#</div>
+    <div class="user-info">
+        <div class="user-name">${group.name}</div>
+        <div class="user-status">Created by ${group.createdBy}</div>
+    </div>
+    `;
+    list.appendChild(item);
+    });
+    }
+
+    function exitChatView() {
+    document.getElementById('chat-app').classList.remove('mobile-chat-active');
+    selectedRecipient = null;
+    activeGroupId = null;
+    }
+
+    async function selectUser(username) {
+    selectedRecipient = username;
+    activeGroupId = null; // Reset activeGroupId when selecting a user
+
+    // Enable Mobile View
+    document.getElementById('chat-app').classList.add('mobile-chat-active');
+
+    // Update header
+    document.getElementById('chat-name').textContent = username;
+    document.getElementById('chat-status').textContent = 'Online';
+    document.getElementById('chat-avatar').textContent = username[0].toUpperCase();
+    document.getElementById('chat-avatar').style.background = '#0ea5e9'; // Default user avatar color
+
+    // Check if friend to enable/disable input
+    const isFriend = friendsList.includes(username);
+    const input = document.getElementById('message-input');
+    const btn = document.getElementById('send-btn');
+
+    if (isFriend) {
+    input.disabled = false;
+    input.placeholder = "Type a message...";
+    btn.disabled = false;
+    btn.style.opacity = "1";
+    btn.style.cursor = "pointer";
+    } else {
+    input.disabled = true;
+    input.placeholder = "Accepted friend request required to chat";
+    btn.disabled = true;
+    btn.style.opacity = "0.5";
+    btn.style.cursor = "not-allowed";
+    }
+
+    // Clear messages
+    document.getElementById('messages').innerHTML = '';
+
+    // Highlight selected user
+    document.querySelectorAll('.user-item').forEach(el => el.classList.remove('active'));
+    const userEl = document.getElementById(`user-${username}`);
+    if (userEl) userEl.classList.add('active');
+
+    // Load chat history
+    loadChatHistory(username);
+    }
+
+    function selectGroup(group) {
+    selectedRecipient = null; // Clear individual recipient
+    activeGroupId = group.id;
+
+    // Enable Mobile View
+    document.getElementById('chat-app').classList.add('mobile-chat-active');
+
+    // Update header
+    document.getElementById('chat-name').textContent = group.name;
+    document.getElementById('chat-status').textContent = 'Group Chat';
+    document.getElementById('chat-avatar').textContent = '#';
+    document.getElementById('chat-avatar').style.background = '#e11d48';
+
+    const input = document.getElementById('message-input');
+    const btn = document.getElementById('send-btn');
+    input.disabled = false;
+    input.placeholder = "Message group...";
+    btn.disabled = false;
+    btn.style.opacity = "1";
+    btn.style.cursor = "pointer";
+
+    // Highlight
+    document.querySelectorAll('.user-item').forEach(el => el.classList.remove('active'));
+    document.getElementById(`group-${group.id}`).classList.add('active');
+
+    // Load history
+    loadGroupHistory(group.id);
+    }
+
+    async function loadGroupHistory(groupId) {
+    try {
+    const response = await fetch(`${API_URL}/groups/${groupId}/messages`);
+    if (response.ok) {
+    const messages = await response.json();
+    document.getElementById('messages').innerHTML = ''; // Clear
+    messages.forEach(displayMessage);
+    }
+    } catch (e) {
+    console.error('Error loading group history:', e);
+    }
+    }
+
+    function onGroupMessageReceived(payload) {
+    const message = JSON.parse(payload.body);
+    // If viewing this group, display it
+    if (activeGroupId === message.groupId) {
+    displayMessage(message);
+    }
+    }
+
+
+    async function loadChatHistory(contact) {
+    try {
+    const response = await fetch(`${API_URL}/messages/${contact}?currentUser=${currentUser.username}`);
+    if (response.ok) {
+    const messages = await response.json();
+    console.log(`Loaded ${messages.length} messages`);
+    messages.forEach(displayMessage);
+    }
+    } catch (e) {
+    console.error('Error loading history:', e);
+    }
+    }
+
+    // Send message
+    document.getElementById('message-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const messageContent = document.getElementById('message-input').value.trim();
+
+    if (messageContent && stompClient) {
+    if (activeGroupId) {
+    // Send Group Message
+    const chatMessage = {
+    sender: currentUser.username,
+    groupId: activeGroupId,
+    content: messageContent,
+    type: 'CHAT'
+    };
+    stompClient.send("/app/chat.group", {}, JSON.stringify(chatMessage));
+    } else if (selectedRecipient) {
+    // Send Private Message
+    const chatMessage = {
+    sender: currentUser.username,
+    recipient: selectedRecipient,
+    content: messageContent,
+    type: 'CHAT',
+    timestamp: Date.now()
+    };
+    stompClient.send("/app/chat.private", {}, JSON.stringify(chatMessage));
+    }
+    document.getElementById('message-input').value = '';
+    }
+    });
+
+    function displayMessage(message) {
+    const messagesDiv = document.getElementById('messages');
+
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'message';
+    if (message.sender === currentUser.username) {
+    messageDiv.classList.add('own');
+    }
+
+    const time = new Date(message.timestamp).toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit'
+    });
+
+    messageDiv.innerHTML = `
+    <div class="message-content">
+        <div class="message-sender">${message.sender}</div>
+        ${escapeHtml(message.content)}
+        <div class="message-time">${time}</div>
+    </div>
+    `;
+
+    messagesDiv.appendChild(messageDiv);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+    }
+
+    async function refreshData() {
+    const btn = document.getElementById('refresh-btn');
+    btn.style.transform = 'rotate(360deg)';
+
+    console.log('🔄 Refreshing data...');
+
+    try {
+    // Reload users and friend status
+    await loadFriendsList();
+    await loadUsers();
+    await loadPendingRequests();
+
+    // If chat is open, refresh history
+    if (selectedRecipient) {
+    loadChatHistory(selectedRecipient);
+    }
+
+    // Check connection
+    if (!stompClient || !stompClient.connected) {
+    console.log('🔄 Reconnecting WebSocket...');
+    enterChat();
+    }
+
+    } catch (e) {
+    console.error('Refresh failed:', e);
+    } finally {
+    setTimeout(() => {
+    btn.style.transform = 'none';
+    }, 1000);
+    }
+    }
+
+    function openCreateGroupModal() {
+    document.getElementById('create-group-modal').style.display = 'flex';
+    const list = document.getElementById('group-user-select');
+    list.innerHTML = '';
+
+    // Filter out self
+    const users = allUsers;
+
+    users.forEach(user => {
+    const div = document.createElement('div');
+    div.className = 'select-item';
+    div.innerHTML = `
+    <input type="checkbox" value="${user.username}" id="chk-${user.username}">
+    <label for="chk-${user.username}" style="cursor:pointer">${user.username}</label>
+    `;
+    // Allow clicking row to toggle
+    div.onclick = (e) => {
+    if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'LABEL') {
+    const chk = document.getElementById(`chk-${user.username}`);
+    chk.checked = !chk.checked;
+    }
+    };
+    list.appendChild(div);
+    });
+    }
+
+    async function submitCreateGroup() {
+    const name = document.getElementById('group-name-input').value.trim();
+    if (!name) { alert('Please enter a group name'); return; }
+
+    const members = [];
+    document.querySelectorAll('#group-user-select input:checked').forEach(chk => {
+    members.push(chk.value);
+    });
+    members.push(currentUser.username); // Add self
+
+    try {
+    const response = await fetch(`${API_URL}/groups/create`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: name, createdBy: currentUser.username, members: members })
+    });
+
+    if (response.ok) {
+    document.getElementById('create-group-modal').style.display = 'none';
+    document.getElementById('group-name-input').value = '';
+    fetchMyGroups();
+    alert('Group created successfully!');
+    } else {
+    try {
+    const errorData = await response.json();
+    alert('Failed to create group: ' + (errorData.error || 'Unknown error'));
+    } catch (parseError) {
+    alert('Failed to create group: Server returned ' + response.status);
+    }
+    }
+    } catch (e) {
+    console.error(e);
+    alert('Connection error: ' + e.message);
+    }
+    }
+
+    function logout() {
+    // Disconnect WebSocket
+    if (stompClient) {
+    stompClient.disconnect();
+    }
+    localStorage.removeItem('currentUser');
+    sessionStorage.removeItem('currentUser');
+    currentUser = null;
+    document.getElementById('chat-app').classList.remove('active');
+    document.getElementById('auth-page').style.display = 'block';
+    document.getElementById('login-form').reset();
+
+    // Clear location reload to prevent re-login
+    window.location.reload();
+    }
+
+    // Admin Reset Functions
+    function showAdminReset() {
+    document.getElementById('admin-modal').style.display = 'flex';
+    document.getElementById('admin-secret').value = '';
+    document.getElementById('admin-error').style.display = 'none';
+    }
+
+    function hideAdminReset() {
+    document.getElementById('admin-modal').style.display = 'none';
+    }
+
+    async function executeAdminReset(type) {
+    const secret = document.getElementById('admin-secret').value.trim();
+    const errorDiv = document.getElementById('admin-error');
+
+    if (!secret) {
+    errorDiv.textContent = 'Please enter admin secret code';
+    errorDiv.style.display = 'block';
+    return;
+    }
+
+    // Client-side partial validation for immediate feedback
+    const EXPECTED_SECRET = "boxbi@#$%&123";
+
+    if (type === 'local') {
+    if (secret !== EXPECTED_SECRET) {
+    errorDiv.textContent = 'Invalid secret code';
+    errorDiv.style.display = 'block';
+    return;
+    }
+
+    if (!confirm('⚠️ This will delete all saved login sessions and local preferences. Are you sure?')) {
+    return;
+    }
+
+    localStorage.clear();
+    sessionStorage.clear();
+    hideAdminReset();
+    alert('✅ Local app data has been cleared.');
+    location.reload();
+    return;
+    }
+
+    // DB Reset
+    if (!confirm('⚠️ WARNING: This will delete ALL users and messages permanently. Are you sure?')) {
+    return;
+    }
+
+    try {
+    const response = await fetch(`${API_URL}/admin/reset`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ secret })
+    });
+
+    if (response.ok) {
+    alert('✅ System has been reset successfully');
+    localStorage.removeItem('currentUser');
+    sessionStorage.removeItem('currentUser');
+    location.reload();
+    } else {
+    const error = await response.text();
+    errorDiv.textContent = 'Invalid secret code';
+    errorDiv.style.display = 'block';
+    }
+    } catch (e) {
+    console.error(e);
+    errorDiv.textContent = 'Connection error';
+    errorDiv.style.display = 'block';
+    }
+    }
     </script>
 </body>
 

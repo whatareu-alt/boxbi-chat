@@ -1,21 +1,40 @@
 services:
   - type: web
-    name: zoobi-chat-backend
-    env: docker
-    plan: free
-    region: oregon
+    name: boxbi-backend
+    runtime: java
     envVars:
       - key: SERVER_PORT
         value: 8080
-      - key: SPRING_DATASOURCE_URL
-        value: jdbc:h2:file:./data/chat_db
+      - key: DB_HOST
+        fromDatabase:
+          name: boxbi-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: boxbi-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: boxbi-db
+          property: databaseName
       - key: SPRING_DATASOURCE_USERNAME
-        value: sa
+        fromDatabase:
+          name: boxbi-db
+          property: user
       - key: SPRING_DATASOURCE_PASSWORD
-        value: ""
-      - key: SPRING_JPA_HIBERNATE_DDL_AUTO
-        value: update
+        fromDatabase:
+          name: boxbi-db
+          property: password
+      - key: SPRING_DATASOURCE_DRIVER_CLASS_NAME
+        value: org.postgresql.Driver
       - key: SPRING_JPA_DATABASE_PLATFORM
-        value: org.hibernate.dialect.H2Dialect
-      - key: SPRING_H2_CONSOLE_ENABLED
-        value: true
+        value: org.hibernate.dialect.PostgreSQLDialect
+    buildCommand: chmod +x mvnw && ./mvnw clean package -DskipTests
+    startCommand: java -jar -Dspring.datasource.url=jdbc:postgresql://$DB_HOST:$DB_PORT/$DB_NAME target/server-spring-0.0.1-SNAPSHOT.jar
+    plan: free
+
+databases:
+  - name: boxbi-db
+    databaseName: boxbi
+    user: boxbi_user
+    plan: free
