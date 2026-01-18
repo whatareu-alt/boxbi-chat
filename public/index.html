@@ -6,6 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Boxbi Messenger</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
     <style>
         * {
             margin: 0;
@@ -694,19 +696,22 @@
                 <div style="display: flex; gap: 10px; align-items: center;">
                     <div style="font-size: 12px; color: #4ade80;">Online</div>
                     <button onclick="toggleFriendRequests()"
-                        style="position: relative; background: none; border: none; font-size: 20px; cursor: pointer;"
+                        style="position: relative; background: none; border: none; cursor: pointer; display: flex; align-items: center;"
                         title="Friend Requests">
-                        👥
+                        <span class="material-symbols-outlined" style="font-size: 24px;">group_add</span>
                         <span id="request-badge"
                             style="position: absolute; top: -5px; right: -5px; background: #dc3545; color: white; border-radius: 50%; width: 15px; height: 15px; font-size: 10px; display: none; justify-content: center; align-items: center;">0</span>
                     </button>
                     <button id="refresh-btn" onclick="refreshData()"
-                        style="background: none; border: none; font-size: 20px; cursor: pointer; transition: transform 0.3s;"
+                        style="background: none; border: none; cursor: pointer; transition: transform 0.3s; display: flex; align-items: center;"
                         title="Refresh Data">
-                        🔄
+                        <span class="material-symbols-outlined" style="font-size: 24px;">refresh</span>
                     </button>
-                    <button onclick="logout()" style="background: none; border: none; font-size: 20px; cursor: pointer;"
-                        title="Logout">🚪</button>
+                    <button onclick="logout()"
+                        style="background: none; border: none; cursor: pointer; display: flex; align-items: center;"
+                        title="Logout">
+                        <span class="material-symbols-outlined" style="font-size: 24px;">logout</span>
+                    </button>
                 </div>
             </div>
 
@@ -754,8 +759,8 @@
             <div class="chat-header">
                 <div class="chat-header-info">
                     <button class="back-button" onclick="exitChatView()"
-                        style="display: none; background: none; border: none; font-size: 24px; cursor: pointer; margin-right: 10px; color: #333;">
-                        ←
+                        style="display: none; background: none; border: none; cursor: pointer; margin-right: 10px; color: #333; align-items: center;">
+                        <span class="material-symbols-outlined">arrow_back</span>
                     </button>
                     <div class="user-avatar" id="chat-avatar">?</div>
                     <div>
