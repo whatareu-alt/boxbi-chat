@@ -95,7 +95,7 @@ public class FriendRequestController {
 
     // Accept friend request
     @PostMapping("/accept/{id}")
-    public ResponseEntity<?> acceptRequest(@PathVariable Long id) {
+    public ResponseEntity<?> acceptRequest(@PathVariable long id) {
         try {
             Optional<FriendRequest> requestOpt = friendRequestRepository.findById(id);
 
@@ -118,7 +118,7 @@ public class FriendRequestController {
 
     // Reject friend request
     @PostMapping("/reject/{id}")
-    public ResponseEntity<?> rejectRequest(@PathVariable Long id) {
+    public ResponseEntity<?> rejectRequest(@PathVariable long id) {
         try {
             Optional<FriendRequest> requestOpt = friendRequestRepository.findById(id);
 

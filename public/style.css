@@ -19,7 +19,8 @@
 
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    background: var(--bg-color);
+    background: url('background.png') no-repeat center center fixed;
+    background-size: cover;
     height: 100vh;
     /* Mobile viewport fix */
     height: 100dvh;

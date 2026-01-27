@@ -1,0 +1,419 @@
+<html><head><meta charset="UTF-8"><style>body { font-family: Calibri, sans-serif; line-height: 1.6; } pre { background-color: #FAFAFA; border: 1px solid #CCC; padding: 10px; border-radius: 4px; font-family: Consolas, "Courier New", monospace; font-size: 0.9em; overflow-x: auto; } h1, h2, h3 { color: #2E74B5; } </style></head><body><h1>Boxbi Messenger - Project Documentation</h1>
+<br>
+<h2>1. Project Overview</h2>
+<br>
+<p>Boxbi Messenger is a real-time chat application built with a modern stack featuring:</p>
+<br>
+<li>**Backend**: Java Spring Boot (WebSocket/STOMP, Spring Security, JPA/Hibernate, H2/PostgreSQL).</li>
+<li>**Frontend**: HTML5, Vanilla JavaScript, CSS3 (No framework dependency, lightweight).</li>
+<li>**Communication**: Real-time bidirectional communication using WebSockets (STOMP protocol).</li>
+<br>
+<h3>Key Features</h3>
+<br>
+<li>Real-time private messaging.</li>
+<li>Group chats.</li>
+<li>Friend request system (Send, Accept, Reject).</li>
+<li>User authentication (Login/Signup with JWT).</li>
+<li>Security (Rate limiting, HTML sanitization, JWT authorization).</li>
+<li>Admin tools (Database reset).</li>
+<br>
+<h2>2. How to Use</h2>
+<br>
+<h3>Prerequisites</h3>
+<br>
+<li>Java Development Kit (JDK) 21 or higher.</li>
+<li>Maven (included as wrapper).</li>
+<li>A modern web browser.</li>
+<br>
+<h3>Running the Backend (Server)</h3>
+<br>
+<p>1. Open a terminal in the `server-spring` directory.</p>
+<p>2. Run the application:</p>
+<br>
+<pre>
+   ./mvnw spring-boot:run
+</pre>
+<br>
+<p>(On Windows use `mvnw.cmd spring-boot:run`)</p>
+<p>3. The server will start on `http://localhost:8080`.</p>
+<br>
+<h3>Running the Frontend (Client)</h3>
+<br>
+<p>1. **Production/Public Mode**: Open `public/index.html` in your browser.</p>
+<p>2. **Local Test Mode**: Open `local_test.html` in your browser.</p>
+<li>This version connects to `localhost:8080` by default.</li>
+<li>You can open multiple tabs to simulate different users.</li>
+<br>
+<h3>API Endpoints (Quick Reference)</h3>
+<br>
+<li>`POST /login`: Authenticate user.</li>
+<li>`POST /signup`: Register new user.</li>
+<li>`WS /ws`: WebSocket connection endpoint.</li>
+<li>`POST /friends/request`: Send friend request.</li>
+<li>`POST /groups/create`: Create a group.</li>
+<br>
+<p>---</p>
+<br>
+<h2>3. Source Code - Backend</h2>
+<br>
+<h3>Configuration &amp; Main</h3>
+<br>
+<h4>`pom.xml` (Dependencies)</h4>
+<br>
+<pre>
+&lt;!-- Refer to original file for full content --&gt;
+&lt;<span style="color: #800000;">dependencies</span>&gt;
+    &lt;!-- Spring Web, WebSocket, Data JPA, Security --&gt;
+    &lt;!-- JWT, Bucket4j, OWASP Encoder --&gt;
+&lt;/<span style="color: #800000;">dependencies</span>&gt;
+</pre>
+<br>
+<h4>`ServerSpringApplication.java`</h4>
+<br>
+<pre>
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>package</span> com.example.chatengine.serverspring;
+
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>import</span> org.springframework.boot.SpringApplication;
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>import</span> org.springframework.boot.autoconfigure.SpringBootApplication;
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>import</span> org.springframework.scheduling.annotation.EnableScheduling;
+
+<span style=<span style="color: #A31515;">"color: #646400;"</span>>@SpringBootApplication</span>
+<span style=<span style="color: #A31515;">"color: #646400;"</span>>@EnableScheduling</span>
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>public</span> <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>class</span> ServerSpringApplication {
+ <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>public</span> <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>static</span> <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>void</span> main(String[] args) {
+  SpringApplication.run(ServerSpringApplication.<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>class</span>, args);
+ }
+}
+</pre>
+<br>
+<h4>`WebSocketConfig.java`</h4>
+<br>
+<pre>
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>package</span> com.example.chatengine.serverspring;
+
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>import</span> org.springframework.context.annotation.Configuration;
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>import</span> org.springframework.messaging.simp.config.MessageBrokerRegistry;
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>import</span> org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>import</span> org.springframework.web.socket.config.annotation.StompEndpointRegistry;
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>import</span> org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>import</span> org.springframework.lang.NonNull;
+
+<span style=<span style="color: #A31515;">"color: #646400;"</span>>@Configuration</span>
+<span style=<span style="color: #A31515;">"color: #646400;"</span>>@EnableWebSocketMessageBroker</span>
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>public</span> <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>class</span> WebSocketConfig <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>implements</span> WebSocketMessageBrokerConfigurer {
+
+    <span style=<span style="color: #A31515;">"color: #646400;"</span>>@Override</span>
+    <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>public</span> <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>void</span> configureMessageBroker(<span style=<span style="color: #A31515;">"color: #646400;"</span>>@NonNull</span> MessageBrokerRegistry config) {
+        config.enableSimpleBroker(<span style="color: #A31515;">"/topic"</span>, <span style="color: #A31515;">"/queue"</span>);
+        config.setApplicationDestinationPrefixes(<span style="color: #A31515;">"/app"</span>);
+        config.setUserDestinationPrefix(<span style="color: #A31515;">"/user"</span>);
+    }
+
+    <span style=<span style="color: #A31515;">"color: #646400;"</span>>@Override</span>
+    <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>public</span> <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>void</span> registerStompEndpoints(<span style=<span style="color: #A31515;">"color: #646400;"</span>>@NonNull</span> StompEndpointRegistry registry) {
+        registry.addEndpoint(<span style="color: #A31515;">"/ws"</span>)
+                .setAllowedOriginPatterns(<span style="color: #A31515;">"*"</span>)
+                .setHandshakeHandler(<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>new</span> CustomHandshakeHandler())
+                .withSockJS();
+    }
+}
+</pre>
+<br>
+<h4>`security/SecurityConfig.java`</h4>
+<br>
+<pre>
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>package</span> com.example.chatengine.serverspring.security;
+
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>import</span> org.springframework.beans.factory.annotation.Autowired;
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>import</span> org.springframework.context.annotation.Bean;
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>import</span> org.springframework.context.annotation.Configuration;
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>import</span> org.springframework.security.authentication.AuthenticationManager;
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>import</span> org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>import</span> org.springframework.security.config.annotation.web.builders.HttpSecurity;
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>import</span> org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>import</span> org.springframework.security.config.http.SessionCreationPolicy;
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>import</span> org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>import</span> org.springframework.security.crypto.password.PasswordEncoder;
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>import</span> org.springframework.security.web.SecurityFilterChain;
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>import</span> org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>import</span> org.springframework.web.cors.CorsConfiguration;
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>import</span> org.springframework.web.cors.CorsConfigurationSource;
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>import</span> org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>import</span> java.util.Arrays;
+
+<span style=<span style="color: #A31515;">"color: #646400;"</span>>@Configuration</span>
+<span style=<span style="color: #A31515;">"color: #646400;"</span>>@EnableWebSecurity</span>
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>public</span> <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>class</span> SecurityConfig {
+
+        <span style=<span style="color: #A31515;">"color: #646400;"</span>>@Autowired</span>
+        <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>private</span> JwtAuthenticationFilter jwtAuthenticationFilter;
+
+        <span style=<span style="color: #A31515;">"color: #646400;"</span>>@Bean</span>
+        <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>public</span> PasswordEncoder passwordEncoder() {
+                <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>return</span> <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>new</span> BCryptPasswordEncoder();
+        }
+
+        <span style=<span style="color: #A31515;">"color: #646400;"</span>>@Bean</span>
+        <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>public</span> AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration)
+                        <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>throws</span> Exception {
+                <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>return</span> authenticationConfiguration.getAuthenticationManager();
+        }
+
+        <span style=<span style="color: #A31515;">"color: #646400;"</span>>@Bean</span>
+        <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>public</span> SecurityFilterChain securityFilterChain(HttpSecurity http) <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>throws</span> Exception {
+                http.csrf(csrf -> csrf.disable())
+                    .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                    .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(<span style="color: #A31515;">"/login"</span>, <span style="color: #A31515;">"/signup"</span>, <span style="color: #A31515;">"/ws/**"</span>, <span style="color: #A31515;">"/h2-console/**"</span>,
+                                        <span style="color: #A31515;">"/users/**"</span>, <span style="color: #A31515;">"/friends/**"</span>, <span style="color: #A31515;">"/groups/**"</span>, <span style="color: #A31515;">"/admin/**"</span>,
+                                        <span style="color: #A31515;">"/messages/**"</span>, <span style="color: #A31515;">"/"</span>, <span style="color: #A31515;">"/index.html"</span>, <span style="color: #A31515;">"/local_test.html"</span>, <span style="color: #A31515;">"/<span style="</span>color: #0000FF; font-weight: bold;<span style="color: #A31515;">">static</span>/**"</span>, <span style="color: #A31515;">"/*.html"</span>)
+                        .permitAll()
+                        .anyRequest().authenticated())
+                    .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                    .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()));
+
+                http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>class</span>);
+                <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>return</span> http.build();
+        }
+
+        <span style=<span style="color: #A31515;">"color: #646400;"</span>>@Bean</span>
+        <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>public</span> CorsConfigurationSource corsConfigurationSource() {
+                CorsConfiguration configuration = <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>new</span> CorsConfiguration();
+                configuration.setAllowedOriginPatterns(Arrays.asList(<span style="color: #A31515;">"*"</span>, "http:<span style="color: #008000;">//localhost:*&quot;, &quot;http://127.0.0.1:*&quot;, &quot;https://boxbichat.netlify.app&quot;, &quot;https://boxbi.online&quot;));
+</span>                configuration.setAllowedMethods(Arrays.asList(<span style="color: #A31515;">"GET"</span>, <span style="color: #A31515;">"POST"</span>, <span style="color: #A31515;">"PUT"</span>, <span style="color: #A31515;">"DELETE"</span>, <span style="color: #A31515;">"OPTIONS"</span>));
+                configuration.setAllowedHeaders(Arrays.asList(<span style="color: #A31515;">"*"</span>));
+                configuration.setAllowCredentials(true);
+                UrlBasedCorsConfigurationSource source = <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>new</span> UrlBasedCorsConfigurationSource();
+                source.registerCorsConfiguration(<span style="color: #A31515;">"/**"</span>, configuration);
+                <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>return</span> source;
+        }
+}
+</pre>
+<br>
+<h3>Controllers</h3>
+<br>
+<h4>`ChatController.java`</h4>
+<br>
+<pre>
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>package</span> com.example.chatengine.serverspring;
+
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>import</span> jakarta.validation.Valid;
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>import</span> jakarta.validation.constraints.NotNull;
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>import</span> org.owasp.encoder.Encode;
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>import</span> org.springframework.messaging.handler.annotation.MessageMapping;
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>import</span> org.springframework.messaging.handler.annotation.Payload;
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>import</span> org.springframework.messaging.handler.annotation.SendTo;
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>import</span> org.springframework.messaging.simp.SimpMessageHeaderAccessor;
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>import</span> org.springframework.stereotype.Controller;
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>import</span> org.springframework.beans.factory.annotation.Autowired;
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>import</span> org.springframework.messaging.simp.SimpMessagingTemplate;
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>import</span> org.springframework.web.bind.annotation.*;
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>import</span> org.springframework.http.ResponseEntity;
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>import</span> java.util.Objects;
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>import</span> java.util.List;
+
+<span style=<span style="color: #A31515;">"color: #646400;"</span>>@RestController</span>
+<span style=<span style="color: #A31515;">"color: #646400;"</span>>@Controller</span>
+<span style=<span style="color: #A31515;">"color: #646400;"</span>>@CrossOrigin</span>(origins = <span style="color: #A31515;">"*"</span>)
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>public</span> <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>class</span> ChatController {
+
+    <span style=<span style="color: #A31515;">"color: #646400;"</span>>@Autowired</span> <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>private</span> SimpMessagingTemplate messagingTemplate;
+    <span style=<span style="color: #A31515;">"color: #646400;"</span>>@Autowired</span> <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>private</span> MessageRepository messageRepository;
+    <span style=<span style="color: #A31515;">"color: #646400;"</span>>@Autowired</span> <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>private</span> FriendRequestRepository friendRequestRepository;
+
+    <span style=<span style="color: #A31515;">"color: #646400;"</span>>@MessageMapping</span>(<span style="color: #A31515;">"/chat.sendMessage"</span>)
+    <span style=<span style="color: #A31515;">"color: #646400;"</span>>@SendTo</span>(<span style="color: #A31515;">"/topic/<span style="</span>color: #0000FF; font-weight: bold;<span style="color: #A31515;">">public</span>"</span>)
+    <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>public</span> ChatMessage sendMessage(<span style=<span style="color: #A31515;">"color: #646400;"</span>>@Valid</span> <span style=<span style="color: #A31515;">"color: #646400;"</span>>@Payload</span> <span style=<span style="color: #A31515;">"color: #646400;"</span>>@NotNull</span> ChatMessage chatMessage) {
+        <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>if</span> (chatMessage.getContent() != null) chatMessage.setContent(Encode.forHtml(chatMessage.getContent()));
+        chatMessage.setTimestamp(System.currentTimeMillis());
+        <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>return</span> chatMessage;
+    }
+
+    <span style=<span style="color: #A31515;">"color: #646400;"</span>>@MessageMapping</span>(<span style="color: #A31515;">"/chat.<span style="</span>color: #0000FF; font-weight: bold;<span style="color: #A31515;">">private</span>"</span>)
+    <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>public</span> <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>void</span> sendPrivateMessage(<span style=<span style="color: #A31515;">"color: #646400;"</span>>@Valid</span> <span style=<span style="color: #A31515;">"color: #646400;"</span>>@Payload</span> <span style=<span style="color: #A31515;">"color: #646400;"</span>>@NotNull</span> ChatMessage chatMessage) {
+        <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>if</span> (!friendRequestRepository.areFriends(chatMessage.getSender(), chatMessage.getRecipient())) <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>return</span>;
+
+        <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>if</span> (chatMessage.getContent() != null) chatMessage.setContent(Encode.forHtml(chatMessage.getContent()));
+        chatMessage.setTimestamp(System.currentTimeMillis());
+        messageRepository.save(chatMessage);
+
+        <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>if</span> (chatMessage.getRecipient() != null) {
+            messagingTemplate.convertAndSendToUser(chatMessage.getRecipient(), <span style="color: #A31515;">"/queue/<span style="</span>color: #0000FF; font-weight: bold;<span style="color: #A31515;">">private</span>"</span>, chatMessage);
+            <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>if</span> (chatMessage.getSender() != null) {
+                messagingTemplate.convertAndSendToUser(chatMessage.getSender(), <span style="color: #A31515;">"/queue/<span style="</span>color: #0000FF; font-weight: bold;<span style="color: #A31515;">">private</span>"</span>, chatMessage);
+            }
+        }
+    }
+
+    <span style=<span style="color: #A31515;">"color: #646400;"</span>>@MessageMapping</span>(<span style="color: #A31515;">"/chat.group"</span>)
+    <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>public</span> <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>void</span> sendGroupMessage(<span style=<span style="color: #A31515;">"color: #646400;"</span>>@Valid</span> <span style=<span style="color: #A31515;">"color: #646400;"</span>>@Payload</span> <span style=<span style="color: #A31515;">"color: #646400;"</span>>@NotNull</span> ChatMessage chatMessage) {
+        <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>if</span> (chatMessage.getGroupId() == null) <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>return</span>;
+        <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>if</span> (chatMessage.getContent() != null) chatMessage.setContent(Encode.forHtml(chatMessage.getContent()));
+        chatMessage.setTimestamp(System.currentTimeMillis());
+        messageRepository.save(chatMessage);
+        
+        String destination = <span style="color: #A31515;">"/topic/group."</span> + chatMessage.getGroupId();
+        messagingTemplate.convertAndSend(destination, chatMessage);
+    }
+
+    <span style=<span style="color: #A31515;">"color: #646400;"</span>>@MessageMapping</span>(<span style="color: #A31515;">"/chat.addUser"</span>)
+    <span style=<span style="color: #A31515;">"color: #646400;"</span>>@SendTo</span>(<span style="color: #A31515;">"/topic/<span style="</span>color: #0000FF; font-weight: bold;<span style="color: #A31515;">">public</span>"</span>)
+    <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>public</span> ChatMessage addUser(<span style=<span style="color: #A31515;">"color: #646400;"</span>>@Valid</span> <span style=<span style="color: #A31515;">"color: #646400;"</span>>@Payload</span> <span style=<span style="color: #A31515;">"color: #646400;"</span>>@NotNull</span> ChatMessage chatMessage, <span style=<span style="color: #A31515;">"color: #646400;"</span>>@NotNull</span> SimpMessageHeaderAccessor headerAccessor) {
+        String sanitizedUsername = chatMessage.getSender() != null ? Encode.forHtml(chatMessage.getSender()) : <span style="color: #A31515;">"Anonymous"</span>;
+        chatMessage.setSender(sanitizedUsername);
+        <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>if</span> (headerAccessor.getSessionAttributes() != null) headerAccessor.getSessionAttributes().put(<span style="color: #A31515;">"username"</span>, sanitizedUsername);
+        chatMessage.setType(<span style="color: #A31515;">"JOIN"</span>);
+        chatMessage.setTimestamp(System.currentTimeMillis());
+        <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>return</span> chatMessage;
+    }
+
+    <span style=<span style="color: #A31515;">"color: #646400;"</span>>@GetMapping</span>(<span style="color: #A31515;">"/messages/{contact}"</span>)
+    <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>public</span> ResponseEntity<List<ChatMessage>> getChatHistory(<span style=<span style="color: #A31515;">"color: #646400;"</span>>@PathVariable</span> String contact, <span style=<span style="color: #A31515;">"color: #646400;"</span>>@RequestParam</span> String currentUser) {
+        <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>return</span> ResponseEntity.ok(messageRepository.findConversationBetween(currentUser, contact));
+    }
+}
+</pre>
+<br>
+<h4>`UserController.java`</h4>
+<br>
+<pre>
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>package</span> com.example.chatengine.serverspring;
+
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>import</span> com.example.chatengine.serverspring.dto.*;
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>import</span> com.example.chatengine.serverspring.security.JwtUtil;
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>import</span> jakarta.validation.Valid;
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>import</span> org.owasp.encoder.Encode;
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>import</span> org.springframework.beans.factory.annotation.Autowired;
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>import</span> org.springframework.http.HttpStatus;
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>import</span> org.springframework.http.ResponseEntity;
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>import</span> org.springframework.security.crypto.password.PasswordEncoder;
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>import</span> org.springframework.web.bind.annotation.*;
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>import</span> java.util.*;
+
+<span style=<span style="color: #A31515;">"color: #646400;"</span>>@RestController</span>
+<span style=<span style="color: #A31515;">"color: #646400;"</span>>@CrossOrigin</span>(origins = <span style="color: #A31515;">"*"</span>)
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>public</span> <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>class</span> UserController {
+
+    <span style=<span style="color: #A31515;">"color: #646400;"</span>>@Autowired</span> <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>private</span> UserRepository userRepository;
+    <span style=<span style="color: #A31515;">"color: #646400;"</span>>@Autowired</span> <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>private</span> PasswordEncoder passwordEncoder;
+    <span style=<span style="color: #A31515;">"color: #646400;"</span>>@Autowired</span> <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>private</span> JwtUtil jwtUtil;
+
+    <span style=<span style="color: #A31515;">"color: #646400;"</span>>@PostMapping</span>(<span style="color: #A31515;">"/login"</span>)
+    <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>public</span> ResponseEntity<?> login(<span style=<span style="color: #A31515;">"color: #646400;"</span>>@Valid</span> <span style=<span style="color: #A31515;">"color: #646400;"</span>>@RequestBody</span> LoginRequest request) {
+        String username = Encode.forHtml(request.getUsername().trim());
+        List<User> users = userRepository.findByUsername(username).stream().toList();
+        <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>if</span> (users.isEmpty()) <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>return</span> <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>new</span> ResponseEntity<>(Map.of(<span style="color: #A31515;">"error"</span>, <span style="color: #A31515;">"Invalid credentials"</span>), HttpStatus.UNAUTHORIZED);
+        
+        User user = users.get(0);
+        <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>if</span> (!passwordEncoder.matches(request.getSecret(), user.getSecret())) <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>return</span> <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>new</span> ResponseEntity<>(Map.of(<span style="color: #A31515;">"error"</span>, <span style="color: #A31515;">"Invalid credentials"</span>), HttpStatus.UNAUTHORIZED);
+
+        user.setLastActive(java.time.LocalDateTime.now());
+        userRepository.save(user);
+        String token = jwtUtil.generateToken(user.getUsername());
+        <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>return</span> <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>new</span> ResponseEntity<>(<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>new</span> AuthResponse(token, user.getUsername(), user.getEmail(), user.getFirstName(), user.getLastName(), user.getId()), HttpStatus.OK);
+    }
+
+    <span style=<span style="color: #A31515;">"color: #646400;"</span>>@PostMapping</span>(<span style="color: #A31515;">"/signup"</span>)
+    <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>public</span> ResponseEntity<?> signup(<span style=<span style="color: #A31515;">"color: #646400;"</span>>@Valid</span> <span style=<span style="color: #A31515;">"color: #646400;"</span>>@RequestBody</span> SignupRequest request) {
+        String username = Encode.forHtml(request.getUsername().trim());
+        <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>if</span> (userRepository.findByUsername(username).isPresent()) <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>return</span> <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>new</span> ResponseEntity<>(Map.of(<span style="color: #A31515;">"error"</span>, <span style="color: #A31515;">"Username already exists"</span>), HttpStatus.CONFLICT);
+
+        User newUser = <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>new</span> User(username, passwordEncoder.encode(request.getSecret()), request.getEmail(), request.getFirstName(), request.getLastName());
+        userRepository.save(newUser);
+        String token = jwtUtil.generateToken(newUser.getUsername());
+        <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>return</span> <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>new</span> ResponseEntity<>(<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>new</span> AuthResponse(token, newUser.getUsername(), newUser.getEmail(), newUser.getFirstName(), newUser.getLastName(), newUser.getId()), HttpStatus.CREATED);
+    }
+    
+    <span style=<span style="color: #A31515;">"color: #646400;"</span>>@GetMapping</span>(<span style="color: #A31515;">"/users/search"</span>)
+    <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>public</span> List<Map<String, Object>> searchUsers(<span style=<span style="color: #A31515;">"color: #646400;"</span>>@RequestParam</span>(defaultValue = <span style="color: #A31515;">""</span>) String username) {
+        String query = Encode.forHtml(username.trim());
+        List<User> users = query.isEmpty() ? userRepository.findAll() : userRepository.findByUsernameContainingIgnoreCaseOrFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCase(query, query, query);
+        <span style="color: #008000;">// ... filtering logic ...
+</span>        <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>return</span> <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>new</span> ArrayList<>(); <span style="color: #008000;">// Simplified for brevity
+</span>    }
+}
+</pre>
+<br>
+<h3>Entities</h3>
+<br>
+<h4>`User.java`</h4>
+<br>
+<pre>
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>package</span> com.example.chatengine.serverspring;
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>import</span> jakarta.persistence.*;
+<span style=<span style="color: #A31515;">"color: #646400;"</span>>@Entity</span> <span style=<span style="color: #A31515;">"color: #646400;"</span>>@Table</span>(name = <span style="color: #A31515;">"users"</span>)
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>public</span> <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>class</span> User {
+    <span style=<span style="color: #A31515;">"color: #646400;"</span>>@Id</span> <span style=<span style="color: #A31515;">"color: #646400;"</span>>@GeneratedValue</span>(strategy = GenerationType.IDENTITY) <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>private</span> Long id;
+    <span style=<span style="color: #A31515;">"color: #646400;"</span>>@Column</span>(unique = true, nullable = false) <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>private</span> String username;
+    <span style=<span style="color: #A31515;">"color: #646400;"</span>>@Column</span>(nullable = false) <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>private</span> String secret;
+    <span style=<span style="color: #A31515;">"color: #646400;"</span>>@Column</span>(unique = true, nullable = false) <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>private</span> String email;
+    <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>private</span> String firstName; <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>private</span> String lastName;
+    <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>private</span> java.time.LocalDateTime lastActive;
+    <span style="color: #008000;">// ... Constructors, Getters, Setters ...
+</span>}
+</pre>
+<br>
+<h4>`ChatMessage.java`</h4>
+<br>
+<pre>
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>package</span> com.example.chatengine.serverspring;
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>import</span> jakarta.persistence.*;
+<span style=<span style="color: #A31515;">"color: #646400;"</span>>@Entity</span> <span style=<span style="color: #A31515;">"color: #646400;"</span>>@Table</span>(name = <span style="color: #A31515;">"messages"</span>)
+<span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>public</span> <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>class</span> ChatMessage {
+    <span style=<span style="color: #A31515;">"color: #646400;"</span>>@Id</span> <span style=<span style="color: #A31515;">"color: #646400;"</span>>@GeneratedValue</span>(strategy = GenerationType.IDENTITY) <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>private</span> Long id;
+    <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>private</span> String type;
+    <span style=<span style="color: #A31515;">"color: #646400;"</span>>@Column</span>(length = 5000) <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>private</span> String content;
+    <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>private</span> String sender; <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>private</span> String recipient;
+    <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>private</span> Long groupId; <span style=<span style="color: #A31515;">"color: #0000FF; font-weight: bold;"</span>>private</span> long timestamp;
+    <span style="color: #008000;">// ... Constructors, Getters, Setters ...
+</span>}
+</pre>
+<br>
+<p>---</p>
+<br>
+<h2>4. Source Code - Frontend</h2>
+<br>
+<h3>`public/index.html` (Main Application)</h3>
+<br>
+<pre>
+&lt;!DOCTYPE html&gt;
+&lt;<span style="color: #800000;">html</span> lang=&quot;en&quot;&gt;
+&lt;<span style="color: #800000;">head</span>&gt;
+    &lt;<span style="color: #800000;">meta</span> charset=&quot;UTF-8&quot;&gt;
+    &lt;<span style="color: #800000;">title</span>&gt;Boxbi Messenger&lt;/<span style="color: #800000;">title</span>&gt;
+    &lt;<span style="color: #800000;">link</span> rel=&quot;stylesheet&quot; href=&quot;style.css&quot;&gt;
+&lt;/<span style="color: #800000;">head</span>&gt;
+&lt;<span style="color: #800000;">body</span>&gt;
+    &lt;!-- Auth Page --&gt;
+    &lt;<span style="color: #800000;">div</span> id=&quot;auth-page&quot; class=&quot;auth-page&quot;&gt;
+        &lt;!-- Login/Signup Forms --&gt;
+    &lt;/<span style="color: #800000;">div</span>&gt;
+
+    &lt;!-- Chat App --&gt;
+    &lt;<span style="color: #800000;">div</span> id=&quot;chat-app&quot; class=&quot;chat-app&quot;&gt;
+        &lt;<span style="color: #800000;">div</span> class=&quot;users-sidebar&quot;&gt;
+             &lt;!-- User List, Groups --&gt;
+        &lt;/<span style="color: #800000;">div</span>&gt;
+        &lt;<span style="color: #800000;">div</span> class=&quot;chat-area&quot;&gt;
+             &lt;!-- Messages, Input --&gt;
+        &lt;/<span style="color: #800000;">div</span>&gt;
+    &lt;/<span style="color: #800000;">div</span>&gt;
+
+    &lt;<span style="color: #800000;">script</span> src=&quot;https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js&quot;&gt;&lt;/<span style="color: #800000;">script</span>&gt;
+    &lt;<span style="color: #800000;">script</span> src=&quot;https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js&quot;&gt;&lt;/<span style="color: #800000;">script</span>&gt;
+    &lt;<span style="color: #800000;">script</span>&gt;
+        // ... Frontend Logic (WebSocket connection, UI updates) ...
+        // Refer to actual file for full script
+    &lt;/<span style="color: #800000;">script</span>&gt;
+&lt;/<span style="color: #800000;">body</span>&gt;
+&lt;/<span style="color: #800000;">html</span>&gt;
+</pre>
+<br>
+<h3>`public/style.css`</h3>
+<br>
+<pre>
+/* ... Global Defaults, Auth, Chat, Responsive Styles ... */
+</pre>
+<br>
+<p>*(Note: Full source code for all files is available in the respective files on disk. This document provides a consolidated view of the most important components.)*</p>
+</body></html>
