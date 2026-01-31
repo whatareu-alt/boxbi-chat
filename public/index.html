@@ -3,7 +3,8 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
     <title>Boxbi Messenger</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet"
@@ -29,18 +30,16 @@
                 <input type="password" id="login-password" required autocomplete="current-password">
             </div>
 
-            <div style="display: flex; align-items: center; margin-bottom: 20px; gap: 8px;">
-                <input type="checkbox" id="remember-me" checked style="width: auto;">
-                <label for="remember-me" style="margin: 0; font-size: 13px; color: #666; cursor: pointer;">Remember
-                    Me</label>
+            <div class="form-checkbox-group">
+                <input type="checkbox" id="remember-me" checked>
+                <label for="remember-me">Remember Me</label>
             </div>
 
             <button type="submit" class="btn">Sign In</button>
             <div class="error hidden" id="login-error"></div>
 
-            <div style="margin-top: 15px; text-align: center;">
-                <a href="#" onclick="showAdminReset(); return false;"
-                    style="font-size: 12px; color: #999; text-decoration: none;">Reset App Data (Admin)</a>
+            <div class="auth-footer-link">
+                <a href="#" onclick="showAdminReset(); return false;">Reset App Data (Admin)</a>
             </div>
         </form>
 
@@ -79,28 +78,21 @@
         </div>
 
         <!-- Admin Reset Button -->
-        <div style="text-align: center; margin-top: 20px;">
-            <button onclick="showAdminReset()"
-                style="padding: 8px 16px; background: #dc3545; color: white; border: none; border-radius: 6px; font-size: 12px; cursor: pointer; opacity: 0.7;">Admin
-                Reset</button>
+        <div class="admin-reset-container">
+            <button onclick="showAdminReset()" class="btn-danger-small">Admin Reset</button>
         </div>
     </div>
 
     <!-- Admin Reset Modal -->
-    <div id="admin-modal"
-        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center;">
-        <div style="background: white; padding: 30px; border-radius: 12px; max-width: 400px; width: 90%;">
-            <h2 style="margin: 0 0 10px 0; font-size: 20px;">🔐 Admin Reset</h2>
-            <p style="color: #666; font-size: 14px; margin-bottom: 20px;">Enter admin secret code to reset all data</p>
-            <input type="password" id="admin-secret" placeholder="Enter secret code"
-                style="width: 100%; padding: 10px; border: 1.5px solid #e0e0e0; border-radius: 8px; font-size: 14px; margin-bottom: 16px;">
-            <div id="admin-error" style="color: #d32f2f; font-size: 12px; margin-bottom: 12px; display: none;"></div>
-            <div style="display: flex; gap: 12px;">
-                <button onclick="hideAdminReset()"
-                    style="flex: 1; padding: 10px; background: #f5f5f5; color: #333; border: none; border-radius: 8px; font-size: 14px; cursor: pointer;">Cancel</button>
-                <button onclick="executeAdminReset()"
-                    style="flex: 1; padding: 10px; background: #dc3545; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;">Reset
-                    All Data</button>
+    <div id="admin-modal" class="modal">
+        <div class="modal-content-admin">
+            <h2 class="modal-title">🔐 Admin Reset</h2>
+            <p class="modal-subtitle">Enter admin secret code to reset all data</p>
+            <input type="password" id="admin-secret" placeholder="Enter secret code" class="admin-input">
+            <div id="admin-error" class="admin-error"></div>
+            <div class="modal-actions-row">
+                <button onclick="hideAdminReset()" class="btn-secondary">Cancel</button>
+                <button onclick="executeAdminReset()" class="btn-danger-action">Reset All Data</button>
             </div>
         </div>
     </div>
@@ -108,7 +100,7 @@
     <!-- Create Group Modal -->
     <div id="create-group-modal" class="modal">
         <div class="modal-content">
-            <h2 style="margin-bottom: 15px;">Create New Group</h2>
+            <h2 class="modal-create-title">Create New Group</h2>
             <div class="form-group">
                 <label>Group Name</label>
                 <input type="text" id="group-name-input" placeholder="Enter group name...">
@@ -119,9 +111,9 @@
                     <!-- Populated by JS -->
                 </div>
             </div>
-            <div style="display: flex; gap: 10px; margin-top: 15px;">
-                <button onclick="document.getElementById('create-group-modal').style.display='none'" class="btn"
-                    style="background: #ccc; color: #333;">Cancel</button>
+            <div class="modal-create-actions">
+                <button onclick="document.getElementById('create-group-modal').style.display='none'"
+                    class="btn btn-secondary">Cancel</button>
                 <button onclick="submitCreateGroup()" class="btn">Create Group</button>
             </div>
         </div>
@@ -133,24 +125,17 @@
         <div class="users-sidebar">
             <div class="sidebar-header">
                 <h2 id="current-username">Loading...</h2>
-                <div style="display: flex; gap: 10px; align-items: center;">
-                    <div style="font-size: 12px; color: #4ade80;">Online</div>
-                    <button onclick="toggleFriendRequests()"
-                        style="position: relative; background: none; border: none; cursor: pointer; display: flex; align-items: center;"
-                        title="Friend Requests">
-                        <span class="material-symbols-outlined" style="font-size: 24px;">group_add</span>
-                        <span id="request-badge"
-                            style="position: absolute; top: -5px; right: -5px; background: #dc3545; color: white; border-radius: 50%; width: 15px; height: 15px; font-size: 10px; display: none; justify-content: center; align-items: center;">0</span>
+                <div class="chat-header-actions">
+                    <div class="status-indicator">Online</div>
+                    <button onclick="toggleFriendRequests()" class="icon-btn" title="Friend Requests">
+                        <span class="material-symbols-outlined icon-lg">group_add</span>
+                        <span id="request-badge" class="badge-count">0</span>
                     </button>
-                    <button id="refresh-btn" onclick="refreshData()"
-                        style="background: none; border: none; cursor: pointer; transition: transform 0.3s; display: flex; align-items: center;"
-                        title="Refresh Data">
-                        <span class="material-symbols-outlined" style="font-size: 24px;">refresh</span>
+                    <button id="refresh-btn" onclick="refreshData()" class="icon-btn" title="Refresh Data">
+                        <span class="material-symbols-outlined icon-lg">refresh</span>
                     </button>
-                    <button onclick="logout()"
-                        style="background: none; border: none; cursor: pointer; display: flex; align-items: center;"
-                        title="Logout">
-                        <span class="material-symbols-outlined" style="font-size: 24px;">logout</span>
+                    <button onclick="logout()" class="icon-btn" title="Logout">
+                        <span class="material-symbols-outlined icon-lg">logout</span>
                     </button>
                 </div>
             </div>
@@ -163,13 +148,10 @@
 
             <!-- CHATS TAB -->
             <div id="tab-chats" class="tab-content active">
-                <div id="requests-panel"
-                    style="display: none; background: #f8f9fa; border-bottom: 1px solid #eee; padding: 10px;">
-                    <h3 style="margin: 0 0 10px 0; font-size: 14px; text-transform: uppercase; color: #666;">Friend
-                        Requests
-                    </h3>
-                    <div id="pending-requests-list" style="max-height: 150px; overflow-y: auto;">
-                        <div style="color: #999; font-size: 12px; text-align: center;">No pending requests</div>
+                <div id="requests-panel" class="requests-panel">
+                    <h3 class="panel-title">Friend Requests</h3>
+                    <div id="pending-requests-list" class="requests-list-container">
+                        <div class="text-empty">No pending requests</div>
                     </div>
                 </div>
 
@@ -183,8 +165,8 @@
 
             <!-- GROUPS TAB -->
             <div id="tab-groups" class="tab-content">
-                <div style="padding: 10px;">
-                    <button class="btn" style="padding: 8px;" onclick="openCreateGroupModal()">
+                <div class="groups-tab-container">
+                    <button class="btn btn-create-group" onclick="openCreateGroupModal()">
                         + Create New Group
                     </button>
                 </div>
@@ -198,8 +180,7 @@
         <div class="chat-area">
             <div class="chat-header">
                 <div class="chat-header-info">
-                    <button class="back-button" onclick="exitChatView()"
-                        style="display: none; background: none; border: none; cursor: pointer; margin-right: 10px; color: #333; align-items: center;">
+                    <button class="back-button back-btn-styled" onclick="exitChatView()">
                         <span class="material-symbols-outlined">arrow_back</span>
                     </button>
                     <div class="user-avatar" id="chat-avatar">?</div>
