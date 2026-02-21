@@ -1,7 +1,7 @@
 export class ChatDO {
     state: DurableObjectState;
     env: any;
-    sessions: Map<WebSocket, { username: string; subscriptions: Set<string> }>;
+    sessions: Map<WebSocket, { username: string; subscriptions: Map<string, string> }>;
 
     constructor(state: DurableObjectState, env: any) {
         this.state = state;
@@ -25,7 +25,7 @@ export class ChatDO {
 
     async handleSession(ws: WebSocket, username: string) {
         ws.accept();
-        this.sessions.set(ws, { username, subscriptions: new Set() });
+        this.sessions.set(ws, { username, subscriptions: new Map() });
 
         ws.addEventListener('message', async (msg) => {
             try {
@@ -33,16 +33,14 @@ export class ChatDO {
                 // Simple STOMP emulation
                 // CONNECT, SUBSCRIBE, SEND, DISCONNECT
 
-                // This is a very simplified handler. 
-                // For a full STOMP support, we'd need a parser.
-                // Let's assume the frontend sends JSON that we can map to STOMP-like actions.
-
                 if (data.startsWith('CONNECT')) {
                     ws.send('CONNECTED\nversion:1.1\n\n\0');
                 } else if (data.startsWith('SUBSCRIBE')) {
-                    const destination = this.getDestination(data);
-                    if (destination) {
-                        this.sessions.get(ws)?.subscriptions.add(destination);
+                    const destination = this.getHeader(data, 'destination:');
+                    const subId = this.getHeader(data, 'id:');
+                    if (destination && subId) {
+                        this.sessions.get(ws)?.subscriptions.set(destination, subId);
+                        console.log(`[DO] User ${username} subscribed to ${destination} with id ${subId}`);
                     }
                 } else if (data.startsWith('SEND')) {
                     const bodyStart = data.indexOf('\n\n') + 2;
@@ -63,10 +61,10 @@ export class ChatDO {
         });
     }
 
-    getDestination(data: string) {
+    getHeader(data: string, headerName: string) {
         const lines = data.split('\n');
         for (const line of lines) {
-            if (line.startsWith('destination:')) {
+            if (line.startsWith(headerName)) {
                 return line.split(':')[1].trim();
             }
         }
@@ -93,24 +91,32 @@ export class ChatDO {
         const payload = JSON.stringify(message);
 
         for (const [ws, info] of this.sessions.entries()) {
-            // Check if user is subscribed to the topic or queue
             const isRecipient = message.recipient === info.username;
             const isSender = message.sender === info.username;
-            const isGroupMember = message.groupId && info.subscriptions.has(`/topic/group.${message.groupId}`);
-            const isPrivateSub = info.subscriptions.has('/user/queue/private');
 
-            if ((isRecipient || isSender) && isPrivateSub) {
-                console.log(`[DO] Broadcasting ${message.type} to ${info.username} (Private)`);
-                this.sendStomp(ws, '/user/queue/private', payload);
-            } else if (isGroupMember) {
-                console.log(`[DO] Broadcasting ${message.type} to ${info.username} (Group ${message.groupId})`);
-                this.sendStomp(ws, `/topic/group.${message.groupId}`, payload);
+            // Check Private Signaling
+            if (isRecipient || isSender) {
+                const subId = info.subscriptions.get('/user/queue/private');
+                if (subId) {
+                    console.log(`[DO] Broadcasting ${message.type} to ${info.username} (Private, ID: ${subId})`);
+                    this.sendStomp(ws, '/user/queue/private', subId, payload);
+                }
+            }
+
+            // Check Group Messaging
+            if (message.groupId) {
+                const groupTopic = `/topic/group.${message.groupId}`;
+                const subId = info.subscriptions.get(groupTopic);
+                if (subId) {
+                    console.log(`[DO] Broadcasting ${message.type} to ${info.username} (Group ${message.groupId}, ID: ${subId})`);
+                    this.sendStomp(ws, groupTopic, subId, payload);
+                }
             }
         }
     }
 
-    sendStomp(ws: WebSocket, destination: string, body: string) {
-        const frame = `MESSAGE\ndestination:${destination}\ncontent-type:application/json\n\n${body}\0`;
+    sendStomp(ws: WebSocket, destination: string, subscriptionId: string, body: string) {
+        const frame = `MESSAGE\ndestination:${destination}\nsubscription:${subscriptionId}\ncontent-type:application/json\n\n${body}\0`;
         ws.send(frame);
     }
 }
