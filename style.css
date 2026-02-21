@@ -15,7 +15,7 @@
     --border-light: #e5e5ea;
     --blue-message: #007aff;
     --grey-message: #e5e5ea;
-    --grey-dark-message: #d0d0d0;
+    --grey-hover: #d0d0d0;
     --text-on-blue: #ffffff;
 }
 
@@ -923,5 +923,5 @@ body {
 .users-list::-webkit-scrollbar-thumb:hover,
 .messages-container::-webkit-scrollbar-thumb:hover,
 .multi-select-list::-webkit-scrollbar-thumb:hover {
-    background: var(--grey-dark-message);
+    background: var(--grey-hover);
 }
