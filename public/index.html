@@ -16,10 +16,6 @@
 
 <body>
     <!-- Global UI Elements -->
-    <div class="cursor" id="cursor">
-        <div class="cursor-ring" id="cursor-ring"></div>
-        <div class="cursor-dot"></div>
-    </div>
 
     <!-- Auth Page -->
     <div id="auth-page" class="auth-page">
@@ -251,47 +247,6 @@
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
     <script>
-        // Custom Cursor Logic
-        const cursor = document.getElementById('cursor');
-        const ring = document.getElementById('cursor-ring');
-        let mx = 0, my = 0;
-        let rx = 0, ry = 0;
-
-        window.addEventListener('mousemove', (e) => {
-            mx = e.clientX;
-            my = e.clientY;
-            cursor.style.transform = `translate(${mx}px, ${my}px)`;
-        });
-
-        window.addEventListener('mousedown', () => {
-            ring.style.transform = 'translate(-50%, -50%) scale(0.6)';
-        });
-
-        window.addEventListener('mouseup', () => {
-            ring.style.transform = 'translate(-50%, -50%) scale(1)';
-        });
-
-        function animCursor() {
-            rx += (mx - rx) * 0.15;
-            ry += (my - ry) * 0.15;
-            ring.style.left = `${rx}px`;
-            ring.style.top = `${ry}px`;
-            requestAnimationFrame(animCursor);
-        }
-        animCursor();
-
-        // Hover Effect
-        document.addEventListener('mouseover', (e) => {
-            if (e.target.tagName === 'A' || e.target.tagName === 'BUTTON' || e.target.closest('.user-item') || e.target.closest('.icon-btn')) {
-                ring.classList.add('hovered');
-            }
-        });
-
-        document.addEventListener('mouseout', (e) => {
-            if (e.target.tagName === 'A' || e.target.tagName === 'BUTTON' || e.target.closest('.user-item') || e.target.closest('.icon-btn')) {
-                ring.classList.remove('hovered');
-            }
-        });
 
         // API URL CONFIGURATION
         let API_URL = window.location.origin;

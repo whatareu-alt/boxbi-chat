@@ -45,7 +45,6 @@ body {
     justify-content: center;
     align-items: center;
     overflow: hidden;
-    cursor: none;
 }
 
 @media (hover: none) {
@@ -56,65 +55,6 @@ body {
     .cursor {
         display: none;
     }
-}
-
-/* CUSTOM CURSOR */
-.cursor {
-    position: fixed;
-    top: 0;
-    left: 0;
-    pointer-events: none;
-    z-index: 9999;
-    mix-blend-mode: multiply;
-}
-
-/* SCANNER CURSOR */
-.cursor-dot {
-    width: 4px;
-    height: 4px;
-    background: var(--cyan-neon);
-    border-radius: 50%;
-    position: absolute;
-    transform: translate(-50%, -50%);
-    box-shadow: 0 0 10px var(--cyan-neon);
-}
-
-.cursor-ring {
-    width: 40px;
-    height: 40px;
-    border: 1px solid var(--cyan-dim);
-    position: absolute;
-    transform: translate(-50%, -50%);
-    transition: all 0.2s cubic-bezier(0.23, 1, 0.32, 1);
-}
-
-.cursor-ring::before,
-.cursor-ring::after {
-    content: '';
-    position: absolute;
-    width: 8px;
-    height: 8px;
-    border-color: var(--cyan-neon);
-    border-style: solid;
-}
-
-.cursor-ring::before {
-    top: -1px;
-    left: -1px;
-    border-width: 1px 0 0 1px;
-}
-
-.cursor-ring::after {
-    bottom: -1px;
-    right: -1px;
-    border-width: 0 1px 1px 0;
-}
-
-.cursor-ring.hovered {
-    width: 56px;
-    height: 56px;
-    border-color: var(--cyan-neon);
-    background: var(--cyan-dim);
 }
 
 /* GRAIN OVERLAY */
