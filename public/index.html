@@ -251,6 +251,48 @@
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
     <script>
+        // Custom Cursor Logic
+        const cursor = document.getElementById('cursor');
+        const ring = document.getElementById('cursor-ring');
+        let mx = 0, my = 0;
+        let rx = 0, ry = 0;
+
+        window.addEventListener('mousemove', (e) => {
+            mx = e.clientX;
+            my = e.clientY;
+            cursor.style.transform = `translate(${mx}px, ${my}px)`;
+        });
+
+        window.addEventListener('mousedown', () => {
+            ring.style.transform = 'translate(-50%, -50%) scale(0.6)';
+        });
+
+        window.addEventListener('mouseup', () => {
+            ring.style.transform = 'translate(-50%, -50%) scale(1)';
+        });
+
+        function animCursor() {
+            rx += (mx - rx) * 0.15;
+            ry += (my - ry) * 0.15;
+            ring.style.left = `${rx}px`;
+            ring.style.top = `${ry}px`;
+            requestAnimationFrame(animCursor);
+        }
+        animCursor();
+
+        // Hover Effect
+        document.addEventListener('mouseover', (e) => {
+            if (e.target.tagName === 'A' || e.target.tagName === 'BUTTON' || e.target.closest('.user-item') || e.target.closest('.icon-btn')) {
+                ring.classList.add('hovered');
+            }
+        });
+
+        document.addEventListener('mouseout', (e) => {
+            if (e.target.tagName === 'A' || e.target.tagName === 'BUTTON' || e.target.closest('.user-item') || e.target.closest('.icon-btn')) {
+                ring.classList.remove('hovered');
+            }
+        });
+
         // API URL CONFIGURATION
         let API_URL = window.location.origin;
         if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
@@ -414,24 +456,26 @@
         }
 
         function onMessageReceived(payload) {
-            console.log('[WS] Message Received:', payload.body);
             const message = JSON.parse(payload.body);
+
+            // 1. FILTER SELF-MESSAGES
+            if (message.sender === currentUser.username) {
+                return;
+            }
+
+            console.log('[WS] Message Received from', message.sender, ':', message.type);
 
             // Handle Video Signaling
             if (message.type === 'VIDEO_OFFER') {
-                console.log('[WS] Video Offer Received from', message.sender);
                 handleVideoOffer(message);
                 return;
             } else if (message.type === 'VIDEO_ANSWER') {
-                console.log('[WS] Video Answer Received from', message.sender);
                 handleVideoAnswer(message);
                 return;
             } else if (message.type === 'ICE_CANDIDATE') {
-                console.log('[WS] ICE Candidate Received from', message.sender);
                 handleIceCandidate(message);
                 return;
             } else if (message.type === 'CALL_REJECTED' || message.type === 'CALL_ENDED') {
-                console.log('[WS] Call Ended/Rejected from', message.sender);
                 handleCallEnded(message);
                 return;
             }
@@ -447,7 +491,9 @@
         let peerConnection = null;
         let localStream = null;
         let callActive = false;
-        let signalingComplete = false;
+        let iceCandidateQueue = [];
+        let currentCaller = null;
+
         const rtcConfig = {
             iceServers: [
                 { urls: 'stun:stun.l.google.com:19302' },
@@ -481,6 +527,7 @@
         }
 
         function initPeerConnection() {
+            console.log('RTCPeerConnection Initialized');
             peerConnection = new RTCPeerConnection(rtcConfig);
 
             peerConnection.onicecandidate = (event) => {
@@ -490,16 +537,25 @@
             };
 
             peerConnection.ontrack = (event) => {
+                console.log('Remote track received');
                 document.getElementById('remote-video').srcObject = event.streams[0];
                 document.getElementById('call-status-overlay').style.display = 'none';
+            };
+
+            peerConnection.oniceconnectionstatechange = () => {
+                console.log('ICE Connection State:', peerConnection.iceConnectionState);
+                if (peerConnection.iceConnectionState === 'disconnected' || peerConnection.iceConnectionState === 'failed') {
+                    cleanupCall();
+                }
             };
         }
 
         function sendSignaling(type, data) {
-            console.log(`[WS] Sending signaling: ${type} to`, selectedRecipient || currentCaller);
+            const target = selectedRecipient || currentCaller;
+            console.log(`[WS] Sending signaling: ${type} to`, target);
             const signalMsg = {
                 sender: currentUser.username,
-                recipient: selectedRecipient || currentCaller,
+                recipient: target,
                 type: type,
                 content: JSON.stringify(data),
                 timestamp: Date.now()
@@ -507,10 +563,9 @@
             stompClient.send("/app/chat.private", {}, JSON.stringify(signalMsg));
         }
 
-        let currentCaller = null;
         function handleVideoOffer(message) {
             if (callActive) {
-                // Busy
+                console.log('Already in a call, ignoring offer from', message.sender);
                 return;
             }
             currentCaller = message.sender;
@@ -519,7 +574,7 @@
             showVideoOverlay(true, `Incoming video call from ${currentCaller}`);
             document.getElementById('incoming-call-actions').style.display = 'flex';
 
-            // Store the offer temporarily
+            // Store the offer
             window.pendingOffer = data.sdp;
         }
 
@@ -535,13 +590,20 @@
                 localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
 
                 await peerConnection.setRemoteDescription(new RTCSessionDescription({ type: 'offer', sdp: window.pendingOffer }));
+                console.log('Remote offer set');
+
+                // Process queued ICE candidates
+                while (iceCandidateQueue.length > 0) {
+                    const candidate = iceCandidateQueue.shift();
+                    await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+                    console.log('Added queued ICE candidate');
+                }
+
                 const answer = await peerConnection.createAnswer();
                 await peerConnection.setLocalDescription(answer);
 
-                selectedRecipient = currentCaller; // Set active recipient for signaling
                 sendSignaling('VIDEO_ANSWER', { sdp: answer.sdp });
                 callActive = true;
-                signalingComplete = true;
             } catch (e) {
                 console.error('Accept call failed', e);
                 endCall();
@@ -550,36 +612,57 @@
 
         async function handleVideoAnswer(message) {
             const data = JSON.parse(message.content);
-            await peerConnection.setRemoteDescription(new RTCSessionDescription({ type: 'answer', sdp: data.sdp }));
-            signalingComplete = true;
+            if (peerConnection) {
+                await peerConnection.setRemoteDescription(new RTCSessionDescription({ type: 'answer', sdp: data.sdp }));
+                console.log('Remote answer set');
+            }
         }
 
         async function handleIceCandidate(message) {
             const data = JSON.parse(message.content);
-            if (peerConnection) {
-                await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+            if (peerConnection && peerConnection.remoteDescription) {
+                try {
+                    await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+                    console.log('Added ICE candidate from', message.sender);
+                } catch (e) {
+                    console.error('Error adding ICE candidate', e);
+                }
+            } else {
+                console.log('ICE candidate received but peerConnection not ready, queueing...');
+                iceCandidateQueue.push(data.candidate);
             }
         }
 
         function endCall() {
-            if (callActive || currentCaller) {
+            const target = selectedRecipient || currentCaller;
+            if (target) {
                 sendSignaling('CALL_ENDED', {});
             }
             cleanupCall();
         }
 
         function handleCallEnded(message) {
+            console.log('Call ended by remote user');
             cleanupCall();
         }
 
         function cleanupCall() {
+            console.log('Cleaning up call state');
             callActive = false;
             currentCaller = null;
+            iceCandidateQueue = [];
+
             if (localStream) {
-                localStream.getTracks().forEach(track => track.stop());
+                localStream.getTracks().forEach(track => {
+                    track.stop();
+                    console.log('Stopped track:', track.kind);
+                });
                 localStream = null;
             }
             if (peerConnection) {
+                peerConnection.onicecandidate = null;
+                peerConnection.ontrack = null;
+                peerConnection.oniceconnectionstatechange = null;
                 peerConnection.close();
                 peerConnection = null;
             }

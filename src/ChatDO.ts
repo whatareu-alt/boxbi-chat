@@ -98,8 +98,10 @@ export class ChatDO {
             if (isRecipient || isSender) {
                 const subId = info.subscriptions.get('/user/queue/private');
                 if (subId) {
-                    console.log(`[DO] Broadcasting ${message.type} to ${info.username} (Private, ID: ${subId})`);
+                    console.log(`[DO] Signaling: /user/queue/private -> ${info.username} (Type: ${message.type}, ID: ${subId}, isSender: ${isSender})`);
                     this.sendStomp(ws, '/user/queue/private', subId, payload);
+                } else if (isRecipient) {
+                    console.warn(`[DO] Warning: Recipient ${info.username} is connected but NOT subscribed to /user/queue/private`);
                 }
             }
 
