@@ -407,19 +407,24 @@
         }
 
         function onMessageReceived(payload) {
+            console.log('[WS] Message Received:', payload.body);
             const message = JSON.parse(payload.body);
 
             // Handle Video Signaling
             if (message.type === 'VIDEO_OFFER') {
+                console.log('[WS] Video Offer Received from', message.sender);
                 handleVideoOffer(message);
                 return;
             } else if (message.type === 'VIDEO_ANSWER') {
+                console.log('[WS] Video Answer Received from', message.sender);
                 handleVideoAnswer(message);
                 return;
             } else if (message.type === 'ICE_CANDIDATE') {
+                console.log('[WS] ICE Candidate Received from', message.sender);
                 handleIceCandidate(message);
                 return;
             } else if (message.type === 'CALL_REJECTED' || message.type === 'CALL_ENDED') {
+                console.log('[WS] Call Ended/Rejected from', message.sender);
                 handleCallEnded(message);
                 return;
             }
@@ -484,6 +489,7 @@
         }
 
         function sendSignaling(type, data) {
+            console.log(`[WS] Sending signaling: ${type} to`, selectedRecipient || currentCaller);
             const signalMsg = {
                 sender: currentUser.username,
                 recipient: selectedRecipient || currentCaller,

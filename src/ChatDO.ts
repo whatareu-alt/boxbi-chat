@@ -49,6 +49,7 @@ export class ChatDO {
                     const bodyEnd = data.lastIndexOf('\0');
                     const body = data.slice(bodyStart, bodyEnd);
                     const message = JSON.parse(body);
+                    console.log(`[DO] Received SEND from ${username}:`, message.type, 'to', message.recipient || message.groupId);
 
                     await this.broadcast(message);
                 }
@@ -99,8 +100,10 @@ export class ChatDO {
             const isPrivateSub = info.subscriptions.has('/user/queue/private');
 
             if ((isRecipient || isSender) && isPrivateSub) {
+                console.log(`[DO] Broadcasting ${message.type} to ${info.username} (Private)`);
                 this.sendStomp(ws, '/user/queue/private', payload);
             } else if (isGroupMember) {
+                console.log(`[DO] Broadcasting ${message.type} to ${info.username} (Group ${message.groupId})`);
                 this.sendStomp(ws, `/topic/group.${message.groupId}`, payload);
             }
         }
