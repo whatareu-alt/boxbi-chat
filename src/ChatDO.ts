@@ -76,15 +76,17 @@ export class ChatDO {
         const timestamp = new Date().toISOString();
         message.timestamp = Date.now();
 
-        // Persist to D1
-        if (message.groupId) {
-            await this.env.DB.prepare(
-                'INSERT INTO messages (sender, group_id, content, type) VALUES (?, ?, ?, ?)'
-            ).bind(message.sender, message.groupId, message.content, message.type).run();
-        } else if (message.recipient) {
-            await this.env.DB.prepare(
-                'INSERT INTO messages (sender, recipient, content, type) VALUES (?, ?, ?, ?)'
-            ).bind(message.sender, message.recipient, message.content, message.type).run();
+        // Persist to D1 - Only for actual chat messages
+        if (message.type === 'CHAT') {
+            if (message.groupId) {
+                await this.env.DB.prepare(
+                    'INSERT INTO messages (sender, group_id, content, type) VALUES (?, ?, ?, ?)'
+                ).bind(message.sender, message.groupId, message.content, message.type).run();
+            } else if (message.recipient) {
+                await this.env.DB.prepare(
+                    'INSERT INTO messages (sender, recipient, content, type) VALUES (?, ?, ?, ?)'
+                ).bind(message.sender, message.recipient, message.content, message.type).run();
+            }
         }
 
         const payload = JSON.stringify(message);
