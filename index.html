@@ -92,27 +92,7 @@
         </div>
     </div>
 
-    <!-- Create Group Modal -->
-    <div id="create-group-modal" class="modal">
-        <div class="modal-content">
-            <h2 class="modal-create-title">Create New Group</h2>
-            <div class="form-group">
-                <label>Group Name</label>
-                <input type="text" id="group-name-input" placeholder="Enter group name...">
-            </div>
-            <div class="form-group">
-                <label>Select Members</label>
-                <div class="multi-select-list" id="group-user-select">
-                    <!-- Populated by JS -->
-                </div>
-            </div>
-            <div class="modal-create-actions">
-                <button onclick="document.getElementById('create-group-modal').style.display='none'"
-                    class="btn btn-secondary">Cancel</button>
-                <button onclick="submitCreateGroup()" class="btn">Create Group</button>
-            </div>
-        </div>
-    </div>
+
 
     <!-- Chat App -->
     <div id="chat-app" class="chat-app">
@@ -138,7 +118,6 @@
             <!-- Sidebar Tabs -->
             <div class="sidebar-tabs">
                 <button class="tab-btn active" onclick="switchTab('chats')">Chats</button>
-                <button class="tab-btn" onclick="switchTab('groups')">Groups</button>
             </div>
 
             <!-- CHATS TAB -->
@@ -158,17 +137,7 @@
                 </div>
             </div>
 
-            <!-- GROUPS TAB -->
-            <div id="tab-groups" class="tab-content">
-                <div class="groups-tab-container">
-                    <button class="btn btn-create-group" onclick="openCreateGroupModal()">
-                        + Create New Group
-                    </button>
-                </div>
-                <div class="users-list" id="groups-list">
-                    <div class="empty-state">Loading groups...</div>
-                </div>
-            </div>
+
         </div>
 
         <!-- Chat Area -->
@@ -249,9 +218,7 @@
         let stompClient = null;
         let currentUser = null;
         let selectedRecipient = null;
-        let activeGroupId = null; // Track active group
         let allUsers = [];
-        let myGroups = [];
         let currentTab = 'chats';
 
         function switchTab(tab) {
@@ -262,10 +229,6 @@
             if (tab === 'chats') {
                 document.querySelector('.tab-btn:nth-child(1)').classList.add('active');
                 document.getElementById('tab-chats').classList.add('active');
-            } else {
-                document.querySelector('.tab-btn:nth-child(2)').classList.add('active');
-                document.getElementById('tab-groups').classList.add('active');
-                fetchMyGroups();
             }
         }
 
@@ -394,7 +357,6 @@
             // Load users and pending requests
             loadUsers();
             loadPendingRequests();
-            fetchMyGroups();
         }
 
         function onError(error) {
@@ -812,58 +774,13 @@
             displayUsers(filtered);
         }
 
-        async function fetchMyGroups() {
-            try {
-                const response = await fetch(`${API_URL}/groups/user/${currentUser.username}`);
-                if (response.ok) {
-                    myGroups = await response.json();
-                    displayGroups(myGroups);
-                    // Subscribe to existing groups if connected
-                    if (stompClient && stompClient.connected) {
-                        myGroups.forEach(group => {
-                            // Idempotent subscribe could be handled by STOMP lib or check if already subbed
-                            // For simplicity, just subscribe (STOMP usually handles duplicates or we can ignore)
-                            stompClient.subscribe(`/topic/group.${group.id}`, onGroupMessageReceived);
-                        });
-                    }
-                }
-            } catch (e) {
-                console.error('Error fetching groups:', e);
-            }
-        }
-
-        function displayGroups(groups) {
-            const list = document.getElementById('groups-list');
-            if (groups.length === 0) {
-                list.innerHTML = '<div class="empty-state">No groups found</div>';
-                return;
-            }
-            list.innerHTML = '';
-            groups.forEach(group => {
-                const item = document.createElement('div');
-                item.className = 'user-item';
-                item.id = `group-${group.id}`;
-                item.onclick = () => selectGroup(group);
-                item.innerHTML = `
-    <div class="user-avatar" style="background: #e11d48">#</div>
-    <div class="user-info">
-        <div class="user-name">${group.name}</div>
-        <div class="user-status">Created by ${group.createdBy}</div>
-    </div>
-    `;
-                list.appendChild(item);
-            });
-        }
-
         function exitChatView() {
             document.getElementById('chat-app').classList.remove('mobile-chat-active');
             selectedRecipient = null;
-            activeGroupId = null;
         }
 
         async function selectUser(username) {
             selectedRecipient = username;
-            activeGroupId = null; // Reset activeGroupId when selecting a user
 
             // Enable Mobile View
             document.getElementById('chat-app').classList.add('mobile-chat-active');
@@ -907,58 +824,6 @@
             loadChatHistory(username);
         }
 
-        function selectGroup(group) {
-            selectedRecipient = null; // Clear individual recipient
-            activeGroupId = group.id;
-
-            // Enable Mobile View
-            document.getElementById('chat-app').classList.add('mobile-chat-active');
-
-            // Update header
-            document.getElementById('chat-name').textContent = group.name;
-            document.getElementById('chat-status').textContent = 'Group Chat';
-            document.getElementById('chat-avatar').textContent = '#';
-            document.getElementById('chat-avatar').style.background = '#e11d48';
-
-            const input = document.getElementById('message-input');
-            const btn = document.getElementById('send-btn');
-            input.disabled = false;
-            input.placeholder = "Message group...";
-            btn.disabled = false;
-            btn.style.opacity = "1";
-            btn.style.cursor = "pointer";
-            document.getElementById('video-call-btn').classList.add('hidden');
-
-            // Highlight
-            document.querySelectorAll('.user-item').forEach(el => el.classList.remove('active'));
-            document.getElementById(`group-${group.id}`).classList.add('active');
-
-            // Load history
-            loadGroupHistory(group.id);
-        }
-
-        async function loadGroupHistory(groupId) {
-            try {
-                const response = await fetch(`${API_URL}/groups/${groupId}/messages`);
-                if (response.ok) {
-                    const messages = await response.json();
-                    document.getElementById('messages').innerHTML = ''; // Clear
-                    messages.forEach(displayMessage);
-                }
-            } catch (e) {
-                console.error('Error loading group history:', e);
-            }
-        }
-
-        function onGroupMessageReceived(payload) {
-            const message = JSON.parse(payload.body);
-            // If viewing this group, display it
-            if (activeGroupId === message.groupId) {
-                displayMessage(message);
-            }
-        }
-
-
         async function loadChatHistory(contact) {
             try {
                 const response = await fetch(`${API_URL}/messages/${contact}?currentUser=${currentUser.username}`);
@@ -977,27 +842,16 @@
             e.preventDefault();
             const messageContent = document.getElementById('message-input').value.trim();
 
-            if (messageContent && stompClient) {
-                if (activeGroupId) {
-                    // Send Group Message
-                    const chatMessage = {
-                        sender: currentUser.username,
-                        groupId: activeGroupId,
-                        content: messageContent,
-                        type: 'CHAT'
-                    };
-                    stompClient.send("/app/chat.group", {}, JSON.stringify(chatMessage));
-                } else if (selectedRecipient) {
-                    // Send Private Message
-                    const chatMessage = {
-                        sender: currentUser.username,
-                        recipient: selectedRecipient,
-                        content: messageContent,
-                        type: 'CHAT',
-                        timestamp: Date.now()
-                    };
-                    stompClient.send("/app/chat.private", {}, JSON.stringify(chatMessage));
-                }
+            if (messageContent && stompClient && selectedRecipient) {
+                // Send Private Message
+                const chatMessage = {
+                    sender: currentUser.username,
+                    recipient: selectedRecipient,
+                    content: messageContent,
+                    type: 'CHAT',
+                    timestamp: Date.now()
+                };
+                stompClient.send("/app/chat.private", {}, JSON.stringify(chatMessage));
                 document.getElementById('message-input').value = '';
             }
         });
@@ -1063,68 +917,6 @@
                 setTimeout(() => {
                     btn.style.transform = 'none';
                 }, 1000);
-            }
-        }
-
-        function openCreateGroupModal() {
-            document.getElementById('create-group-modal').style.display = 'flex';
-            const list = document.getElementById('group-user-select');
-            list.innerHTML = '';
-
-            // Filter out self
-            const users = allUsers;
-
-            users.forEach(user => {
-                const div = document.createElement('div');
-                div.className = 'select-item';
-                div.innerHTML = `
-    <input type="checkbox" value="${user.username}" id="chk-${user.username}">
-    <label for="chk-${user.username}" style="cursor:pointer">${user.username}</label>
-    `;
-                // Allow clicking row to toggle
-                div.onclick = (e) => {
-                    if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'LABEL') {
-                        const chk = document.getElementById(`chk-${user.username}`);
-                        chk.checked = !chk.checked;
-                    }
-                };
-                list.appendChild(div);
-            });
-        }
-
-        async function submitCreateGroup() {
-            const name = document.getElementById('group-name-input').value.trim();
-            if (!name) { alert('Please enter a group name'); return; }
-
-            const members = [];
-            document.querySelectorAll('#group-user-select input:checked').forEach(chk => {
-                members.push(chk.value);
-            });
-            members.push(currentUser.username); // Add self
-
-            try {
-                const response = await fetch(`${API_URL}/groups/create`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name: name, createdBy: currentUser.username, members: members })
-                });
-
-                if (response.ok) {
-                    document.getElementById('create-group-modal').style.display = 'none';
-                    document.getElementById('group-name-input').value = '';
-                    fetchMyGroups();
-                    alert('Group created successfully!');
-                } else {
-                    try {
-                        const errorData = await response.json();
-                        alert('Failed to create group: ' + (errorData.error || 'Unknown error'));
-                    } catch (parseError) {
-                        alert('Failed to create group: Server returned ' + response.status);
-                    }
-                }
-            } catch (e) {
-                console.error(e);
-                alert('Connection error: ' + e.message);
             }
         }
 

@@ -595,22 +595,6 @@ body {
     letter-spacing: 0.5px;
 }
 
-.groups-tab-container {
-    padding: 12px 24px;
-}
-
-.btn-create-group {
-    width: 100%;
-    background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
-    color: var(--gold);
-    border: 1px solid var(--navy);
-}
-
-.btn-create-group:hover {
-    background: linear-gradient(135deg, var(--navy-light) 0%, var(--navy) 100%);
-    box-shadow: var(--shadow-subtle);
-}
-
 .requests-panel {
     display: none;
     padding: 12px 24px;
