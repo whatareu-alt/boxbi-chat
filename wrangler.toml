@@ -8,7 +8,7 @@ directory = "./public"
 [[d1_databases]]
 binding = "DB"
 database_name = "boxbi-db"
-database_id = "REPLACE_WITH_D1_ID" # User will need to fill this after creating D1 via wrangler
+database_id = "821b47d1-16c3-4760-8590-d276d01ad085"
 
 [[durable_objects.bindings]]
 name = "CHAT_DO"
@@ -16,7 +16,7 @@ class_name = "ChatDO"
 
 [[migrations]]
 tag = "v1"
-new_classes = ["ChatDO"]
+new_sqlite_classes = ["ChatDO"]
 
 [vars]
 JWT_SECRET = "super-secret-key"
