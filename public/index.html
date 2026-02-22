@@ -539,7 +539,7 @@
             const otherUser = message.sender;
 
             // Update last message preview in sidebar
-            updateLastMessage(otherUser, message.content, message.timestamp);
+            updateLastMessage(otherUser, message.content);
 
             if (selectedRecipient === otherUser) {
                 displayMessage(message);
@@ -567,8 +567,8 @@
             }
         }
 
-        function updateLastMessage(username, content, timestamp) {
-            lastMessages[username] = { content, timestamp };
+        function updateLastMessage(username, content) {
+            lastMessages[username] = { content };
             const previewEl = document.getElementById(`preview-${username}`);
             if (previewEl) {
                 previewEl.textContent = content.length > 28 ? content.slice(0, 28) + '…' : content;
@@ -876,10 +876,10 @@
 
         function stopChatPolling() {
             if (chatPollInterval) { clearInterval(chatPollInterval); chatPollInterval = null; }
-            dbMsgCount = 0;
         }
 
         async function loadChatHistory(contact) {
+            dbMsgCount = 0; // Reset count BEFORE fetching and rendering
             try {
                 const response = await fetch(`${API_URL}/messages/${contact}?currentUser=${currentUser.username}`);
                 if (response.ok) {
@@ -950,14 +950,12 @@
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
 
             // Increment count to avoid duplication during polling
-            // (Since this message is now on screen, the next DB poll should skip it)
-            if (message.timestamp) dbMsgCount++;
+            dbMsgCount++;
 
             // Update last message preview
             updateLastMessage(
                 message.sender === currentUser.username ? message.recipient : message.sender,
-                message.content,
-                message.timestamp
+                message.content
             );
         }
 
