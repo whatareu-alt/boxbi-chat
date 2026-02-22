@@ -804,6 +804,72 @@ body {
     color: var(--text-muted);
 }
 
+/* Feature: Last Message Preview */
+.user-name-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.user-last-preview {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 400;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 2px;
+}
+
+/* Feature: Unread Badge */
+.unread-badge {
+    background: var(--accent);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    min-width: 20px;
+    height: 20px;
+    border-radius: 999px;
+    align-items: center;
+    justify-content: center;
+    padding: 0 5px;
+    flex-shrink: 0;
+}
+
+/* Feature: Date Dividers */
+.date-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 12px 0;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.date-divider::before,
+.date-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border-thin);
+    background: rgba(0, 0, 0, 0.08);
+}
+
+.date-divider span {
+    background: #e2e8f0;
+    padding: 3px 12px;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+/* Feature: Typing status animation */
+#chat-status {
+    transition: color 0.25s ease;
+    font-style: normal;
+}
+
 .empty-state {
     text-align: center;
     padding: 40px 20px;

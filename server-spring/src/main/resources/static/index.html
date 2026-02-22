@@ -382,9 +382,64 @@
         function onConnected() {
             console.log('✅ Connected to WebSocket');
             stompClient.subscribe('/user/queue/private', onMessageReceived);
+            stompClient.subscribe('/user/queue/typing', onTypingReceived);
             // Load users and pending requests
             loadUsers();
             loadPendingRequests();
+        }
+
+        function onMessageReceived(payload) {
+            const message = JSON.parse(payload.body);
+            if (message.sender === currentUser.username) return;
+
+            console.log('[WS] Message from', message.sender);
+            const otherUser = message.sender;
+
+            // Update last message preview in sidebar
+            updateLastMessage(otherUser, message.content, message.timestamp);
+
+            if (selectedRecipient === otherUser) {
+                displayMessage(message);
+            } else {
+                // Increment unread badge
+                unreadCounts[otherUser] = (unreadCounts[otherUser] || 0) + 1;
+                const badge = document.getElementById(`unread-${otherUser}`);
+                if (badge) {
+                    badge.textContent = unreadCounts[otherUser];
+                    badge.style.display = 'flex';
+                }
+            }
+        }
+
+        function onTypingReceived(payload) {
+            const data = JSON.parse(payload.body);
+            if (data.sender === selectedRecipient) {
+                const statusEl = document.getElementById('chat-status');
+                statusEl.textContent = 'typing...';
+                statusEl.style.color = 'var(--accent)';
+                clearTimeout(typingHideTimeout);
+                typingHideTimeout = setTimeout(() => {
+                    statusEl.textContent = 'Online';
+                    statusEl.style.color = '';
+                }, 2000);
+            }
+        }
+
+        function sendTypingEvent() {
+            if (stompClient && selectedRecipient) {
+                stompClient.send('/app/chat.typing', {}, JSON.stringify({
+                    sender: currentUser.username,
+                    recipient: selectedRecipient
+                }));
+            }
+        }
+
+        function updateLastMessage(username, content, timestamp) {
+            lastMessages[username] = { content, timestamp };
+            const previewEl = document.getElementById(`preview-${username}`);
+            if (previewEl) {
+                previewEl.textContent = content.length > 28 ? content.slice(0, 28) + '…' : content;
+            }
         }
 
         function onError(error) {
@@ -550,9 +605,12 @@
                 userItem.innerHTML = `
     <div class="user-avatar">${user.username[0].toUpperCase()}</div>
     <div class="user-info">
-        <div class="user-name">${user.username}</div>
-        <div class="status-row"
-            style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+        <div class="user-name-row">
+            <div class="user-name">${user.username}</div>
+            <div class="unread-badge" id="unread-${user.username}" style="display:none;">0</div>
+        </div>
+        <div class="user-last-preview" id="preview-${user.username}">${isFriend ? '👋 Say hi!' : ''}</div>
+        <div class="status-row">
             <div class="user-status">Online</div>
             <div>${statusHtml}</div>
         </div>
@@ -610,8 +668,14 @@
                 btn.style.cursor = "not-allowed";
             }
 
-            // Clear messages
+            // Clear messages + reset date dividers for this conversation
             document.getElementById('messages').innerHTML = '';
+            lastMessageDates[username] = null;
+
+            // Clear unread badge
+            unreadCounts[username] = 0;
+            const badge = document.getElementById(`unread-${username}`);
+            if (badge) badge.style.display = 'none';
 
             // Highlight selected user
             document.querySelectorAll('.user-item').forEach(el => el.classList.remove('active'));
@@ -635,13 +699,19 @@
             }
         }
 
+        // Typing indicator trigger
+        document.getElementById('message-input').addEventListener('input', () => {
+            clearTimeout(typingTimeout);
+            sendTypingEvent();
+            typingTimeout = setTimeout(() => { }, 2000);
+        });
+
         // Send message
         document.getElementById('message-form').addEventListener('submit', (e) => {
             e.preventDefault();
             const messageContent = document.getElementById('message-input').value.trim();
 
             if (messageContent && stompClient && selectedRecipient) {
-                // Send Private Message
                 const chatMessage = {
                     sender: currentUser.username,
                     recipient: selectedRecipient,
@@ -651,11 +721,34 @@
                 };
                 stompClient.send("/app/chat.private", {}, JSON.stringify(chatMessage));
                 document.getElementById('message-input').value = '';
+                // Show own message immediately
+                displayMessage(chatMessage);
             }
         });
 
+        function getDateLabel(timestamp) {
+            const date = new Date(timestamp);
+            const today = new Date();
+            const yesterday = new Date();
+            yesterday.setDate(today.getDate() - 1);
+            if (date.toDateString() === today.toDateString()) return 'Today';
+            if (date.toDateString() === yesterday.toDateString()) return 'Yesterday';
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+
         function displayMessage(message) {
             const messagesDiv = document.getElementById('messages');
+            const conversationKey = selectedRecipient;
+
+            // Date divider
+            const dateLabel = getDateLabel(message.timestamp);
+            if (lastMessageDates[conversationKey] !== dateLabel) {
+                lastMessageDates[conversationKey] = dateLabel;
+                const divider = document.createElement('div');
+                divider.className = 'date-divider';
+                divider.innerHTML = `<span>${dateLabel}</span>`;
+                messagesDiv.appendChild(divider);
+            }
 
             const messageDiv = document.createElement('div');
             messageDiv.className = 'message';
@@ -678,6 +771,13 @@
 
             messagesDiv.appendChild(messageDiv);
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+            // Update last message preview
+            updateLastMessage(
+                message.sender === currentUser.username ? message.recipient : message.sender,
+                message.content,
+                message.timestamp
+            );
         }
 
         function escapeHtml(text) {
