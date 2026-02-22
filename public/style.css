@@ -421,7 +421,7 @@ body {
     width: 100%;
     height: 100vh;
     height: 100dvh;
-    grid-template-columns: 400px 1fr;
+    grid-template-columns: 480px 1fr;
     background: var(--bg-main);
     gap: 0;
 }
@@ -1193,6 +1193,35 @@ body {
 
 
 /* ===== RESPONSIVE ===== */
+
+/* Tablets (768px to 1023px) */
+@media (max-width: 1024px) {
+    .chat-app {
+        grid-template-columns: 350px 1fr;
+    }
+
+    .chat-header {
+        padding: 12px 18px;
+    }
+
+    .messages-container {
+        padding: 12px 16px;
+    }
+
+    .message-content {
+        max-width: 70%;
+    }
+
+    .sidebar-header {
+        padding: 16px 18px;
+    }
+
+    .sidebar-username {
+        font-size: 13px;
+    }
+}
+
+/* Tablets (768px to 899px) */
 @media (max-width: 900px) {
     .chat-app {
         grid-template-columns: 1fr;
@@ -1220,35 +1249,451 @@ body {
     .message-content {
         max-width: 80%;
     }
+
+    .users-sidebar {
+        width: 100%;
+    }
+
+    .sidebar-header {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .profile-avatar-btn {
+        margin-bottom: 8px;
+    }
 }
 
-@media (max-width: 480px) {
+/* Mobile devices (481px to 767px) */
+@media (max-width: 768px) {
     .auth-container {
-        padding: 40px 24px;
+        width: 95%;
+        max-width: 100%;
+        padding: 20px 25px;
+        margin: 10px auto;
+    }
+
+    .auth-logo {
+        width: 180px;
+        margin-bottom: 10px;
+    }
+
+    .auth-page p {
+        font-size: 14px;
+        margin-bottom: 18px;
+    }
+
+    .form-group {
+        margin-bottom: 14px;
+    }
+
+    .form-group input {
+        padding: 14px 16px;
+        font-size: 16px;
+    }
+
+    .btn {
+        padding: 12px 18px;
+        font-size: 14px;
+    }
+
+    .modal-content,
+    .modal-content-admin {
+        width: 90%;
+        padding: 20px;
+    }
+
+    .modal-title {
+        font-size: 18px;
+    }
+
+    .modal-subtitle {
+        font-size: 13px;
+    }
+
+    .sidebar-username {
+        font-size: 12px;
+        max-width: 120px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .sidebar-logo img {
+        width: 60px;
+    }
+
+    .chat-header-info {
+        gap: 10px;
+    }
+
+    .chat-header h3 {
+        font-size: 15px;
+    }
+
+    .messages-container {
+        padding: 10px 12px;
+        gap: 6px;
+    }
+
+    .message-content {
+        max-width: 85%;
+        padding: 10px 14px;
+        font-size: 14px;
+    }
+
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+        font-size: 14px;
+    }
+
+    .avatar {
+        width: 44px;
+        height: 44px;
+        font-size: 16px;
+    }
+}
+
+/* Small mobile devices (max 480px) */
+@media (max-width: 480px) {
+    body {
+        font-size: 14px;
+    }
+
+    .auth-container {
+        width: 98%;
+        padding: 18px 20px;
+        max-width: 100%;
+        border-radius: 12px;
+    }
+
+    .auth-logo {
+        width: 150px;
+        margin-bottom: 8px;
+    }
+
+    .auth-page h1 {
+        font-size: 28px;
+        margin-bottom: 8px;
+    }
+
+    .auth-page p {
+        font-size: 13px;
+        margin-bottom: 16px;
+    }
+
+    .form-group {
+        margin-bottom: 12px;
+    }
+
+    .form-group input {
+        padding: 12px 14px;
+        font-size: 16px;
+        border-radius: 8px;
+    }
+
+    .form-checkbox-group {
+        margin: 14px 0;
+        gap: 6px;
+    }
+
+    .form-checkbox-group input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+    }
+
+    .form-checkbox-group label {
+        font-size: 12px;
+    }
+
+    .btn {
+        padding: 11px 16px;
+        font-size: 13px;
+        border-radius: 8px;
+    }
+
+    .btn-primary {
+        font-weight: 600;
+    }
+
+    .auth-divider {
+        margin: 10px 0;
+        font-size: 12px;
+    }
+
+    .toggle-auth {
+        margin: 10px 0;
+        font-size: 12px;
     }
 
     .modal-content,
     .modal-content-admin {
         width: 95%;
-        padding: 24px;
+        padding: 16px;
+        border-radius: 12px;
     }
 
-    .local-video {
-        width: 100px;
-        height: 75px;
-        bottom: 60px;
+    .modal-title {
+        font-size: 16px;
+        margin-bottom: 6px;
+    }
+
+    .modal-subtitle {
+        font-size: 12px;
+    }
+
+    .admin-input {
+        padding: 10px 12px;
+        font-size: 14px;
+    }
+
+    .modal-actions-row {
+        gap: 8px;
+        margin-top: 12px;
+    }
+
+    .btn-secondary,
+    .btn-danger-action {
+        padding: 10px 12px;
+        font-size: 12px;
+    }
+
+    /* Chat layout on mobile */
+    .users-sidebar {
+        border-right: none;
+    }
+
+    .sidebar-header {
+        padding: 12px 16px;
+        gap: 8px;
+    }
+
+    .sidebar-logo img {
+        width: 50px;
+    }
+
+    .sidebar-user-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .sidebar-username {
+        font-size: 11px;
+        max-width: 100px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .sidebar-status {
+        font-size: 10px;
+    }
+
+    .sidebar-avatar {
+        width: 36px;
+        height: 36px;
+        font-size: 14px;
+    }
+
+    .icon-lg {
+        font-size: 20px;
+    }
+
+    .icon-btn {
+        width: 32px;
+        height: 32px;
+        font-size: 16px;
+    }
+
+    .sidebar-tabs {
+        gap: 0;
+        padding: 0;
+    }
+
+    .tab-btn {
+        padding: 10px 12px;
+        font-size: 12px;
+        flex: 1;
+    }
+
+    .search-box {
+        padding: 8px 12px;
+    }
+
+    .search-box input {
+        padding: 8px 12px;
+        font-size: 13px;
+    }
+
+    .users-list {
+        gap: 4px;
+    }
+
+    .user-item {
+        padding: 8px 12px;
+        gap: 8px;
+    }
+
+    .user-item-info h4 {
+        font-size: 13px;
+    }
+
+    .user-item-info p {
+        font-size: 11px;
+    }
+
+    .user-avatar {
+        width: 36px;
+        height: 36px;
+        font-size: 12px;
+    }
+
+    .chat-header {
+        padding: 10px 12px;
+    }
+
+    .chat-header-info {
+        gap: 8px;
+    }
+
+    .chat-header h3 {
+        font-size: 13px;
+    }
+
+    .status {
+        font-size: 10px;
+    }
+
+    .chat-header-actions {
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    #delete-chat-btn,
+    .logout-btn {
+        padding: 8px 12px;
+        font-size: 11px;
+    }
+
+    .messages-container {
+        padding: 8px 10px;
+        gap: 4px;
+    }
+
+    .message-content {
+        max-width: 90%;
+        padding: 8px 12px;
+        font-size: 13px;
+        border-radius: 8px;
+    }
+
+    .message-time {
+        font-size: 10px;
+    }
+
+    .welcome-screen {
+        padding: 20px 16px;
+    }
+
+    .welcome-screen-card {
+        padding: 24px 20px;
+        gap: 8px;
+    }
+
+    .welcome-icon {
+        font-size: 40px;
+        margin-bottom: 4px;
+    }
+
+    .welcome-screen h2 {
+        font-size: 18px;
+        margin-bottom: 6px;
+    }
+
+    .welcome-screen p {
+        font-size: 12px;
+    }
+
+    /* Input area for mobile */
+    .input-row {
+        padding: 8px 12px;
+        gap: 6px;
+    }
+
+    .input-row input,
+    .input-row textarea {
+        padding: 10px 12px;
+        font-size: 14px;
+        border-radius: 8px;
+    }
+
+    .send-btn {
+        padding: 10px;
+        width: 40px;
+        height: 40px;
+    }
+
+    /* Admin menu button */
+    .admin-menu-btn {
+        width: 36px;
+        height: 36px;
+        font-size: 18px;
+        top: 10px;
         right: 10px;
     }
 
+    /* Profile panel */
+    .profile-panel {
+        width: 100%;
+        max-width: 100%;
+        border-radius: 16px 16px 0 0;
+    }
+
+    .profile-panel-header {
+        padding: 12px 16px;
+    }
+
+    .profile-avatar-lg {
+        width: 60px;
+        height: 60px;
+        font-size: 24px;
+    }
+
+    .profile-body {
+        padding: 16px;
+    }
+
+    .profile-field {
+        padding: 8px 0;
+        gap: 6px;
+    }
+
+    .profile-field-label,
+    .profile-field-value {
+        font-size: 12px;
+    }
+
+    .profile-actions {
+        padding: 12px 16px;
+    }
+
+    .local-video {
+        width: 80px;
+        height: 60px;
+        bottom: 50px;
+        right: 8px;
+    }
+
     .video-controls {
-        gap: 12px;
-        padding: 10px 16px;
+        gap: 10px;
+        padding: 8px 12px;
     }
 
     .control-btn {
-        width: 40px;
-        height: 40px;
-        font-size: 16px;
+        width: 36px;
+        height: 36px;
+        font-size: 14px;
     }
 }
 
