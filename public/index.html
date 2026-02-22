@@ -935,8 +935,9 @@
         function parseTimestamp(ts) {
             if (!ts) return new Date();
             if (typeof ts === 'number') return new Date(ts);
-            // SQLite stores as '2026-02-23 20:14:00' — replace space with T for valid ISO
-            const fixed = String(ts).replace(' ', 'T');
+            // SQLite stores as '2023-10-27 10:00:00' in UTC. 
+            // We replace space with 'T' and append 'Z' to ensure JS parses as UTC.
+            const fixed = String(ts).replace(' ', 'T') + 'Z';
             const d = new Date(fixed);
             return isNaN(d.getTime()) ? new Date() : d;
         }
@@ -982,6 +983,10 @@
 
             messagesDiv.appendChild(messageDiv);
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+            // Increment count to avoid duplication during polling
+            // (Since this message is now on screen, the next DB poll should skip it)
+            if (message.timestamp) dbMsgCount++;
 
             // Update last message preview
             updateLastMessage(
