@@ -21,7 +21,7 @@
     <div id="auth-page" class="auth-page">
         <div class="auth-container">
             <h1>Boxbi</h1>
-            <p>Messaging made simple</p>
+            <p id="slogan-text" class="slogan-text">Messaging made simple</p>
 
             <!-- Login Form -->
             <form id="login-form">
@@ -288,6 +288,16 @@
         let sidebarMode = 'friends'; // 'friends' or 'discover'
         let unreadCounts = {};
         let lastMessages = {};
+        const slogans = [
+            "Conversations in Full Bloom.",
+            "Boxbi: Chat with Grace.",
+            "Your World, Simplified.",
+            "Boxbi: The Art of Conversation.",
+            "Stay Rose-Tinted.",
+            "Simply Better.",
+            "Boxbi: Simply Smooth. Beautifully Rose."
+        ];
+        let currentSloganIndex = 0;
         let lastMessageDates = {};
         let typingTimeout = null;
         let typingHideTimeout = null;
@@ -297,6 +307,25 @@
             document.getElementById('tab-btn-friends').classList.toggle('active', mode === 'friends');
             document.getElementById('tab-btn-discover').classList.toggle('active', mode === 'discover');
             displayUsers(allUsers, document.getElementById('user-search').value);
+        }
+
+        function rotateSlogans() {
+            const sloganEl = document.getElementById('slogan-text');
+            if (!sloganEl) return;
+
+            setInterval(() => {
+                sloganEl.classList.add('fade-out');
+                setTimeout(() => {
+                    currentSloganIndex = (currentSloganIndex + 1) % slogans.length;
+                    sloganEl.textContent = slogans[currentSloganIndex];
+                    sloganEl.classList.remove('fade-out');
+                }, 500);
+            }, 4000);
+        }
+
+        // Initialize slogans if on auth page
+        if (!localStorage.getItem('currentUser')) {
+            setTimeout(rotateSlogans, 2000);
         }
 
         function switchTab(tab) {

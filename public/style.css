@@ -1819,3 +1819,15 @@ body {
     gap: 12px;
 }
 
+
+/* ===== DYNAMIC SLOGAN STYLES ===== */
+.slogan-text {
+    transition: opacity 0.5s ease, transform 0.5s ease;
+    opacity: 0.8;
+}
+
+.slogan-text.fade-out {
+    opacity: 0;
+    transform: translateY(5px);
+}
+

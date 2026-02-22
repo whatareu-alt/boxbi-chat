@@ -21,7 +21,7 @@
     <div id="auth-page" class="auth-page">
         <div class="auth-container">
             <h1>Boxbi</h1>
-            <p>Messaging made simple</p>
+            <p id="slogan-text" class="slogan-text">Messaging made simple</p>
 
             <!-- Login Form -->
             <form id="login-form">
@@ -123,10 +123,12 @@
 
             <!-- Sidebar Tabs -->
             <div class="sidebar-tabs">
-                <button class="tab-btn active" onclick="switchTab('chats')">Chats</button>
+                <button class="tab-btn active" id="tab-btn-friends" onclick="switchSidebarTab('friends')">My
+                    Friends</button>
+                <button class="tab-btn" id="tab-btn-discover" onclick="switchSidebarTab('discover')">Discover
+                    All</button>
             </div>
 
-            <!-- CHATS TAB -->
             <div id="tab-chats" class="tab-content active">
                 <div id="requests-panel" class="requests-panel">
                     <h3 class="panel-title">Friend Requests</h3>
@@ -233,6 +235,12 @@
                     </div>
                 </div>
                 <div class="chat-header-actions">
+                    <button id="delete-chat-btn" class="btn-danger-outline" style="display:none; margin-right:10px;"
+                        onclick="deleteChat()">
+                        <span class="material-symbols-outlined"
+                            style="font-size:18px; vertical-align:middle;">delete</span>
+                        Delete Chat
+                    </button>
                     <button class="logout-btn" id="logout-btn" onclick="logout()">Logout</button>
                 </div>
             </div>
@@ -277,11 +285,48 @@
         let selectedRecipient = null;
         let allUsers = [];
         let currentTab = 'chats';
+        let sidebarMode = 'friends'; // 'friends' or 'discover'
         let unreadCounts = {};
         let lastMessages = {};
+        const slogans = [
+            "Conversations in Full Bloom.",
+            "Boxbi: Chat with Grace.",
+            "Your World, Simplified.",
+            "Boxbi: The Art of Conversation.",
+            "Stay Rose-Tinted.",
+            "Simply Better.",
+            "Boxbi: Simply Smooth. Beautifully Rose."
+        ];
+        let currentSloganIndex = 0;
         let lastMessageDates = {};
         let typingTimeout = null;
         let typingHideTimeout = null;
+
+        function switchSidebarTab(mode) {
+            sidebarMode = mode;
+            document.getElementById('tab-btn-friends').classList.toggle('active', mode === 'friends');
+            document.getElementById('tab-btn-discover').classList.toggle('active', mode === 'discover');
+            displayUsers(allUsers, document.getElementById('user-search').value);
+        }
+
+        function rotateSlogans() {
+            const sloganEl = document.getElementById('slogan-text');
+            if (!sloganEl) return;
+
+            setInterval(() => {
+                sloganEl.classList.add('fade-out');
+                setTimeout(() => {
+                    currentSloganIndex = (currentSloganIndex + 1) % slogans.length;
+                    sloganEl.textContent = slogans[currentSloganIndex];
+                    sloganEl.classList.remove('fade-out');
+                }, 500);
+            }, 4000);
+        }
+
+        // Initialize slogans if on auth page
+        if (!localStorage.getItem('currentUser')) {
+            setTimeout(rotateSlogans, 2000);
+        }
 
         function switchTab(tab) {
             currentTab = tab;
@@ -613,9 +658,16 @@
 
             if (query) {
                 renderSection(`Search Results for "${query}"`, users);
-            } else {
+            } else if (sidebarMode === 'friends') {
                 renderSection('My Friends', friends);
-                renderSection('Available Users', available);
+                if (friends.length === 0) {
+                    usersList.innerHTML = '<div class="empty-state">No friends yet. Search and add some!</div>';
+                }
+            } else {
+                renderSection('Discover Users', available);
+                if (available.length === 0) {
+                    usersList.innerHTML = '<div class="empty-state">Everyone is your friend! Wow!</div>';
+                }
             }
 
             function renderSection(label, list) {
@@ -679,10 +731,11 @@
             document.getElementById('chat-app').classList.add('mobile-chat-active');
 
             // Update header with avatar color
-            document.getElementById('chat-name').textContent = username;
-            document.getElementById('chat-status').textContent = 'Online';
             document.getElementById('chat-avatar').textContent = username[0].toUpperCase();
             document.getElementById('chat-avatar').style.background = avatarColor(username);
+
+            // Show delete button
+            document.getElementById('delete-chat-btn').style.display = 'inline-flex';
 
             // Check if friend to enable/disable input
             const isFriend = friendsList.includes(username);
@@ -719,6 +772,34 @@
 
             // Load chat history
             loadChatHistory(username);
+        }
+
+        async function deleteChat() {
+            if (!selectedRecipient) return;
+            if (!confirm(`Are you sure you want to delete all messages with ${selectedRecipient}? This cannot be undone.`)) return;
+
+            try {
+                const response = await fetch(`${API_URL}/messages/${selectedRecipient}?currentUser=${currentUser.username}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    document.getElementById('messages').innerHTML = `
+                        <div class="empty-state-chat">
+                            <span class="material-symbols-outlined" style="font-size:48px; color: var(--text-muted);">delete_sweep</span>
+                            <p>Conversation deleted</p>
+                        </div>
+                    `;
+                    // Refresh last message preview in list
+                    lastMessages[selectedRecipient] = null;
+                    refreshData();
+                } else {
+                    alert('Failed to delete chat');
+                }
+            } catch (err) {
+                console.error('Error deleting chat:', err);
+                alert('Connection error');
+            }
         }
 
         async function loadChatHistory(contact) {

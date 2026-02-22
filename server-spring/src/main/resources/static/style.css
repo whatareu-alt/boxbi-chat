@@ -1769,3 +1769,65 @@ body {
         transform: scaleX(1);
     }
 }
+/* ===== DANGER BUTTON STYLES ===== */
+.btn-danger-outline {
+    background: transparent;
+    border: 1px solid var(--danger);
+    color: var(--danger);
+    padding: 6px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-danger-outline:hover {
+    background: var(--danger);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+}
+
+.sidebar-tabs .tab-btn {
+    flex: 1;
+    padding: 12px;
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--text-secondary);
+    border: none;
+    border-bottom: 2px solid transparent;
+    background: transparent;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+}
+
+.sidebar-tabs .tab-btn.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+}
+
+.empty-state-chat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--text-muted);
+    gap: 12px;
+}
+
+
+/* ===== DYNAMIC SLOGAN STYLES ===== */
+.slogan-text {
+    transition: opacity 0.5s ease, transform 0.5s ease;
+    opacity: 0.8;
+}
+
+.slogan-text.fade-out {
+    opacity: 0;
+    transform: translateY(5px);
+}
+
