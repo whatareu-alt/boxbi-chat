@@ -732,6 +732,7 @@
         }
 
         function exitChatView() {
+            stopChatPolling();
             document.getElementById('chat-app').classList.remove('mobile-chat-active');
             selectedRecipient = null;
             // Deselect active user
@@ -819,6 +820,33 @@
             }
         }
 
+        let chatPollInterval = null;
+        let lastKnownMsgCount = 0;
+
+        function startChatPolling(contact) {
+            stopChatPolling();
+            lastKnownMsgCount = document.getElementById('messages').querySelectorAll('.message').length;
+            chatPollInterval = setInterval(async () => {
+                if (!selectedRecipient || selectedRecipient !== contact) return stopChatPolling();
+                try {
+                    const r = await fetch(`${API_URL}/messages/${contact}?currentUser=${currentUser.username}`);
+                    if (!r.ok) return;
+                    const msgs = await r.json();
+                    const currentCount = document.getElementById('messages').querySelectorAll('.message').length;
+                    if (msgs.length > currentCount) {
+                        // New messages found — reload the chat
+                        document.getElementById('messages').innerHTML = '';
+                        lastMessageDates[contact] = null;
+                        msgs.forEach(displayMessage);
+                    }
+                } catch (e) { /* silent */ }
+            }, 3000);
+        }
+
+        function stopChatPolling() {
+            if (chatPollInterval) { clearInterval(chatPollInterval); chatPollInterval = null; }
+        }
+
         async function loadChatHistory(contact) {
             try {
                 const response = await fetch(`${API_URL}/messages/${contact}?currentUser=${currentUser.username}`);
@@ -826,6 +854,7 @@
                     const messages = await response.json();
                     console.log(`Loaded ${messages.length} messages`);
                     messages.forEach(displayMessage);
+                    startChatPolling(contact);
                 }
             } catch (e) {
                 console.error('Error loading history:', e);
@@ -860,7 +889,7 @@
         });
 
         function getDateLabel(timestamp) {
-            const date = new Date(timestamp);
+            const date = new Date(typeof timestamp === 'number' ? timestamp : String(timestamp).replace(' ', 'T'));
             const today = new Date();
             const yesterday = new Date();
             yesterday.setDate(today.getDate() - 1);
@@ -869,12 +898,26 @@
             return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
         }
 
+        function parseTimestamp(ts) {
+            if (!ts) return new Date();
+            if (typeof ts === 'number') return new Date(ts);
+            // SQLite stores as '2026-02-23 20:14:00' — replace space with T for valid ISO
+            const fixed = String(ts).replace(' ', 'T');
+            const d = new Date(fixed);
+            return isNaN(d.getTime()) ? new Date() : d;
+        }
+
         function displayMessage(message) {
             const messagesDiv = document.getElementById('messages');
             const conversationKey = selectedRecipient;
 
+            // Clear welcome screen on first message
+            const welcome = messagesDiv.querySelector('.welcome-screen');
+            if (welcome) welcome.remove();
+
             // Date divider
-            const dateLabel = getDateLabel(message.timestamp);
+            const ts = parseTimestamp(message.timestamp);
+            const dateLabel = getDateLabel(ts.getTime());
             if (lastMessageDates[conversationKey] !== dateLabel) {
                 lastMessageDates[conversationKey] = dateLabel;
                 const divider = document.createElement('div');
@@ -889,10 +932,7 @@
                 messageDiv.classList.add('own');
             }
 
-            const ts = message.timestamp ? new Date(message.timestamp) : new Date();
-            const time = isNaN(ts.getTime())
-                ? new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-                : ts.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            const time = ts.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
             const safeContent = escapeHtml(message.content);
             messageDiv.innerHTML = `
