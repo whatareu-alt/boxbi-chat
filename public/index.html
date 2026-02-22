@@ -1026,7 +1026,7 @@
             }
         }
 
-        function saveProfileChanges() {
+        async function saveProfileChanges() {
             if (!currentUser) return;
 
             const firstName = document.getElementById('edit-firstname').value.trim();
@@ -1038,36 +1038,47 @@
                 return;
             }
 
-            // Update local user object
-            currentUser.firstName = firstName;
-            currentUser.lastName = lastName;
-            currentUser.email = email;
+            const saveBtn = document.querySelector('#profile-edit-mode .btn-primary');
+            const originalText = saveBtn.textContent;
+            saveBtn.textContent = 'Saving...';
+            saveBtn.disabled = true;
 
-            // Save to localStorage
-            localStorage.setItem('currentUser', JSON.stringify(currentUser));
-            sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+            try {
+                const response = await fetch(`${API_URL}/users/${currentUser.username}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ firstName, lastName, email })
+                });
 
-            // Update profile display
-            const name = `${firstName} ${lastName}`;
-            const initials = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+                if (!response.ok) throw new Error('Server error');
 
-            document.getElementById('profile-avatar-lg').textContent = initials;
-            document.getElementById('sidebar-avatar-initials').textContent = initials;
-            document.getElementById('profile-fullname').textContent = name;
-            document.getElementById('sidebar-username').textContent = firstName;
+                // Update local user object
+                currentUser.firstName = firstName;
+                currentUser.lastName = lastName;
+                currentUser.email = email;
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
 
-            // Send update to server if needed
-            if (stompClient && stompClient.connected) {
-                stompClient.send('/app/user/update', {}, JSON.stringify({
-                    firstName: firstName,
-                    lastName: lastName,
-                    email: email
-                }));
+                // Update UI
+                const name = `${firstName} ${lastName}`;
+                const initials = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+                const avatarEl = document.getElementById('profile-avatar-lg');
+                if (!avatarEl.style.backgroundImage) avatarEl.textContent = initials;
+                const sidebarAv = document.getElementById('sidebar-avatar-initials');
+                if (sidebarAv && !sidebarAv.style.backgroundImage) sidebarAv.textContent = initials;
+                document.getElementById('profile-fullname').textContent = name;
+                const usernameEl = document.getElementById('sidebar-username');
+                if (usernameEl) usernameEl.textContent = firstName;
+
+                toggleProfileEdit();
+                alert('Profile updated successfully!');
+            } catch (err) {
+                console.error('Profile update failed:', err);
+                alert('Failed to update profile. Please try again.');
+            } finally {
+                saveBtn.textContent = originalText;
+                saveBtn.disabled = false;
             }
-
-            // Switch back to view mode
-            toggleProfileEdit();
-            alert('Profile updated successfully!');
         }
 
         function previewProfilePic(event) {

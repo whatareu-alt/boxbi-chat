@@ -68,6 +68,16 @@ app.get('/users/search', async (c) => {
     return c.json(users.results);
 });
 
+app.put('/users/:username', async (c) => {
+    const username = c.req.param('username');
+    const { firstName, lastName, email } = await c.req.json();
+    if (!firstName || !lastName || !email) return c.json({ error: 'Missing fields' }, 400);
+    await c.env.DB.prepare(
+        'UPDATE users SET first_name = ?, last_name = ?, email = ? WHERE username = ?'
+    ).bind(firstName, lastName, email, username).run();
+    return c.json({ message: 'Profile updated' });
+});
+
 // Friends
 app.post('/friends/request', async (c) => {
     const { sender, receiver } = await c.req.json();
