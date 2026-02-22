@@ -148,6 +148,16 @@ app.get('/messages/:contact', async (c) => {
     return c.json(messages.results);
 });
 
+app.delete('/messages/:contact', async (c) => {
+    const contact = c.req.param('contact');
+    const currentUser = c.req.query('currentUser');
+    if (!currentUser || !contact) return c.json({ error: 'Missing params' }, 400);
+    await c.env.DB.prepare(
+        'DELETE FROM messages WHERE (sender = ? AND recipient = ?) OR (sender = ? AND recipient = ?)'
+    ).bind(currentUser, contact, contact, currentUser).run();
+    return c.json({ message: 'Chat deleted' });
+});
+
 app.get('/groups/:groupId/messages', async (c) => {
     const groupId = c.req.param('groupId');
     const messages = await c.env.DB.prepare(
