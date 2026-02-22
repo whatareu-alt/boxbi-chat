@@ -78,6 +78,21 @@ app.put('/users/:username', async (c) => {
     return c.json({ message: 'Profile updated' });
 });
 
+app.delete('/users/:username', async (c) => {
+    const username = c.req.param('username');
+    // Delete all messages involving this user
+    await c.env.DB.prepare(
+        'DELETE FROM messages WHERE sender = ? OR recipient = ?'
+    ).bind(username, username).run();
+    // Delete all friend requests involving this user
+    await c.env.DB.prepare(
+        'DELETE FROM friend_requests WHERE sender_username = ? OR receiver_username = ?'
+    ).bind(username, username).run();
+    // Delete the user
+    await c.env.DB.prepare('DELETE FROM users WHERE username = ?').bind(username).run();
+    return c.json({ message: 'Account deleted' });
+});
+
 // Friends
 app.post('/friends/request', async (c) => {
     const { sender, receiver } = await c.req.json();
@@ -89,6 +104,17 @@ app.post('/friends/request', async (c) => {
     } catch (e) {
         return c.json({ error: 'Request already exists or user not found' }, 400);
     }
+});
+
+app.delete('/friends/:friend', async (c) => {
+    const friend = c.req.param('friend');
+    const currentUser = c.req.query('currentUser');
+    if (!currentUser) return c.json({ error: 'Missing currentUser' }, 400);
+    await c.env.DB.prepare(
+        `DELETE FROM friend_requests WHERE status = 'ACCEPTED' AND
+        ((sender_username = ? AND receiver_username = ?) OR (sender_username = ? AND receiver_username = ?))`
+    ).bind(currentUser, friend, friend, currentUser).run();
+    return c.json({ message: 'Unfriended' });
 });
 
 app.get('/friends/requests/pending', async (c) => {

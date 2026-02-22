@@ -268,6 +268,10 @@
                     <span class="material-symbols-outlined profile-logout-icon">logout</span>
                     Logout
                 </button>
+                <button class="btn btn-delete-account" onclick="deleteAccount()">
+                    <span class="material-symbols-outlined profile-logout-icon">delete_forever</span>
+                    Delete Account
+                </button>
             </div>
         </div>
 
@@ -689,7 +693,8 @@
                 list.forEach(user => {
                     const isFriend = friendsList.includes(user.username);
                     let statusHtml = isFriend
-                        ? '<span style="color: var(--success); font-size: 12px; font-weight: 600;">Friend ✅</span>'
+                        ? `<span style="color: var(--success); font-size: 12px; font-weight: 600;">Friend ✅</span>
+                           <button onclick="unfriend('${user.username}'); event.stopPropagation();" class="btn-unfriend" title="Remove friend">✕ Unfriend</button>`
                         : `<button onclick="sendFriendRequest('${user.username}'); event.stopPropagation();" class="btn btn-primary" style="padding:3px 10px; font-size:11px;">Add Friend</button>`;
 
                     const gradient = avatarColor(user.username);
@@ -1126,6 +1131,52 @@
                 }
             };
             reader.readAsDataURL(file);
+        }
+
+        async function deleteAccount() {
+            if (!currentUser) return;
+            if (!confirm(`⚠️ Are you sure you want to permanently delete your account "@${currentUser.username}"? This will delete all your messages and friend connections. This CANNOT be undone.`)) return;
+            if (!confirm('Last warning: all your data will be deleted forever. Continue?')) return;
+
+            try {
+                const response = await fetch(`${API_URL}/users/${currentUser.username}`, {
+                    method: 'DELETE'
+                });
+                if (response.ok) {
+                    if (stompClient) stompClient.disconnect();
+                    localStorage.clear();
+                    sessionStorage.clear();
+                    alert('Your account has been deleted.');
+                    window.location.reload();
+                } else {
+                    alert('Failed to delete account. Please try again.');
+                }
+            } catch (err) {
+                console.error('Delete account error:', err);
+                alert('Connection error. Please try again.');
+            }
+        }
+
+        async function unfriend(friendUsername) {
+            if (!currentUser) return;
+            if (!confirm(`Remove ${friendUsername} from your friends?`)) return;
+
+            try {
+                const response = await fetch(`${API_URL}/friends/${friendUsername}?currentUser=${currentUser.username}`, {
+                    method: 'DELETE'
+                });
+                if (response.ok) {
+                    // If we were chatting with this person, exit chat
+                    if (selectedRecipient === friendUsername) exitChatView();
+                    await loadFriendsList();
+                    await loadUsers();
+                } else {
+                    alert('Failed to unfriend. Please try again.');
+                }
+            } catch (err) {
+                console.error('Unfriend error:', err);
+                alert('Connection error.');
+            }
         }
 
         function logout() {
