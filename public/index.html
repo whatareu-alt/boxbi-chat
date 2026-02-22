@@ -19,65 +19,73 @@
 
     <!-- Auth Page -->
     <div id="auth-page" class="auth-page">
-        <div class="auth-container">
+
+        <!-- LEFT: Branding -->
+        <div class="auth-left">
             <img src="logo.png" alt="Boxbi Logo" class="auth-logo">
-            <p id="slogan-text" class="slogan-text">CONNECT YOUR WORLD</p>
+            <h1 class="auth-brand-name">Boxbi</h1>
+            <p class="auth-tagline">Connect with friends and the world around you on Boxbi.</p>
+        </div>
 
-            <!-- Login Form -->
-            <form id="login-form">
-                <div class="form-group">
-                    <input type="text" id="login-username" placeholder="Username" required autocomplete="username">
-                </div>
-                <div class="form-group">
-                    <input type="password" id="login-password" placeholder="Password" required
-                        autocomplete="current-password">
+        <!-- RIGHT: Login Card -->
+        <div class="auth-right">
+            <div class="auth-container">
+
+                <!-- Login Form -->
+                <form id="login-form">
+                    <div class="form-group">
+                        <input type="text" id="login-username" placeholder="Username" required autocomplete="username">
+                    </div>
+                    <div class="form-group">
+                        <input type="password" id="login-password" placeholder="Password" required
+                            autocomplete="current-password">
+                    </div>
+                    <div class="form-checkbox-group">
+                        <input type="checkbox" id="remember-me" checked>
+                        <label for="remember-me">Remember me</label>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Sign In</button>
+                    <div class="error hidden" id="login-error"></div>
+                </form>
+
+                <div class="auth-divider">or</div>
+
+                <div class="toggle-auth">
+                    Don't have an account? <a href="#" id="show-signup">Create one</a>
                 </div>
 
-                <div class="form-checkbox-group">
-                    <input type="checkbox" id="remember-me" checked>
-                    <label for="remember-me">Remember me</label>
+                <!-- Signup Form -->
+                <form id="signup-form" class="hidden">
+                    <div class="form-group">
+                        <input type="text" id="signup-username" placeholder="Username" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="email" id="signup-email" placeholder="Email" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="text" id="signup-firstname" placeholder="First Name" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="text" id="signup-lastname" placeholder="Last Name" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="password" id="signup-password" placeholder="Password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Create Account</button>
+                    <div class="error hidden" id="signup-error"></div>
+                </form>
+
+                <div class="toggle-auth hidden" id="show-login-link">
+                    Have an account? <a href="#" id="show-login">Sign in</a>
                 </div>
 
-                <button type="submit" class="btn btn-primary">Sign In</button>
-                <div class="error hidden" id="login-error"></div>
-            </form>
-
-            <div class="auth-divider">or</div>
-
-            <div class="toggle-auth">
-                Don't have an account? <a href="#" id="show-signup">Create one</a>
-            </div>
-
-            <!-- Signup Form -->
-            <form id="signup-form" class="hidden">
-                <div class="form-group">
-                    <input type="text" id="signup-username" placeholder="Username" required>
+                <div class="admin-reset-container">
+                    <button onclick="showAdminReset()" class="btn btn-ghost">Admin Reset</button>
                 </div>
-                <div class="form-group">
-                    <input type="email" id="signup-email" placeholder="Email" required>
-                </div>
-                <div class="form-group">
-                    <input type="text" id="signup-firstname" placeholder="First Name" required>
-                </div>
-                <div class="form-group">
-                    <input type="text" id="signup-lastname" placeholder="Last Name" required>
-                </div>
-                <div class="form-group">
-                    <input type="password" id="signup-password" placeholder="Password" required>
-                </div>
-                <button type="submit" class="btn btn-primary">Create Account</button>
-                <div class="error hidden" id="signup-error"></div>
-            </form>
 
-            <div class="toggle-auth hidden" id="show-login-link">
-                Have an account? <a href="#" id="show-login">Sign in</a>
-            </div>
-
-            <div class="admin-reset-container">
-                <button onclick="showAdminReset()" class="btn btn-ghost">Admin Reset</button>
             </div>
         </div>
-        
+
         <!-- Admin Menu Button -->
         <button onclick="showAdminReset()" class="admin-menu-btn" title="Admin Menu">⚙</button>
     </div>
@@ -189,13 +197,21 @@
                     <span class="material-symbols-outlined">arrow_back</span>
                 </button>
                 <span>Profile</span>
+                <button class="profile-edit-btn" id="profile-edit-toggle" onclick="toggleProfileEdit()">
+                    <span class="material-symbols-outlined">edit</span>
+                </button>
             </div>
 
             <div class="profile-cover">
-                <div class="profile-avatar-lg" id="profile-avatar-lg">?</div>
+                <div class="profile-avatar-lg" id="profile-avatar-lg"
+                    onclick="document.getElementById('profile-pic-input').click()" style="cursor: pointer;"
+                    title="Click to change profile picture">?</div>
+                <input type="file" id="profile-pic-input" accept="image/*" style="display: none;"
+                    onchange="handleProfilePicChange(event)">
             </div>
 
-            <div class="profile-body">
+            <!-- View Mode -->
+            <div id="profile-view-mode" class="profile-body">
                 <div class="profile-field">
                     <span class="profile-field-label">
                         <span class="material-symbols-outlined">person</span> Your Name
@@ -216,7 +232,41 @@
                 </div>
             </div>
 
-            <div class="profile-actions">
+            <!-- Edit Mode -->
+            <div id="profile-edit-mode" class="profile-body profile-edit-form hidden">
+                <div class="profile-field">
+                    <span class="profile-field-label">
+                        <span class="material-symbols-outlined">person</span> First Name
+                    </span>
+                    <input type="text" id="edit-firstname" class="profile-edit-input" placeholder="First Name">
+                </div>
+                <div class="profile-field">
+                    <span class="profile-field-label">
+                        <span class="material-symbols-outlined">person</span> Last Name
+                    </span>
+                    <input type="text" id="edit-lastname" class="profile-edit-input" placeholder="Last Name">
+                </div>
+                <div class="profile-field">
+                    <span class="profile-field-label">
+                        <span class="material-symbols-outlined">image</span> Profile Picture
+                    </span>
+                    <input type="file" id="edit-profile-pic" class="profile-pic-upload-input" accept="image/*"
+                        onchange="previewProfilePic(event)">
+                    <div id="pic-preview" class="profile-pic-preview hidden"></div>
+                </div>
+                <div class="profile-field">
+                    <span class="profile-field-label">
+                        <span class="material-symbols-outlined">alternate_email</span> Email
+                    </span>
+                    <input type="email" id="edit-email" class="profile-edit-input" placeholder="Email">
+                </div>
+                <div class="profile-edit-actions">
+                    <button class="btn btn-primary" onclick="saveProfileChanges()">Save Changes</button>
+                    <button class="btn btn-secondary" onclick="toggleProfileEdit()">Cancel</button>
+                </div>
+            </div>
+
+            <div class="profile-actions" id="profile-actions-logout">
                 <button class="btn btn-primary" onclick="closeProfile(); logout();">
                     <span class="material-symbols-outlined profile-logout-icon">logout</span>
                     Logout
@@ -929,8 +979,32 @@
                 : currentUser.username;
             const initials = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
 
-            document.getElementById('profile-avatar-lg').textContent = initials;
-            document.getElementById('sidebar-avatar-initials').textContent = initials;
+            const profileAvatar = document.getElementById('profile-avatar-lg');
+            const sidebarAvatar = document.getElementById('sidebar-avatar-initials');
+
+            // Check if user has a profile picture
+            if (currentUser.profilePicture) {
+                profileAvatar.style.backgroundImage = `url('${currentUser.profilePicture}')`;
+                profileAvatar.style.backgroundSize = 'cover';
+                profileAvatar.style.backgroundPosition = 'center';
+                profileAvatar.textContent = '';
+
+                if (sidebarAvatar) {
+                    sidebarAvatar.style.backgroundImage = `url('${currentUser.profilePicture}')`;
+                    sidebarAvatar.style.backgroundSize = 'cover';
+                    sidebarAvatar.style.backgroundPosition = 'center';
+                    sidebarAvatar.textContent = '';
+                }
+            } else {
+                profileAvatar.style.backgroundImage = '';
+                profileAvatar.textContent = initials;
+
+                if (sidebarAvatar) {
+                    sidebarAvatar.style.backgroundImage = '';
+                    sidebarAvatar.textContent = initials;
+                }
+            }
+
             document.getElementById('profile-fullname').textContent = name;
             document.getElementById('profile-username').textContent = '@' + currentUser.username;
 
@@ -941,6 +1015,122 @@
         function closeProfile() {
             document.getElementById('profile-panel').classList.remove('open');
             document.getElementById('profile-backdrop').classList.remove('open');
+        }
+
+        function toggleProfileEdit() {
+            const viewMode = document.getElementById('profile-view-mode');
+            const editMode = document.getElementById('profile-edit-mode');
+            const logoutBtn = document.getElementById('profile-actions-logout');
+
+            if (editMode.classList.contains('hidden')) {
+                // Switch to edit mode
+                editMode.classList.remove('hidden');
+                viewMode.style.display = 'none';
+                logoutBtn.style.display = 'none';
+
+                // Populate edit fields
+                if (currentUser) {
+                    document.getElementById('edit-firstname').value = currentUser.firstName || '';
+                    document.getElementById('edit-lastname').value = currentUser.lastName || '';
+                    document.getElementById('edit-email').value = currentUser.email || '';
+                }
+            } else {
+                // Switch back to view mode
+                editMode.classList.add('hidden');
+                viewMode.style.display = 'block';
+                logoutBtn.style.display = 'block';
+            }
+        }
+
+        function saveProfileChanges() {
+            if (!currentUser) return;
+
+            const firstName = document.getElementById('edit-firstname').value.trim();
+            const lastName = document.getElementById('edit-lastname').value.trim();
+            const email = document.getElementById('edit-email').value.trim();
+
+            if (!firstName || !lastName || !email) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            // Update local user object
+            currentUser.firstName = firstName;
+            currentUser.lastName = lastName;
+            currentUser.email = email;
+
+            // Save to localStorage
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+
+            // Update profile display
+            const name = `${firstName} ${lastName}`;
+            const initials = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+
+            document.getElementById('profile-avatar-lg').textContent = initials;
+            document.getElementById('sidebar-avatar-initials').textContent = initials;
+            document.getElementById('profile-fullname').textContent = name;
+            document.getElementById('sidebar-username').textContent = firstName;
+
+            // Send update to server if needed
+            if (stompClient && stompClient.connected) {
+                stompClient.send('/app/user/update', {}, JSON.stringify({
+                    firstName: firstName,
+                    lastName: lastName,
+                    email: email
+                }));
+            }
+
+            // Switch back to view mode
+            toggleProfileEdit();
+            alert('Profile updated successfully!');
+        }
+
+        function previewProfilePic(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const preview = document.getElementById('pic-preview');
+                preview.innerHTML = `<img src="${e.target.result}" alt="Profile Picture Preview">`;
+                preview.classList.remove('hidden');
+
+                // Store the image data in currentUser
+                if (!currentUser) currentUser = {};
+                currentUser.profilePicture = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function handleProfilePicChange(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                // Update avatar with profile picture
+                const profileAvatar = document.getElementById('profile-avatar-lg');
+                profileAvatar.style.backgroundImage = `url('${e.target.result}')`;
+                profileAvatar.style.backgroundSize = 'cover';
+                profileAvatar.style.backgroundPosition = 'center';
+                profileAvatar.textContent = '';
+
+                // Store in currentUser
+                if (!currentUser) currentUser = {};
+                currentUser.profilePicture = e.target.result;
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+
+                // Also update sidebar avatar
+                const sidebarAvatar = document.getElementById('sidebar-avatar-initials');
+                if (sidebarAvatar) {
+                    sidebarAvatar.style.backgroundImage = `url('${e.target.result}')`;
+                    sidebarAvatar.style.backgroundSize = 'cover';
+                    sidebarAvatar.style.backgroundPosition = 'center';
+                    sidebarAvatar.textContent = '';
+                }
+            };
+            reader.readAsDataURL(file);
         }
 
         function logout() {
