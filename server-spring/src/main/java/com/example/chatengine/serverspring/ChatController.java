@@ -193,4 +193,18 @@ public class ChatController {
             return ResponseEntity.internalServerError().build();
         }
     }
+
+    @org.springframework.web.bind.annotation.DeleteMapping("/messages/{contact}")
+    public ResponseEntity<Void> deleteChatHistory(
+            @PathVariable String contact,
+            @RequestParam String currentUser) {
+        try {
+            messageRepository.deleteConversationBetween(currentUser, contact);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            System.err.println("❌ Error deleting chat history: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
+    }
 }

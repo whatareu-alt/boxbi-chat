@@ -16,4 +16,16 @@ public interface MessageRepository extends JpaRepository<ChatMessage, Long> {
     List<ChatMessage> findConversationBetween(@Param("user1") String user1, @Param("user2") String user2);
 
     List<ChatMessage> findByGroupIdOrderByTimestamp(Long groupId);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @jakarta.transaction.Transactional
+    @Query("DELETE FROM ChatMessage m WHERE " +
+            "(m.sender = :user1 AND m.recipient = :user2) OR " +
+            "(m.sender = :user2 AND m.recipient = :user1)")
+    void deleteConversationBetween(@Param("user1") String user1, @Param("user2") String user2);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @jakarta.transaction.Transactional
+    @Query("DELETE FROM ChatMessage m WHERE m.groupId = :groupId")
+    void deleteByGroupId(@Param("groupId") Long groupId);
 }
