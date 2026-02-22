@@ -115,6 +115,9 @@
                     <button id="refresh-btn" onclick="refreshData()" class="icon-btn" title="Refresh Data">
                         <span class="material-symbols-outlined icon-lg">refresh</span>
                     </button>
+                    <button class="icon-btn" onclick="toggleDarkMode()" title="Toggle Dark Mode" id="dark-mode-btn">
+                        <span class="material-symbols-outlined icon-lg" id="dark-mode-icon">dark_mode</span>
+                    </button>
                 </div>
             </div>
 
@@ -136,7 +139,35 @@
                     <input type="text" id="user-search" placeholder="Search users..." onkeyup="filterUsers(this.value)">
                 </div>
                 <div class="users-list" id="users-list">
-                    <div class="empty-state">Loading users...</div>
+                    <!-- Skeleton Loading -->
+                    <div class="skeleton-item">
+                        <div class="skeleton-avatar"></div>
+                        <div class="skeleton-lines">
+                            <div class="skeleton-line"></div>
+                            <div class="skeleton-line short"></div>
+                        </div>
+                    </div>
+                    <div class="skeleton-item">
+                        <div class="skeleton-avatar"></div>
+                        <div class="skeleton-lines">
+                            <div class="skeleton-line"></div>
+                            <div class="skeleton-line short"></div>
+                        </div>
+                    </div>
+                    <div class="skeleton-item">
+                        <div class="skeleton-avatar"></div>
+                        <div class="skeleton-lines">
+                            <div class="skeleton-line"></div>
+                            <div class="skeleton-line short"></div>
+                        </div>
+                    </div>
+                    <div class="skeleton-item">
+                        <div class="skeleton-avatar"></div>
+                        <div class="skeleton-lines">
+                            <div class="skeleton-line"></div>
+                            <div class="skeleton-line short"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -215,6 +246,11 @@
                     </div>
                 </div>
             </div>
+            <!-- Scroll to Bottom Button -->
+            <button id="scroll-to-bottom" class="scroll-to-bottom-btn" onclick="scrollToBottom()"
+                title="Scroll to bottom">
+                <span class="material-symbols-outlined">keyboard_arrow_down</span>
+            </button>
 
             <div class="chat-input">
                 <form class="chat-input-form" id="message-form">
@@ -583,41 +619,53 @@
             }
 
             usersList.innerHTML = '';
-            users.forEach(user => {
-                const isFriend = friendsList.includes(user.username);
-                let statusHtml = '';
 
-                if (isFriend) {
-                    statusHtml = '<span style="color: #4ade80; font-size: 12px; font-weight: 600;">Friend ✅</span>';
-                } else {
-                    // Start of render_diff logic adaptation:
-                    // Add friend button that stops propagation so we don't select the user
-                    statusHtml = `<button onclick="sendFriendRequest('${user.username}'); event.stopPropagation();"
-        style="background: #3b82f6; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">Add
-        Friend</button>`;
-                }
+            const friends = users.filter(u => friendsList.includes(u.username));
+            const others = users.filter(u => !friendsList.includes(u.username));
 
-                const userItem = document.createElement('div');
-                userItem.className = 'user-item';
-                userItem.id = `user-${user.username}`;
-                userItem.onclick = () => selectUser(user.username);
+            function renderSection(label, list) {
+                if (list.length === 0) return;
+                const labelEl = document.createElement('div');
+                labelEl.className = 'sidebar-section-label';
+                labelEl.textContent = label;
+                usersList.appendChild(labelEl);
 
-                userItem.innerHTML = `
-    <div class="user-avatar">${user.username[0].toUpperCase()}</div>
+                list.forEach(user => {
+                    const isFriend = friendsList.includes(user.username);
+                    let statusHtml = isFriend
+                        ? '<span style="color: var(--success); font-size: 12px; font-weight: 600;">Friend ✅</span>'
+                        : `<button onclick="sendFriendRequest('${user.username}'); event.stopPropagation();" class="btn btn-primary" style="padding:3px 10px; font-size:11px;">Add Friend</button>`;
+
+                    const gradient = avatarColor(user.username);
+
+                    const userItem = document.createElement('div');
+                    userItem.className = 'user-item';
+                    userItem.id = `user-${user.username}`;
+                    userItem.onclick = () => selectUser(user.username);
+
+                    userItem.innerHTML = `
+    <div class="user-avatar-wrap">
+        <div class="user-avatar" style="background:${gradient}">${user.username[0].toUpperCase()}</div>
+        <div class="status-dot"></div>
+    </div>
     <div class="user-info">
         <div class="user-name-row">
             <div class="user-name">${user.username}</div>
             <div class="unread-badge" id="unread-${user.username}" style="display:none;">0</div>
         </div>
-        <div class="user-last-preview" id="preview-${user.username}">${isFriend ? '👋 Say hi!' : ''}</div>
+        <div class="user-last-preview" id="preview-${user.username}">${isFriend ? '👋 Say hi!' : 'Send a friend request'}</div>
         <div class="status-row">
-            <div class="user-status">Online</div>
+            <div class="user-status">🟢 Online</div>
             <div>${statusHtml}</div>
         </div>
     </div>
     `;
-                usersList.appendChild(userItem);
-            });
+                    usersList.appendChild(userItem);
+                });
+            }
+
+            renderSection('Friends 🟢', friends);
+            renderSection('All Users', others);
         }
 
         function filterUsers(query) {
@@ -643,11 +691,11 @@
             // Enable Mobile View
             document.getElementById('chat-app').classList.add('mobile-chat-active');
 
-            // Update header
+            // Update header with avatar color
             document.getElementById('chat-name').textContent = username;
             document.getElementById('chat-status').textContent = 'Online';
             document.getElementById('chat-avatar').textContent = username[0].toUpperCase();
-            document.getElementById('chat-avatar').style.background = '#0ea5e9'; // Default user avatar color
+            document.getElementById('chat-avatar').style.background = avatarColor(username);
 
             // Check if friend to enable/disable input
             const isFriend = friendsList.includes(username);
@@ -761,10 +809,14 @@
                 minute: '2-digit'
             });
 
+            const safeContent = escapeHtml(message.content);
             messageDiv.innerHTML = `
     <div class="message-content">
+        <div class="msg-actions">
+            <button class="msg-action-btn" title="Copy" data-content="${safeContent}" onclick="copyMessage(this)">📋</button>
+        </div>
         <div class="message-sender">${message.sender}</div>
-        ${escapeHtml(message.content)}
+        ${safeContent}
         <div class="message-time">${time}</div>
     </div>
     `;
@@ -784,6 +836,14 @@
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
+        }
+
+        function copyMessage(btn) {
+            const text = btn.getAttribute('data-content') || '';
+            navigator.clipboard.writeText(text).then(() => {
+                btn.textContent = '✅';
+                setTimeout(() => btn.textContent = '📋', 1500);
+            });
         }
 
         async function refreshData() {
@@ -824,7 +884,7 @@
 
             // Populate initials
             const name = currentUser.firstName && currentUser.lastName
-                ? `${currentUser.firstName} ${currentUser.lastName}`
+                ? `${currentUser.firstName} ${currentUser.lastName} `
                 : currentUser.username;
             const initials = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
 
@@ -907,7 +967,7 @@
             }
 
             try {
-                const response = await fetch(`${API_URL}/admin/reset`, {
+                const response = await fetch(`${API_URL} /admin/reset`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ secret })
@@ -929,6 +989,50 @@
                 errorDiv.style.display = 'block';
             }
         }
+
+        // ===== DARK MODE =====
+        (function () {
+            const saved = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', saved);
+            if (saved === 'dark') {
+                const icon = document.getElementById('dark-mode-icon');
+                if (icon) icon.textContent = 'light_mode';
+            }
+        })();
+
+        function toggleDarkMode() {
+            const html = document.documentElement;
+            const isDark = html.getAttribute('data-theme') === 'dark';
+            const next = isDark ? 'light' : 'dark';
+            html.setAttribute('data-theme', next);
+            localStorage.setItem('theme', next);
+            document.getElementById('dark-mode-icon').textContent = next === 'dark' ? 'light_mode' : 'dark_mode';
+        }
+
+        // ===== AVATAR COLOR (unique gradient per username) =====
+        function avatarColor(username) {
+            let hash = 0;
+            for (let i = 0; i < username.length; i++) hash = username.charCodeAt(i) + ((hash << 5) - hash);
+            const h = Math.abs(hash) % 360;
+            return `linear - gradient(135deg, hsl(${h}, 70 %, 55 %) 0 %, hsl(${(h + 40) % 360}, 80 %, 65 %) 100 %)`;
+        }
+
+        // ===== SCROLL TO BOTTOM BUTTON =====
+        function scrollToBottom() {
+            const container = document.getElementById('messages');
+            container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+        }
+
+        function setupScrollObserver() {
+            const container = document.getElementById('messages');
+            const btn = document.getElementById('scroll-to-bottom');
+            if (!container || !btn) return;
+            container.addEventListener('scroll', () => {
+                const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 120;
+                btn.classList.toggle('visible', !isNearBottom);
+            });
+        }
+        setupScrollObserver();
     </script>
 </body>
 
