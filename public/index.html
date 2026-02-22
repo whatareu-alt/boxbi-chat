@@ -856,23 +856,21 @@
         }
 
         let chatPollInterval = null;
-        let lastKnownMsgCount = 0;
+        let dbMsgCount = 0; // tracks how many DB messages are currently rendered
 
         function startChatPolling(contact) {
             stopChatPolling();
-            lastKnownMsgCount = document.getElementById('messages').querySelectorAll('.message').length;
             chatPollInterval = setInterval(async () => {
                 if (!selectedRecipient || selectedRecipient !== contact) return stopChatPolling();
                 try {
                     const r = await fetch(`${API_URL}/messages/${contact}?currentUser=${currentUser.username}`);
                     if (!r.ok) return;
                     const msgs = await r.json();
-                    const currentCount = document.getElementById('messages').querySelectorAll('.message').length;
-                    if (msgs.length > currentCount) {
-                        // New messages found — reload the chat
-                        document.getElementById('messages').innerHTML = '';
-                        lastMessageDates[contact] = null;
-                        msgs.forEach(displayMessage);
+                    if (msgs.length > dbMsgCount) {
+                        // Only render the truly new messages from DB
+                        const newMsgs = msgs.slice(dbMsgCount);
+                        newMsgs.forEach(displayMessage);
+                        dbMsgCount = msgs.length;
                     }
                 } catch (e) { /* silent */ }
             }, 2000);
@@ -880,6 +878,7 @@
 
         function stopChatPolling() {
             if (chatPollInterval) { clearInterval(chatPollInterval); chatPollInterval = null; }
+            dbMsgCount = 0;
         }
 
         async function loadChatHistory(contact) {
@@ -887,8 +886,8 @@
                 const response = await fetch(`${API_URL}/messages/${contact}?currentUser=${currentUser.username}`);
                 if (response.ok) {
                     const messages = await response.json();
-                    console.log(`Loaded ${messages.length} messages`);
                     messages.forEach(displayMessage);
+                    dbMsgCount = messages.length; // remember where DB ends
                     startChatPolling(contact);
                 }
             } catch (e) {
