@@ -7,7 +7,7 @@
         content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
     <title>Boxbi Messenger</title>
     <link
-        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Noto+Sans+JP:wght@300;400&family=Space+Mono:ital@0;1&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Outfit:wght@400;700;900&family=Space+Mono&display=swap"
         rel="stylesheet">
     <link rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
@@ -29,7 +29,8 @@
                     <input type="text" id="login-username" placeholder="Username" required autocomplete="username">
                 </div>
                 <div class="form-group">
-                    <input type="password" id="login-password" placeholder="Password" required autocomplete="current-password">
+                    <input type="password" id="login-password" placeholder="Password" required
+                        autocomplete="current-password">
                 </div>
 
                 <div class="form-checkbox-group">
@@ -180,8 +181,8 @@
     <!-- Video Call Overlay -->
     <div id="video-overlay" class="video-overlay hidden">
         <div class="video-container">
-            <video id="remote-video" autoplay playsinline class="remote-video"></video>
-            <video id="local-video" autoplay playsinline muted class="local-video"></video>
+            <video id="remote-video" autoplay class="remote-video"></video>
+            <video id="local-video" autoplay muted class="local-video"></video>
 
             <div class="video-controls">
                 <button onclick="toggleAudio()" id="mute-btn" class="control-btn" title="Toggle Audio">
@@ -413,43 +414,24 @@
         async function startVideoCall() {
             if (!selectedRecipient) return;
 
-            if (callActive) {
-                console.warn('Call already active');
-                return;
-            }
-
             showVideoOverlay(true, `Calling ${selectedRecipient}...`);
             document.getElementById('incoming-call-actions').style.display = 'none';
 
             try {
-                console.log('Requesting media devices...');
                 localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-                console.log('Media devices granted');
                 document.getElementById('local-video').srcObject = localStream;
 
                 initPeerConnection();
                 localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
 
-                console.log('Creating offer...');
                 const offer = await peerConnection.createOffer();
                 await peerConnection.setLocalDescription(offer);
-                console.log('Offer created and set as local description');
 
-                // Send the offer
                 sendSignaling('VIDEO_OFFER', { sdp: offer.sdp });
                 callActive = true;
-
-                // IMPORTANT: Don't set callActive to true until after sending the offer
-                // This prevents race conditions where ICE candidates arrive before we're ready
             } catch (e) {
                 console.error('Failed to get local stream', e);
-                if (e.name === 'NotAllowedError') {
-                    alert('Permission denied: Camera or microphone access is required');
-                } else if (e.name === 'NotFoundError') {
-                    alert('No camera or microphone found');
-                } else {
-                    alert('Could not access camera/microphone: ' + e.message);
-                }
+                alert('Could not access camera/microphone');
                 endCall();
             }
         }
@@ -473,38 +455,14 @@
             peerConnection.oniceconnectionstatechange = () => {
                 console.log('ICE Connection State:', peerConnection.iceConnectionState);
                 if (peerConnection.iceConnectionState === 'disconnected' || peerConnection.iceConnectionState === 'failed') {
-                    console.error('ICE connection failed or disconnected');
                     cleanupCall();
                 }
-            };
-
-            peerConnection.onconnectionstatechange = () => {
-                console.log('PeerConnection State:', peerConnection.connectionState);
-                if (peerConnection.connectionState === 'failed' || peerConnection.connectionState === 'disconnected') {
-                    console.error('PeerConnection failed or disconnected');
-                    cleanupCall();
-                }
-            };
-
-            peerConnection.onsignalingstatechange = () => {
-                console.log('Signaling State:', peerConnection.signalingState);
-            };
-
-            peerConnection.onicegatheringstatechange = () => {
-                console.log('ICE Gathering State:', peerConnection.iceGatheringState);
             };
         }
 
         function sendSignaling(type, data) {
             const target = selectedRecipient || currentCaller;
             console.log(`[WS] Sending signaling: ${type} to`, target);
-
-            // Validate WebSocket connection
-            if (!stompClient || !stompClient.connected) {
-                console.error(`WebSocket not connected when sending ${type}`);
-                return;
-            }
-
             const signalMsg = {
                 sender: currentUser.username,
                 recipient: target,
@@ -512,12 +470,7 @@
                 content: JSON.stringify(data),
                 timestamp: Date.now()
             };
-
-            try {
-                stompClient.send("/app/chat.private", {}, JSON.stringify(signalMsg));
-            } catch (e) {
-                console.error(`Failed to send ${type}:`, e);
-            }
+            stompClient.send("/app/chat.private", {}, JSON.stringify(signalMsg));
         }
 
         function handleVideoOffer(message) {
@@ -546,18 +499,14 @@
                 initPeerConnection();
                 localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
 
-                await peerConnection.setRemoteDescription({ type: 'offer', sdp: window.pendingOffer });
+                await peerConnection.setRemoteDescription(new RTCSessionDescription({ type: 'offer', sdp: window.pendingOffer }));
                 console.log('Remote offer set');
 
                 // Process queued ICE candidates
                 while (iceCandidateQueue.length > 0) {
                     const candidate = iceCandidateQueue.shift();
-                    try {
-                        await peerConnection.addIceCandidate(candidate);
-                        console.log('Added queued ICE candidate');
-                    } catch (e) {
-                        console.error('Failed to add queued ICE candidate', e);
-                    }
+                    await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+                    console.log('Added queued ICE candidate');
                 }
 
                 const answer = await peerConnection.createAnswer();
@@ -574,13 +523,8 @@
         async function handleVideoAnswer(message) {
             const data = JSON.parse(message.content);
             if (peerConnection) {
-                try {
-                    await peerConnection.setRemoteDescription({ type: 'answer', sdp: data.sdp });
-                    console.log('Remote answer set');
-                } catch (e) {
-                    console.error('Failed to set remote answer', e);
-                    endCall();
-                }
+                await peerConnection.setRemoteDescription(new RTCSessionDescription({ type: 'answer', sdp: data.sdp }));
+                console.log('Remote answer set');
             }
         }
 
@@ -588,7 +532,7 @@
             const data = JSON.parse(message.content);
             if (peerConnection && peerConnection.remoteDescription) {
                 try {
-                    await peerConnection.addIceCandidate(data.candidate);
+                    await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
                     console.log('Added ICE candidate from', message.sender);
                 } catch (e) {
                     console.error('Error adding ICE candidate', e);
@@ -651,13 +595,8 @@
         let isAudioMuted = false;
         function toggleAudio() {
             if (localStream) {
-                const audioTracks = localStream.getAudioTracks();
-                if (audioTracks.length === 0) {
-                    console.warn('No audio tracks available');
-                    return;
-                }
                 isAudioMuted = !isAudioMuted;
-                audioTracks[0].enabled = !isAudioMuted;
+                localStream.getAudioTracks()[0].enabled = !isAudioMuted;
                 document.getElementById('mute-btn').innerHTML = `<span class="material-symbols-outlined">${isAudioMuted ? 'mic_off' : 'mic'}</span>`;
             }
         }
@@ -665,13 +604,8 @@
         let isVideoOff = false;
         function toggleVideo() {
             if (localStream) {
-                const videoTracks = localStream.getVideoTracks();
-                if (videoTracks.length === 0) {
-                    console.warn('No video tracks available');
-                    return;
-                }
                 isVideoOff = !isVideoOff;
-                videoTracks[0].enabled = !isVideoOff;
+                localStream.getVideoTracks()[0].enabled = !isVideoOff;
                 document.getElementById('video-toggle-btn').innerHTML = `<span class="material-symbols-outlined">${isVideoOff ? 'videocam_off' : 'videocam'}</span>`;
             }
         }

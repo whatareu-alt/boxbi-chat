@@ -462,6 +462,10 @@ body {
     display: flex;
 }
 
+.tab-padding {
+    padding: 20px;
+}
+
 .search-box {
     padding: 20px 24px;
     border-bottom: var(--brutal-border);
