@@ -804,10 +804,10 @@
                 messageDiv.classList.add('own');
             }
 
-            const time = new Date(message.timestamp).toLocaleTimeString('en-US', {
-                hour: '2-digit',
-                minute: '2-digit'
-            });
+            const ts = message.timestamp ? new Date(message.timestamp) : new Date();
+            const time = isNaN(ts.getTime())
+                ? new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+                : ts.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
             const safeContent = escapeHtml(message.content);
             messageDiv.innerHTML = `
