@@ -284,7 +284,6 @@
                     <div class="user-avatar" id="chat-avatar">?</div>
                     <div>
                         <h3 id="chat-name">Select a user to chat</h3>
-                        <div class="status" id="chat-status"></div>
                     </div>
                 </div>
                 <div class="chat-header-actions">
@@ -521,17 +520,7 @@
         }
 
         function onTypingReceived(payload) {
-            const data = JSON.parse(payload.body);
-            if (data.sender === selectedRecipient) {
-                const statusEl = document.getElementById('chat-status');
-                statusEl.textContent = 'typing...';
-                statusEl.style.color = 'var(--accent)';
-                clearTimeout(typingHideTimeout);
-                typingHideTimeout = setTimeout(() => {
-                    statusEl.textContent = 'Online';
-                    statusEl.style.color = '';
-                }, 2000);
-            }
+            // status indicator removed
         }
 
         function sendTypingEvent() {
@@ -716,7 +705,6 @@
                     userItem.innerHTML = `
     <div class="user-avatar-wrap">
         <div class="user-avatar" style="background:${gradient}">${user.username[0].toUpperCase()}</div>
-        <div class="status-dot"></div>
     </div>
     <div class="user-info">
         <div class="user-name-row">
@@ -725,7 +713,6 @@
         </div>
         <div class="user-last-preview" id="preview-${user.username}">${isFriend ? '👋 Say hi!' : 'Send a friend request'}</div>
         <div class="status-row">
-            <div class="user-status">🟢 Online</div>
             <div>${statusHtml}</div>
         </div>
     </div>
@@ -802,8 +789,10 @@
             if (!confirm(`Are you sure you want to delete all messages with ${selectedRecipient}? This cannot be undone.`)) return;
 
             try {
-                const response = await fetch(`${API_URL}/messages/${selectedRecipient}?currentUser=${currentUser.username}`, {
-                    method: 'DELETE'
+                const response = await fetch(`${API_URL}/messages/delete`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ currentUser: currentUser.username, recipient: selectedRecipient })
                 });
 
                 if (response.ok) {
@@ -813,9 +802,9 @@
                             <p>Conversation deleted</p>
                         </div>
                     `;
-                    // Refresh last message preview in list
                     lastMessages[selectedRecipient] = null;
-                    refreshData();
+                    const previewEl = document.getElementById(`preview-${selectedRecipient}`);
+                    if (previewEl) previewEl.textContent = '👋 Say hi!';
                 } else {
                     alert('Failed to delete chat');
                 }
@@ -1227,7 +1216,7 @@
             let hash = 0;
             for (let i = 0; i < username.length; i++) hash = username.charCodeAt(i) + ((hash << 5) - hash);
             const h = Math.abs(hash) % 360;
-            return `linear - gradient(135deg, hsl(${h}, 70 %, 55 %) 0 %, hsl(${(h + 40) % 360}, 80 %, 65 %) 100 %)`;
+            return `linear-gradient(135deg, hsl(${h},70%,55%) 0%, hsl(${(h + 40) % 360},80%,65%) 100%)`;
         }
 
         // ===== SCROLL TO BOTTOM BUTTON =====
