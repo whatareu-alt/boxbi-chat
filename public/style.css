@@ -2206,14 +2206,6 @@ body {
 }
 
 
-/* ===== MESSAGE TIME ===== */
-.message-time {
-    font-size: 11px;
-    font-weight: 500;
-    margin-top: 4px;
-    color: var(--text-muted);
-    display: block;
-}
 
 /* ===== STRONGER INPUT GLOW ON FOCUS ===== */
 .chat-input-form input:focus {
