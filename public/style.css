@@ -418,12 +418,62 @@ body {
     border-bottom: var(--border-thin);
 }
 
-.sidebar-header h2 {
-    font-size: 22px;
-    font-weight: 800;
-    margin-bottom: 16px;
+/* Profile Avatar Trigger Button */
+.profile-avatar-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    flex: 1;
+    text-align: left;
+    padding: 4px 0;
+    border-radius: var(--radius-md);
+    transition: var(--transition-smooth);
+    min-width: 0;
+}
+
+.profile-avatar-btn:hover .sidebar-avatar {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.sidebar-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-secondary) 100%);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 700;
+    flex-shrink: 0;
+    transition: var(--transition-smooth);
+    box-shadow: var(--shadow-sm);
+}
+
+.sidebar-user-info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.sidebar-username {
+    font-size: 16px;
+    font-weight: 700;
     color: var(--text-primary);
-    letter-spacing: -0.5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sidebar-status {
+    font-size: 12px;
+    color: var(--success);
+    font-weight: 600;
 }
 
 .chat-header-actions {
@@ -501,6 +551,162 @@ body {
     background: var(--accent);
     color: #fff;
     box-shadow: var(--accent-shadow);
+}
+
+/* ===== PROFILE PANEL ===== */
+.profile-backdrop {
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(15, 23, 42, 0.3);
+    z-index: 99;
+    -webkit-backdrop-filter: blur(2px);
+    backdrop-filter: blur(2px);
+}
+
+.profile-backdrop.open {
+    display: block;
+    animation: fadeIn 0.2s ease;
+}
+
+.profile-panel {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #fff;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    transform: translateX(-100%);
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow-y: auto;
+    border-right: var(--border-thin);
+}
+
+.profile-panel.open {
+    transform: translateX(0);
+}
+
+.profile-panel-header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 24px 20px 20px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 18px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.profile-close-btn {
+    background: none;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    border-radius: var(--radius-sm);
+    transition: var(--transition-smooth);
+}
+
+.profile-close-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.profile-cover {
+    background: linear-gradient(160deg, #4f46e5 0%, #0ea5e9 100%);
+    padding: 32px 0 48px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.profile-avatar-lg {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.25);
+    border: 4px solid rgba(255, 255, 255, 0.6);
+    color: #fff;
+    font-size: 42px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.profile-body {
+    padding: 8px 0;
+    flex: 1;
+}
+
+.profile-field {
+    padding: 16px 24px;
+    border-bottom: var(--border-thin);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    transition: var(--transition-smooth);
+}
+
+.profile-field:hover {
+    background: #f8fafc;
+}
+
+.profile-field-label {
+    font-size: 12px;
+    color: var(--accent);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.profile-field-label .material-symbols-outlined {
+    font-size: 16px;
+}
+
+.profile-field-value {
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--text-primary);
+    padding-left: 22px;
+}
+
+.profile-status-online {
+    color: var(--success);
+    font-weight: 700;
+}
+
+.profile-actions {
+    padding: 24px;
+    border-top: var(--border-thin);
+    flex-shrink: 0;
+}
+
+.profile-logout-icon {
+    margin-right: 8px;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 }
 
 .search-box {

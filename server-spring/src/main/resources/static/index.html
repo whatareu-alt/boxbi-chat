@@ -100,18 +100,20 @@
         <!-- Users Sidebar -->
         <div class="users-sidebar">
             <div class="sidebar-header">
-                <h2 id="current-username">Loading...</h2>
+                <button class="profile-avatar-btn" onclick="openProfile()" title="View Profile">
+                    <div class="sidebar-avatar" id="sidebar-avatar-initials">?</div>
+                    <div class="sidebar-user-info">
+                        <span id="current-username" class="sidebar-username">Loading...</span>
+                        <span class="sidebar-status">🟢 Online</span>
+                    </div>
+                </button>
                 <div class="chat-header-actions">
-                    <div class="status-indicator">Online</div>
                     <button onclick="toggleFriendRequests()" class="icon-btn" title="Friend Requests">
                         <span class="material-symbols-outlined icon-lg">group_add</span>
                         <span id="request-badge" class="badge-count">0</span>
                     </button>
                     <button id="refresh-btn" onclick="refreshData()" class="icon-btn" title="Refresh Data">
                         <span class="material-symbols-outlined icon-lg">refresh</span>
-                    </button>
-                    <button onclick="logout()" class="icon-btn" title="Logout">
-                        <span class="material-symbols-outlined icon-lg">logout</span>
                     </button>
                 </div>
             </div>
@@ -139,6 +141,51 @@
             </div>
 
 
+        </div>
+
+        <!-- Profile Panel Backdrop -->
+        <div id="profile-backdrop" class="profile-backdrop" onclick="closeProfile()"></div>
+
+        <!-- Profile Panel -->
+        <div id="profile-panel" class="profile-panel">
+            <div class="profile-panel-header">
+                <button class="profile-close-btn" onclick="closeProfile()">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                </button>
+                <span>Profile</span>
+            </div>
+
+            <div class="profile-cover">
+                <div class="profile-avatar-lg" id="profile-avatar-lg">?</div>
+            </div>
+
+            <div class="profile-body">
+                <div class="profile-field">
+                    <span class="profile-field-label">
+                        <span class="material-symbols-outlined">person</span> Your Name
+                    </span>
+                    <span class="profile-field-value" id="profile-fullname">—</span>
+                </div>
+                <div class="profile-field">
+                    <span class="profile-field-label">
+                        <span class="material-symbols-outlined">alternate_email</span> Username
+                    </span>
+                    <span class="profile-field-value" id="profile-username">—</span>
+                </div>
+                <div class="profile-field">
+                    <span class="profile-field-label">
+                        <span class="material-symbols-outlined">circle</span> Status
+                    </span>
+                    <span class="profile-field-value profile-status-online">🟢 Online</span>
+                </div>
+            </div>
+
+            <div class="profile-actions">
+                <button class="btn btn-primary" onclick="closeProfile(); logout();">
+                    <span class="material-symbols-outlined profile-logout-icon">logout</span>
+                    Logout
+                </button>
+            </div>
         </div>
 
         <!-- Chat Area -->
@@ -309,6 +356,13 @@
             document.getElementById('auth-page').style.display = 'none';
             document.getElementById('chat-app').classList.add('active');
             document.getElementById('current-username').textContent = currentUser.username;
+
+            // Set sidebar avatar initials
+            const _name = currentUser.firstName && currentUser.lastName
+                ? `${currentUser.firstName} ${currentUser.lastName}`
+                : currentUser.username;
+            const _initials = _name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+            document.getElementById('sidebar-avatar-initials').textContent = _initials;
 
             // Connect to WebSocket via standard WebSocket (not SockJS)
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -659,6 +713,30 @@
                     btn.style.transform = 'none';
                 }, 1000);
             }
+        }
+
+        // ===== PROFILE PANEL =====
+        function openProfile() {
+            if (!currentUser) return;
+
+            // Populate initials
+            const name = currentUser.firstName && currentUser.lastName
+                ? `${currentUser.firstName} ${currentUser.lastName}`
+                : currentUser.username;
+            const initials = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+
+            document.getElementById('profile-avatar-lg').textContent = initials;
+            document.getElementById('sidebar-avatar-initials').textContent = initials;
+            document.getElementById('profile-fullname').textContent = name;
+            document.getElementById('profile-username').textContent = '@' + currentUser.username;
+
+            document.getElementById('profile-panel').classList.add('open');
+            document.getElementById('profile-backdrop').classList.add('open');
+        }
+
+        function closeProfile() {
+            document.getElementById('profile-panel').classList.remove('open');
+            document.getElementById('profile-backdrop').classList.remove('open');
         }
 
         function logout() {
