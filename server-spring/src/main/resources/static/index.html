@@ -598,7 +598,7 @@
             }
         }
 
-        function displayUsers(users) {
+        function displayUsers(users, query = '') {
             const usersList = document.getElementById('users-list');
 
             if (users.length === 0) {
@@ -609,7 +609,14 @@
             usersList.innerHTML = '';
 
             const friends = users.filter(u => friendsList.includes(u.username));
-            const others = users.filter(u => !friendsList.includes(u.username));
+            const available = users.filter(u => !friendsList.includes(u.username));
+
+            if (query) {
+                renderSection(`Search Results for "${query}"`, users);
+            } else {
+                renderSection('My Friends', friends);
+                renderSection('Available Users', available);
+            }
 
             function renderSection(label, list) {
                 if (list.length === 0) return;
@@ -651,21 +658,13 @@
                     usersList.appendChild(userItem);
                 });
             }
-
-            renderSection('Friends 🟢', friends);
-            renderSection('All Users', others);
         }
 
         function filterUsers(query) {
-            if (!query) {
-                displayUsers(allUsers);
-                return;
-            }
-
-            const filtered = allUsers.filter(user =>
-                user.username.toLowerCase().includes(query.toLowerCase())
-            );
-            displayUsers(filtered);
+            const filtered = query
+                ? allUsers.filter(user => user.username.toLowerCase().includes(query.toLowerCase()))
+                : allUsers;
+            displayUsers(filtered, query);
         }
 
         function exitChatView() {

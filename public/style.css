@@ -1667,11 +1667,29 @@ body {
 /* ===== SECTION LABELS IN SIDEBAR ===== */
 .sidebar-section-label {
     font-size: 11px;
-    font-weight: 700;
-    color: var(--accent);
+    font-weight: 800;
+    color: var(--text-secondary);
     text-transform: uppercase;
-    letter-spacing: 1px;
-    padding: 12px 14px 6px;
+    letter-spacing: 1.2px;
+    padding: 24px 16px 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.sidebar-section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="dark"] .sidebar-section-label {
+    color: var(--text-muted);
+}
+
+[data-theme="dark"] .sidebar-section-label::after {
+    background: rgba(255, 255, 255, 0.05);
 }
 
 /* ===== MESSAGE TIME ===== */
