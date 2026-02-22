@@ -734,6 +734,8 @@
         function exitChatView() {
             document.getElementById('chat-app').classList.remove('mobile-chat-active');
             selectedRecipient = null;
+            // Deselect active user
+            document.querySelectorAll('.user-item').forEach(el => el.classList.remove('active'));
         }
 
         async function selectUser(username) {
@@ -784,6 +786,9 @@
 
             // Load chat history
             loadChatHistory(username);
+
+            // Mobile: switch to chat view
+            document.getElementById('chat-app').classList.add('mobile-chat-active');
         }
 
         async function deleteChat() {

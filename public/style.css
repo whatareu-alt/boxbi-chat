@@ -2391,3 +2391,292 @@ body {
     image-rendering: pixelated;
     filter: drop-shadow(0 2px 4px rgba(164, 20, 75, 0.15));
 }
+
+
+/* =============================================
+   MOBILE RESPONSIVE STYLES
+   ============================================= */
+
+/* ── Hide back button on desktop ── */
+.back-button {
+    display: none;
+}
+
+/* ── Show delete-chat button always ── */
+#delete-chat-btn {
+    display: inline-flex;
+}
+
+/* ============================================
+   TABLET (≤ 1024px) — shrink sidebar
+   ============================================ */
+@media (max-width: 1024px) {
+    .chat-app {
+        grid-template-columns: 320px 1fr;
+    }
+
+    .sidebar-logo img {
+        width: 56px;
+    }
+}
+
+/* ============================================
+   MOBILE (≤ 768px) — single column, toggle
+   ============================================ */
+@media (max-width: 768px) {
+
+    /* ── Chat app layout: full-screen single panel ── */
+    .chat-app {
+        display: flex;
+        flex-direction: column;
+        height: 100dvh;
+        overflow: hidden;
+    }
+
+    /* Sidebar takes full screen by default */
+    .users-sidebar {
+        width: 100%;
+        height: 100dvh;
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        border-right: none;
+        border-bottom: var(--border-thin);
+        z-index: 5;
+        position: relative;
+    }
+
+    /* Chat area hidden by default on mobile */
+    .chat-area {
+        display: none;
+        width: 100%;
+        height: 100dvh;
+        flex-direction: column;
+        flex-shrink: 0;
+    }
+
+    /* When chat is active: show chat, hide sidebar */
+    .chat-app.mobile-chat-active .users-sidebar {
+        display: none;
+    }
+
+    .chat-app.mobile-chat-active .chat-area {
+        display: flex;
+    }
+
+    /* ── Show back button on mobile ── */
+    .back-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+        border: none;
+        background: none;
+        cursor: pointer;
+        border-radius: var(--radius-sm);
+        color: var(--text-primary);
+        flex-shrink: 0;
+        transition: var(--transition-smooth);
+    }
+
+    .back-button:hover {
+        background: var(--accent-glow);
+    }
+
+    /* ── Chat header ── */
+    .chat-header {
+        padding: 10px 12px;
+        flex-shrink: 0;
+    }
+
+    .chat-header h3 {
+        font-size: 16px;
+    }
+
+    /* Hide logout button in header on mobile — use profile panel */
+    .logout-btn {
+        display: none;
+    }
+
+    /* Shrink delete chat button on mobile */
+    #delete-chat-btn {
+        padding: 6px 10px;
+        font-size: 12px;
+    }
+
+    #delete-chat-btn span.material-symbols-outlined {
+        font-size: 16px;
+    }
+
+    /* ── Sidebar header ── */
+    .sidebar-header {
+        padding: 12px 16px;
+    }
+
+    .sidebar-logo img {
+        width: 44px;
+    }
+
+    .sidebar-username {
+        font-size: 14px;
+    }
+
+    /* ── Search box ── */
+    .search-box input {
+        font-size: 14px;
+    }
+
+    /* ── User list items ── */
+    .user-item {
+        padding: 12px 16px;
+        min-height: 64px;
+    }
+
+    .user-avatar {
+        width: 42px;
+        height: 42px;
+        font-size: 16px;
+    }
+
+    /* ── Messages ── */
+    .messages-container {
+        padding: 12px;
+        flex: 1;
+        overflow-y: auto;
+    }
+
+    .message {
+        max-width: 88%;
+    }
+
+    .message-content {
+        font-size: 14px;
+        padding: 10px 14px;
+    }
+
+    .message-time {
+        font-size: 11px;
+    }
+
+    /* ── Chat input ── */
+    .chat-input {
+        padding: 8px 12px;
+        /* Account for iPhone home bar */
+        padding-bottom: max(8px, env(safe-area-inset-bottom));
+        flex-shrink: 0;
+        border-top: var(--border-thin);
+        background: #fff;
+    }
+
+    .chat-input-form {
+        gap: 8px;
+    }
+
+    #message-input {
+        font-size: 16px;
+        /* Prevents iOS auto-zoom */
+        padding: 12px 16px;
+        min-height: 44px;
+    }
+
+    .send-btn {
+        min-width: 64px;
+        padding: 0 16px;
+        min-height: 44px;
+        font-size: 14px;
+    }
+
+    /* ── Profile panel ── */
+    .profile-panel {
+        width: 100%;
+    }
+
+    .profile-avatar-lg {
+        width: 80px;
+        height: 80px;
+        font-size: 32px;
+    }
+
+    /* ── Tabs ── */
+    .sidebar-tabs {
+        padding: 6px;
+        gap: 6px;
+    }
+
+    .tab-btn {
+        padding: 10px;
+        font-size: 13px;
+    }
+
+    /* ── Buttons touch targets ── */
+    .icon-btn {
+        min-width: 44px;
+        min-height: 44px;
+    }
+
+    .btn {
+        min-height: 48px;
+    }
+
+    /* ── Chat avatar in header ── */
+    .chat-header .user-avatar {
+        width: 36px;
+        height: 36px;
+        font-size: 14px;
+    }
+
+    /* ── Welcome screen ── */
+    .welcome-screen-card {
+        padding: 24px 20px;
+    }
+
+    .welcome-screen h2 {
+        font-size: 20px;
+    }
+}
+
+/* ============================================
+   SMALL MOBILE (≤ 380px) — extra compact
+   ============================================ */
+@media (max-width: 380px) {
+    .sidebar-header {
+        padding: 10px 12px;
+        gap: 8px;
+    }
+
+    .sidebar-logo img {
+        width: 36px;
+    }
+
+    .sidebar-avatar {
+        width: 36px;
+        height: 36px;
+        font-size: 14px;
+    }
+
+    .user-name {
+        font-size: 13px;
+    }
+
+    .user-last-preview {
+        font-size: 11px;
+    }
+
+    .chat-header h3 {
+        font-size: 14px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 140px;
+    }
+
+    #delete-chat-btn {
+        font-size: 0;
+        padding: 8px;
+    }
+
+    #delete-chat-btn span.material-symbols-outlined {
+        font-size: 18px;
+    }
+}
