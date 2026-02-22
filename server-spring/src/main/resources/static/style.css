@@ -1831,3 +1831,53 @@ body {
     transform: translateY(5px);
 }
 
+
+#delete-chat-btn {
+    display: none;
+    margin-right: 10px;
+}
+
+#delete-chat-btn .material-symbols-outlined {
+    font-size: 18px;
+    vertical-align: middle;
+}
+
+
+/* ===== LOGO STYLES ===== */
+.auth-logo {
+    width: 80px;
+    height: 80px;
+    margin-bottom: 20px;
+    filter: drop-shadow(0 10px 15px rgba(164, 20, 75, 0.3));
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+.sidebar-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 5px;
+    margin-bottom: 5px;
+}
+
+.sidebar-logo img {
+    width: 32px;
+    height: 32px;
+    filter: drop-shadow(0 4px 6px rgba(164, 20, 75, 0.2));
+}
+
+.sidebar-logo span {
+    font-size: 20px;
+    font-weight: 900;
+    font-family: " Outfit\, sans-serif;
+ background: linear-gradient(45deg, var(--accent), #ff4d8d);
+ -webkit-background-clip: text;
+ -webkit-text-fill-color: transparent;
+ letter-spacing: -0.5px;
+}
+
