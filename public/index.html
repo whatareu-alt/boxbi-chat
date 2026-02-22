@@ -155,9 +155,6 @@
                     </div>
                 </div>
                 <div class="chat-header-actions">
-                    <button id="video-call-btn" class="icon-btn hidden" onclick="startVideoCall()" title="Video Call">
-                        <span class="material-symbols-outlined">videocam</span>
-                    </button>
                     <button class="logout-btn" id="logout-btn" onclick="logout()">Logout</button>
                 </div>
             </div>
@@ -178,33 +175,6 @@
         </div>
     </div>
 
-    <!-- Video Call Overlay -->
-    <div id="video-overlay" class="video-overlay hidden">
-        <div class="video-container">
-            <video id="remote-video" autoplay class="remote-video"></video>
-            <video id="local-video" autoplay muted class="local-video"></video>
-
-            <div class="video-controls">
-                <button onclick="toggleAudio()" id="mute-btn" class="control-btn" title="Toggle Audio">
-                    <span class="material-symbols-outlined">mic</span>
-                </button>
-                <button onclick="endCall()" class="control-btn btn-danger" title="End Call">
-                    <span class="material-symbols-outlined">call_end</span>
-                </button>
-                <button onclick="toggleVideo()" id="video-toggle-btn" class="control-btn" title="Toggle Video">
-                    <span class="material-symbols-outlined">videocam</span>
-                </button>
-            </div>
-
-            <div id="call-status-overlay" class="call-status-overlay">
-                <div id="caller-name">Incoming Call...</div>
-                <div class="call-actions" id="incoming-call-actions">
-                    <button onclick="acceptCall()" class="btn-call accept">Accept</button>
-                    <button onclick="endCall()" class="btn-call reject">Decline</button>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
@@ -375,21 +345,6 @@
 
             console.log('[WS] Message Received from', message.sender, ':', message.type);
 
-            // Handle Video Signaling
-            if (message.type === 'VIDEO_OFFER') {
-                handleVideoOffer(message);
-                return;
-            } else if (message.type === 'VIDEO_ANSWER') {
-                handleVideoAnswer(message);
-                return;
-            } else if (message.type === 'ICE_CANDIDATE') {
-                handleIceCandidate(message);
-                return;
-            } else if (message.type === 'CALL_REJECTED' || message.type === 'CALL_ENDED') {
-                handleCallEnded(message);
-                return;
-            }
-
             const otherUser = message.sender === currentUser.username ? message.recipient : message.sender;
 
             if (selectedRecipient === otherUser) {
@@ -397,219 +352,6 @@
             }
         }
 
-        // --- WebRTC / Video Call Logic ---
-        let peerConnection = null;
-        let localStream = null;
-        let callActive = false;
-        let iceCandidateQueue = [];
-        let currentCaller = null;
-
-        const rtcConfig = {
-            iceServers: [
-                { urls: 'stun:stun.l.google.com:19302' },
-                { urls: 'stun:stun1.l.google.com:19302' }
-            ]
-        };
-
-        async function startVideoCall() {
-            if (!selectedRecipient) return;
-
-            showVideoOverlay(true, `Calling ${selectedRecipient}...`);
-            document.getElementById('incoming-call-actions').style.display = 'none';
-
-            try {
-                localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-                document.getElementById('local-video').srcObject = localStream;
-
-                initPeerConnection();
-                localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
-
-                const offer = await peerConnection.createOffer();
-                await peerConnection.setLocalDescription(offer);
-
-                sendSignaling('VIDEO_OFFER', { sdp: offer.sdp });
-                callActive = true;
-            } catch (e) {
-                console.error('Failed to get local stream', e);
-                alert('Could not access camera/microphone');
-                endCall();
-            }
-        }
-
-        function initPeerConnection() {
-            console.log('RTCPeerConnection Initialized');
-            peerConnection = new RTCPeerConnection(rtcConfig);
-
-            peerConnection.onicecandidate = (event) => {
-                if (event.candidate) {
-                    sendSignaling('ICE_CANDIDATE', { candidate: event.candidate });
-                }
-            };
-
-            peerConnection.ontrack = (event) => {
-                console.log('Remote track received');
-                document.getElementById('remote-video').srcObject = event.streams[0];
-                document.getElementById('call-status-overlay').style.display = 'none';
-            };
-
-            peerConnection.oniceconnectionstatechange = () => {
-                console.log('ICE Connection State:', peerConnection.iceConnectionState);
-                if (peerConnection.iceConnectionState === 'disconnected' || peerConnection.iceConnectionState === 'failed') {
-                    cleanupCall();
-                }
-            };
-        }
-
-        function sendSignaling(type, data) {
-            const target = selectedRecipient || currentCaller;
-            console.log(`[WS] Sending signaling: ${type} to`, target);
-            const signalMsg = {
-                sender: currentUser.username,
-                recipient: target,
-                type: type,
-                content: JSON.stringify(data),
-                timestamp: Date.now()
-            };
-            stompClient.send("/app/chat.private", {}, JSON.stringify(signalMsg));
-        }
-
-        function handleVideoOffer(message) {
-            if (callActive) {
-                console.log('Already in a call, ignoring offer from', message.sender);
-                return;
-            }
-            currentCaller = message.sender;
-            const data = JSON.parse(message.content);
-
-            showVideoOverlay(true, `Incoming video call from ${currentCaller}`);
-            document.getElementById('incoming-call-actions').style.display = 'flex';
-
-            // Store the offer
-            window.pendingOffer = data.sdp;
-        }
-
-        async function acceptCall() {
-            document.getElementById('incoming-call-actions').style.display = 'none';
-            document.getElementById('caller-name').textContent = 'Connecting...';
-
-            try {
-                localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-                document.getElementById('local-video').srcObject = localStream;
-
-                initPeerConnection();
-                localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
-
-                await peerConnection.setRemoteDescription(new RTCSessionDescription({ type: 'offer', sdp: window.pendingOffer }));
-                console.log('Remote offer set');
-
-                // Process queued ICE candidates
-                while (iceCandidateQueue.length > 0) {
-                    const candidate = iceCandidateQueue.shift();
-                    await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
-                    console.log('Added queued ICE candidate');
-                }
-
-                const answer = await peerConnection.createAnswer();
-                await peerConnection.setLocalDescription(answer);
-
-                sendSignaling('VIDEO_ANSWER', { sdp: answer.sdp });
-                callActive = true;
-            } catch (e) {
-                console.error('Accept call failed', e);
-                endCall();
-            }
-        }
-
-        async function handleVideoAnswer(message) {
-            const data = JSON.parse(message.content);
-            if (peerConnection) {
-                await peerConnection.setRemoteDescription(new RTCSessionDescription({ type: 'answer', sdp: data.sdp }));
-                console.log('Remote answer set');
-            }
-        }
-
-        async function handleIceCandidate(message) {
-            const data = JSON.parse(message.content);
-            if (peerConnection && peerConnection.remoteDescription) {
-                try {
-                    await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
-                    console.log('Added ICE candidate from', message.sender);
-                } catch (e) {
-                    console.error('Error adding ICE candidate', e);
-                }
-            } else {
-                console.log('ICE candidate received but peerConnection not ready, queueing...');
-                iceCandidateQueue.push(data.candidate);
-            }
-        }
-
-        function endCall() {
-            const target = selectedRecipient || currentCaller;
-            if (target) {
-                sendSignaling('CALL_ENDED', {});
-            }
-            cleanupCall();
-        }
-
-        function handleCallEnded(message) {
-            console.log('Call ended by remote user');
-            cleanupCall();
-        }
-
-        function cleanupCall() {
-            console.log('Cleaning up call state');
-            callActive = false;
-            currentCaller = null;
-            iceCandidateQueue = [];
-
-            if (localStream) {
-                localStream.getTracks().forEach(track => {
-                    track.stop();
-                    console.log('Stopped track:', track.kind);
-                });
-                localStream = null;
-            }
-            if (peerConnection) {
-                peerConnection.onicecandidate = null;
-                peerConnection.ontrack = null;
-                peerConnection.oniceconnectionstatechange = null;
-                peerConnection.close();
-                peerConnection = null;
-            }
-            showVideoOverlay(false);
-            document.getElementById('local-video').srcObject = null;
-            document.getElementById('remote-video').srcObject = null;
-        }
-
-        function showVideoOverlay(show, statusText = '') {
-            const overlay = document.getElementById('video-overlay');
-            if (show) {
-                overlay.classList.remove('hidden');
-                document.getElementById('caller-name').textContent = statusText;
-                document.getElementById('call-status-overlay').style.display = 'flex';
-            } else {
-                overlay.classList.add('hidden');
-            }
-        }
-
-        let isAudioMuted = false;
-        function toggleAudio() {
-            if (localStream) {
-                isAudioMuted = !isAudioMuted;
-                localStream.getAudioTracks()[0].enabled = !isAudioMuted;
-                document.getElementById('mute-btn').innerHTML = `<span class="material-symbols-outlined">${isAudioMuted ? 'mic_off' : 'mic'}</span>`;
-            }
-        }
-
-        let isVideoOff = false;
-        function toggleVideo() {
-            if (localStream) {
-                isVideoOff = !isVideoOff;
-                localStream.getVideoTracks()[0].enabled = !isVideoOff;
-                document.getElementById('video-toggle-btn').innerHTML = `<span class="material-symbols-outlined">${isVideoOff ? 'videocam_off' : 'videocam'}</span>`;
-            }
-        }
-        // --- End WebRTC Logic ---
 
         // Friend Request Functions
         function toggleFriendRequests() {
@@ -803,14 +545,12 @@
                 btn.disabled = false;
                 btn.style.opacity = "1";
                 btn.style.cursor = "pointer";
-                document.getElementById('video-call-btn').classList.remove('hidden');
             } else {
                 input.disabled = true;
                 input.placeholder = "Accepted friend request required to chat";
                 btn.disabled = true;
                 btn.style.opacity = "0.5";
                 btn.style.cursor = "not-allowed";
-                document.getElementById('video-call-btn').classList.add('hidden');
             }
 
             // Clear messages
