@@ -94,6 +94,9 @@ body {
     z-index: 1;
     transition: var(--transition-smooth);
     margin: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .auth-container:hover {
@@ -1254,266 +1257,6 @@ body {
     background: var(--accent);
 }
 
-/* ===== DARK MODE ===== */
-[data-theme="dark"] {
-    --bg-main: #0f172a;
-    --bg-sidebar: #1e293b;
-    --bg-card: #1e293b;
-    --bg-section: #152033;
-    --text-primary: #f1f5f9;
-    --text-secondary: #94a3b8;
-    --text-muted: #64748b;
-    --border-thin: 1px solid rgba(255, 255, 255, 0.08);
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
-    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
-    --shadow-lg: 0 20px 50px -12px rgba(0, 0, 0, 0.6);
-    --glass-bg: rgba(30, 41, 59, 0.9);
-    --glass-border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-[data-theme="dark"] body {
-    background-color: var(--bg-main);
-}
-
-[data-theme="dark"] .auth-page {
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-}
-
-[data-theme="dark"] .auth-container {
-    background: var(--bg-card);
-    color: var(--text-primary);
-}
-
-[data-theme="dark"] input,
-[data-theme="dark"] .admin-input {
-    background: var(--bg-section);
-    color: var(--text-primary);
-    border-color: rgba(255, 255, 255, 0.12);
-}
-
-[data-theme="dark"] input::placeholder {
-    color: var(--text-muted);
-}
-
-[data-theme="dark"] input:focus {
-    background: var(--bg-card);
-}
-
-[data-theme="dark"] .users-sidebar {
-    background: var(--bg-sidebar);
-}
-
-[data-theme="dark"] .sidebar-header {
-    background: var(--glass-bg);
-    -webkit-backdrop-filter: blur(16px);
-    backdrop-filter: blur(16px);
-    border-color: var(--border-thin);
-}
-
-[data-theme="dark"] .sidebar-username {
-    color: var(--text-primary);
-}
-
-[data-theme="dark"] .sidebar-avatar {
-    background: rgba(99, 102, 241, 0.3);
-    color: var(--text-primary);
-}
-
-[data-theme="dark"] .icon-btn {
-    color: var(--text-primary);
-}
-
-[data-theme="dark"] .icon-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
-}
-
-[data-theme="dark"] .search-box {
-    background: var(--bg-sidebar);
-    border-color: var(--border-thin);
-}
-
-[data-theme="dark"] .search-box input {
-    background: var(--bg-section);
-    color: var(--text-primary);
-}
-
-[data-theme="dark"] .search-box input:focus {
-    background: var(--bg-card);
-    box-shadow: 0 0 0 3px var(--accent-glow);
-}
-
-[data-theme="dark"] .users-list {
-    background: var(--bg-sidebar);
-}
-
-[data-theme="dark"] .user-item {
-    background: transparent;
-}
-
-[data-theme="dark"] .user-item:hover {
-    background: rgba(255, 255, 255, 0.05);
-}
-
-[data-theme="dark"] .user-item.active {
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(99, 102, 241, 0.1) 100%);
-}
-
-[data-theme="dark"] .user-name {
-    color: var(--text-primary);
-}
-
-[data-theme="dark"] .user-last-preview {
-    color: var(--text-muted);
-}
-
-[data-theme="dark"] .user-avatar {
-    background: rgba(99, 102, 241, 0.25);
-    color: #fff;
-}
-
-[data-theme="dark"] .sidebar-section-label {
-    color: var(--accent);
-}
-
-[data-theme="dark"] .tab-btn {
-    background: transparent;
-    color: var(--text-secondary);
-}
-
-[data-theme="dark"] .tab-btn.active {
-    color: #fff;
-}
-
-[data-theme="dark"] .chat-header {
-    background: var(--glass-bg);
-    -webkit-backdrop-filter: blur(16px);
-    backdrop-filter: blur(16px);
-    border-color: var(--border-thin);
-}
-
-[data-theme="dark"] .chat-header h3 {
-    color: var(--text-primary);
-}
-
-[data-theme="dark"] .status {
-    color: var(--text-muted);
-}
-
-[data-theme="dark"] .chat-avatar {
-    background: rgba(99, 102, 241, 0.3);
-    color: #fff;
-}
-
-[data-theme="dark"] .logout-btn {
-    background: var(--bg-card);
-    color: var(--text-secondary);
-    border-color: rgba(255, 255, 255, 0.1);
-}
-
-[data-theme="dark"] .logout-btn:hover {
-    color: var(--danger);
-    border-color: var(--danger);
-}
-
-[data-theme="dark"] .messages-container {
-    background: var(--bg-main);
-}
-
-[data-theme="dark"] .message:not(.own) .message-content {
-    background: var(--bg-card);
-    color: var(--text-primary);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-[data-theme="dark"] .message.own .message-content {
-    background: var(--accent);
-    color: #fff;
-}
-
-[data-theme="dark"] .message-sender {
-    color: var(--text-muted);
-}
-
-[data-theme="dark"] .message-time {
-    color: var(--text-muted);
-}
-
-[data-theme="dark"] .date-divider span {
-    background: var(--bg-card);
-    color: var(--text-muted);
-}
-
-[data-theme="dark"] .chat-input {
-    background: var(--bg-sidebar);
-    border-color: var(--border-thin);
-}
-
-[data-theme="dark"] .chat-input-form input {
-    background: var(--bg-section);
-    color: var(--text-primary);
-    border-color: rgba(255, 255, 255, 0.1);
-}
-
-[data-theme="dark"] .chat-input-form input:focus {
-    background: var(--bg-card);
-    border-color: var(--accent);
-    box-shadow: 0 0 0 4px var(--accent-glow);
-}
-
-[data-theme="dark"] .welcome-screen-card {
-    background: var(--bg-card);
-    color: var(--text-primary);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-[data-theme="dark"] .welcome-screen h2 {
-    color: var(--text-primary);
-}
-
-[data-theme="dark"] .welcome-screen p {
-    color: var(--text-secondary);
-}
-
-[data-theme="dark"] .modal-content,
-[data-theme="dark"] .modal-content-admin {
-    background: var(--bg-card);
-    color: var(--text-primary);
-}
-
-[data-theme="dark"] .modal {
-    background: rgba(0, 0, 0, 0.6);
-}
-
-[data-theme="dark"] .msg-actions {
-    background: var(--bg-card);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-[data-theme="dark"] .msg-action-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
-}
-
-[data-theme="dark"] .scroll-to-bottom-btn {
-    background: var(--bg-card);
-    color: var(--accent);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-[data-theme="dark"] .skeleton-item {
-    background: var(--bg-card);
-}
-
-[data-theme="dark"] .skeleton-avatar,
-[data-theme="dark"] .skeleton-line {
-    background: linear-gradient(90deg, #1e293b 25%, #293548 50%, #1e293b 75%);
-    background-size: 800px 100%;
-    animation: shimmer 1.5s infinite;
-}
-
-[data-theme="dark"] .users-list::-webkit-scrollbar-thumb,
-[data-theme="dark"] .messages-container::-webkit-scrollbar-thumb {
-    background: rgba(99, 102, 241, 0.3);
-}
 
 /* ===== SMOOTH MESSAGE ENTRY ANIMATION ===== */
 @keyframes message-in {
@@ -1690,13 +1433,6 @@ body {
     background: rgba(0, 0, 0, 0.05);
 }
 
-[data-theme="dark"] .sidebar-section-label {
-    color: var(--text-muted);
-}
-
-[data-theme="dark"] .sidebar-section-label::after {
-    background: rgba(255, 255, 255, 0.05);
-}
 
 /* ===== MESSAGE TIME ===== */
 .message-time {
@@ -1769,6 +1505,7 @@ body {
         transform: scaleX(1);
     }
 }
+
 /* ===== DANGER BUTTON STYLES ===== */
 .btn-danger-outline {
     background: transparent;
@@ -1845,46 +1582,35 @@ body {
 
 /* ===== LOGO STYLES ===== */
 .auth-logo {
-    width: 80px;
-    height: 80px;
-    margin-bottom: 20px;
+    width: 140px;
+    height: auto;
+    margin-bottom: 5px;
     filter: drop-shadow(0 10px 15px rgba(164, 20, 75, 0.3));
     animation: float 3s ease-in-out infinite;
 }
 
 @keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-10px); }
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
 }
 
 .sidebar-logo {
     display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 5px;
+    justify-content: center;
+    width: 100%;
+    padding: 10px 0;
     margin-bottom: 5px;
 }
 
 .sidebar-logo img {
-    width: 32px;
-    height: 32px;
+    width: 100px;
+    height: auto;
     filter: drop-shadow(0 4px 6px rgba(164, 20, 75, 0.2));
 }
-
-.sidebar-logo span {
-    font-size: 20px;
-    font-weight: 900;
-    font-family: " Outfit\, sans-serif;
- background: linear-gradient(45deg, var(--accent), #ff4d8d);
- -webkit-background-clip: text;
- -webkit-text-fill-color: transparent;
- letter-spacing: -0.5px;
-}
-
-
-.slogan-text {
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    font-weight: 700;
-}
-
