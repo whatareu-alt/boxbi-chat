@@ -488,6 +488,39 @@
             stompClient.connect({}, onConnected, onError);
         }
 
+        let globalRefreshInterval = null;
+        let requestRefreshInterval = null;
+
+        function startAutoRefresh() {
+            // Refresh user list + last message previews every 10s
+            globalRefreshInterval = setInterval(async () => {
+                if (!currentUser) return;
+                try {
+                    await loadFriendsList();
+                    const r = await fetch(`${API_URL}/users/search?username=`);
+                    if (!r.ok) return;
+                    const users = await r.json();
+                    allUsers = users.filter(u => u.username !== currentUser.username);
+                    // Only update previews for existing items without full re-render (prevent flicker)
+                    // Full re-render only if count changed
+                    const currentItems = document.querySelectorAll('.user-item').length;
+                    if (currentItems !== allUsers.length) {
+                        displayUsers(allUsers);
+                    }
+                } catch (e) { /* silent */ }
+            }, 10000);
+
+            // Refresh friend request badge every 30s
+            requestRefreshInterval = setInterval(() => {
+                if (currentUser) loadPendingRequests();
+            }, 30000);
+        }
+
+        function stopAutoRefresh() {
+            if (globalRefreshInterval) { clearInterval(globalRefreshInterval); globalRefreshInterval = null; }
+            if (requestRefreshInterval) { clearInterval(requestRefreshInterval); requestRefreshInterval = null; }
+        }
+
         function onConnected() {
             console.log('✅ Connected to WebSocket');
             stompClient.subscribe('/user/queue/private', onMessageReceived);
@@ -495,6 +528,8 @@
             // Load users and pending requests
             loadUsers();
             loadPendingRequests();
+            // Start background auto-refresh
+            startAutoRefresh();
         }
 
         function onMessageReceived(payload) {
@@ -1225,6 +1260,9 @@
         }
 
         function logout() {
+            // Stop all background timers
+            stopAutoRefresh();
+            stopChatPolling();
             // Disconnect WebSocket
             if (stompClient) {
                 stompClient.disconnect();
