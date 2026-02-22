@@ -1881,3 +1881,10 @@ body {
  letter-spacing: -0.5px;
 }
 
+
+.slogan-text {
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-weight: 700;
+}
+

@@ -22,7 +22,7 @@
         <div class="auth-container">
             <img src="logo.svg" alt="Boxbi Logo" class="auth-logo">
             <h1>Boxbi</h1>
-            <p id="slogan-text" class="slogan-text">Connect with world</p>
+            <p id="slogan-text" class="slogan-text">CONNECT YOUR WORLD</p>
 
             <!-- Login Form -->
             <form id="login-form">
@@ -291,16 +291,6 @@
         let sidebarMode = 'friends'; // 'friends' or 'discover'
         let unreadCounts = {};
         let lastMessages = {};
-        const slogans = [
-            "Connect with world",
-            "Conversations in Full Bloom.",
-            "Boxbi: Chat with Grace.",
-            "Your World, Simplified.",
-            "Boxbi: The Art of Conversation.",
-            "Stay Rose-Tinted.",
-            "Boxbi: Simply Smooth. Beautifully Rose."
-        ];
-        let currentSloganIndex = 0;
         let lastMessageDates = {};
         let typingTimeout = null;
         let typingHideTimeout = null;
@@ -312,24 +302,6 @@
             displayUsers(allUsers, document.getElementById('user-search').value);
         }
 
-        function rotateSlogans() {
-            const sloganEl = document.getElementById('slogan-text');
-            if (!sloganEl) return;
-
-            setInterval(() => {
-                sloganEl.classList.add('fade-out');
-                setTimeout(() => {
-                    currentSloganIndex = (currentSloganIndex + 1) % slogans.length;
-                    sloganEl.textContent = slogans[currentSloganIndex];
-                    sloganEl.classList.remove('fade-out');
-                }, 500);
-            }, 4000);
-        }
-
-        // Initialize slogans if on auth page
-        if (!localStorage.getItem('currentUser')) {
-            setTimeout(rotateSlogans, 2000);
-        }
 
         function switchTab(tab) {
             currentTab = tab;
