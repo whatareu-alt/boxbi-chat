@@ -277,6 +277,11 @@
         let selectedRecipient = null;
         let allUsers = [];
         let currentTab = 'chats';
+        let unreadCounts = {};
+        let lastMessages = {};
+        let lastMessageDates = {};
+        let typingTimeout = null;
+        let typingHideTimeout = null;
 
         function switchTab(tab) {
             currentTab = tab;
@@ -481,23 +486,6 @@
         function onError(error) {
             console.error('WebSocket error:', error);
             alert('Could not connect to chat server');
-        }
-
-        function onMessageReceived(payload) {
-            const message = JSON.parse(payload.body);
-
-            // 1. FILTER SELF-MESSAGES
-            if (message.sender === currentUser.username) {
-                return;
-            }
-
-            console.log('[WS] Message Received from', message.sender, ':', message.type);
-
-            const otherUser = message.sender === currentUser.username ? message.recipient : message.sender;
-
-            if (selectedRecipient === otherUser) {
-                displayMessage(message);
-            }
         }
 
 
