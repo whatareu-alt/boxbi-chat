@@ -2464,79 +2464,155 @@ body {
         display: flex;
     }
 
+    /* ── SIDEBAR HEADER — prevent overlap ── */
+    .sidebar-header {
+        display: flex;
+        align-items: center;
+        padding: 10px 12px;
+        gap: 8px;
+        overflow: hidden;
+        flex-shrink: 0;
+        min-width: 0;
+    }
+
+    /* Keep logo small and prevent it from growing */
+    .sidebar-logo {
+        flex-shrink: 0;
+        width: 36px;
+    }
+
+    .sidebar-logo img {
+        width: 36px;
+    }
+
+    /* Profile button fills available space but won't overflow */
+    .profile-avatar-btn {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        overflow: hidden;
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 4px;
+        border-radius: var(--radius-sm);
+    }
+
+    /* Sidebar avatar — don't shrink */
+    .sidebar-avatar {
+        width: 36px;
+        height: 36px;
+        font-size: 13px;
+        flex-shrink: 0;
+    }
+
+    /* Username truncates cleanly */
+    .sidebar-user-info {
+        min-width: 0;
+        overflow: hidden;
+    }
+
+    .sidebar-username {
+        display: block;
+        font-size: 14px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+    }
+
+    /* Action buttons — don't shrink, stay visible */
+    .sidebar-header .chat-header-actions {
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .sidebar-header .icon-btn {
+        width: 40px;
+        height: 40px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* ── CHAT HEADER — prevent overlap ── */
+    .chat-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 12px;
+        gap: 8px;
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+
+    .chat-header-info {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+        overflow: hidden;
+    }
+
+    .chat-header-info h3,
+    .chat-header-info>div>h3 {
+        font-size: 15px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 140px;
+    }
+
+    /* Chat header right side */
+    .chat-header .chat-header-actions {
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    /* Hide logout button on mobile */
+    .logout-btn {
+        display: none !important;
+    }
+
+    /* Delete chat — icon only on mobile to save space */
+    #delete-chat-btn {
+        padding: 8px;
+        gap: 0;
+        font-size: 0;
+        /* hides text */
+        min-width: 40px;
+        min-height: 40px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    #delete-chat-btn .material-symbols-outlined {
+        font-size: 20px;
+    }
+
     /* ── Show back button on mobile ── */
     .back-button {
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 44px;
-        height: 44px;
+        width: 40px;
+        height: 40px;
+        flex-shrink: 0;
         border: none;
         background: none;
         cursor: pointer;
         border-radius: var(--radius-sm);
         color: var(--text-primary);
-        flex-shrink: 0;
         transition: var(--transition-smooth);
-    }
-
-    .back-button:hover {
-        background: var(--accent-glow);
-    }
-
-    /* ── Chat header ── */
-    .chat-header {
-        padding: 10px 12px;
-        flex-shrink: 0;
-    }
-
-    .chat-header h3 {
-        font-size: 16px;
-    }
-
-    /* Hide logout button in header on mobile — use profile panel */
-    .logout-btn {
-        display: none;
-    }
-
-    /* Shrink delete chat button on mobile */
-    #delete-chat-btn {
-        padding: 6px 10px;
-        font-size: 12px;
-    }
-
-    #delete-chat-btn span.material-symbols-outlined {
-        font-size: 16px;
-    }
-
-    /* ── Sidebar header ── */
-    .sidebar-header {
-        padding: 12px 16px;
-    }
-
-    .sidebar-logo img {
-        width: 44px;
-    }
-
-    .sidebar-username {
-        font-size: 14px;
-    }
-
-    /* ── Search box ── */
-    .search-box input {
-        font-size: 14px;
-    }
-
-    /* ── User list items ── */
-    .user-item {
-        padding: 12px 16px;
-        min-height: 64px;
-    }
-
-    .user-avatar {
-        width: 42px;
-        height: 42px;
-        font-size: 16px;
     }
 
     /* ── Messages ── */
@@ -2544,6 +2620,7 @@ body {
         padding: 12px;
         flex: 1;
         overflow-y: auto;
+        min-height: 0;
     }
 
     .message {
@@ -2555,53 +2632,32 @@ body {
         padding: 10px 14px;
     }
 
-    .message-time {
-        font-size: 11px;
-    }
-
     /* ── Chat input ── */
     .chat-input {
         padding: 8px 12px;
-        /* Account for iPhone home bar */
         padding-bottom: max(8px, env(safe-area-inset-bottom));
         flex-shrink: 0;
-        border-top: var(--border-thin);
-        background: #fff;
-    }
-
-    .chat-input-form {
-        gap: 8px;
     }
 
     #message-input {
         font-size: 16px;
         /* Prevents iOS auto-zoom */
-        padding: 12px 16px;
         min-height: 44px;
     }
 
     .send-btn {
-        min-width: 64px;
-        padding: 0 16px;
         min-height: 44px;
-        font-size: 14px;
+        padding: 0 16px;
     }
 
-    /* ── Profile panel ── */
+    /* ── Profile panel full-width ── */
     .profile-panel {
         width: 100%;
     }
 
-    .profile-avatar-lg {
-        width: 80px;
-        height: 80px;
-        font-size: 32px;
-    }
-
     /* ── Tabs ── */
     .sidebar-tabs {
-        padding: 6px;
-        gap: 6px;
+        flex-shrink: 0;
     }
 
     .tab-btn {
@@ -2609,32 +2665,13 @@ body {
         font-size: 13px;
     }
 
-    /* ── Buttons touch targets ── */
-    .icon-btn {
-        min-width: 44px;
-        min-height: 44px;
-    }
-
-    .btn {
-        min-height: 48px;
-    }
-
-    /* ── Chat avatar in header ── */
-    .chat-header .user-avatar {
-        width: 36px;
-        height: 36px;
-        font-size: 14px;
-    }
-
-    /* ── Welcome screen ── */
-    .welcome-screen-card {
-        padding: 24px 20px;
-    }
-
-    .welcome-screen h2 {
-        font-size: 20px;
+    /* ── User list ── */
+    .user-item {
+        padding: 12px 16px;
+        min-height: 64px;
     }
 }
+
 
 /* ============================================
    SMALL MOBILE (≤ 380px) — extra compact
