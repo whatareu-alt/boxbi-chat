@@ -9,6 +9,7 @@ type Bindings = {
     DB: D1Database;
     JWT_SECRET: string;
     CHAT_DO: DurableObjectNamespace;
+    ADMIN_RESET_SECRET?: string;
 };
 
 const app = new Hono<{ Bindings: Bindings }>();

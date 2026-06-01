@@ -61,7 +61,6 @@ public class AdminController {
             return new ResponseEntity<>(response, HttpStatus.OK);
 
         } catch (Exception e) {
-            e.printStackTrace();
             Map<String, Object> error = new HashMap<>();
             error.put("error", "Reset failed: " + e.getMessage());
             return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -85,7 +84,6 @@ public class AdminController {
             return new ResponseEntity<>(stats, HttpStatus.OK);
 
         } catch (Exception e) {
-            e.printStackTrace();
             Map<String, Object> error = new HashMap<>();
             error.put("error", "Failed to get stats: " + e.getMessage());
             return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
