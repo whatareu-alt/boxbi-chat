@@ -644,6 +644,19 @@ body {
     box-shadow: var(--accent-shadow);
 }
 
+/* ===== TAB CONTENT SCROLL LAYOUT ===== */
+.tab-content {
+    display: none;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.tab-content.active {
+    display: flex;
+}
+
 /* ===== PROFILE PANEL ===== */
 .profile-backdrop {
     display: none;
