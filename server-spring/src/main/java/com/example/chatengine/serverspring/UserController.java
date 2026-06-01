@@ -35,6 +35,12 @@ public class UserController {
     @Autowired
     private JwtUtil jwtUtil;
 
+    @Autowired
+    private OtpVerificationRepository otpVerificationRepository;
+
+    @Autowired
+    private EmailService emailService;
+
     @CrossOrigin
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
@@ -118,6 +124,12 @@ public class UserController {
                 return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
             }
 
+            if (email.isEmpty()) {
+                Map<String, Object> error = new HashMap<>();
+                error.put("error", "Email is required");
+                return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+            }
+
             // Check if user already exists (defensive check for duplicates)
             java.util.List<User> existingUsers = userRepository.findAll().stream()
                     .filter(u -> u.getUsername().equals(username))
@@ -129,12 +141,118 @@ public class UserController {
                 return new ResponseEntity<>(error, HttpStatus.CONFLICT);
             }
 
+            // Check if email already exists
+            boolean emailExists = userRepository.findAll().stream()
+                    .anyMatch(u -> u.getEmail().equalsIgnoreCase(email));
+
+            if (emailExists) {
+                Map<String, Object> error = new HashMap<>();
+                error.put("error", "Email already exists");
+                return new ResponseEntity<>(error, HttpStatus.CONFLICT);
+            }
+
+            // Generate a random 6-digit OTP code
+            String otp = String.format("%06d", new java.util.Random().nextInt(1000000));
+
             // Hash password with BCrypt
             String hashedPassword = passwordEncoder.encode(password);
 
-            // Create new user in DB
-            User newUser = new User(username, hashedPassword, email, firstName, lastName);
+            // Clean up any existing verifications for the same username or email
+            otpVerificationRepository.findByUsername(username).ifPresent(otpVerificationRepository::delete);
+            otpVerificationRepository.findByEmail(email).ifPresent(otpVerificationRepository::delete);
+
+            // Create and save new pending OTP verification
+            OtpVerification pending = new OtpVerification(
+                    username,
+                    email,
+                    hashedPassword,
+                    firstName,
+                    lastName,
+                    otp,
+                    java.time.LocalDateTime.now().plusMinutes(5)
+            );
+            otpVerificationRepository.save(pending);
+
+            // Send OTP email (gracefully falls back to console printing)
+            emailService.sendOtpEmail(email, otp);
+
+            // Return that OTP is required to complete signup
+            Map<String, Object> response = new HashMap<>();
+            response.put("otpRequired", true);
+            response.put("email", email);
+            response.put("username", username);
+
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Map<String, Object> error = new HashMap<>();
+            error.put("error", "Internal server error");
+            return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @CrossOrigin
+    @PostMapping("/signup/verify")
+    public ResponseEntity<?> verifySignup(@RequestBody Map<String, String> request) {
+        try {
+            String username = request.get("username");
+            String email = request.get("email");
+            String otp = request.get("otp");
+
+            if (username == null || email == null || otp == null) {
+                Map<String, Object> error = new HashMap<>();
+                error.put("error", "Username, email, and OTP code are required");
+                return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+            }
+
+            username = username.trim();
+            email = email.trim();
+            otp = otp.trim();
+
+            // Find the pending verification
+            java.util.Optional<OtpVerification> optPending = otpVerificationRepository.findByUsername(username);
+            if (optPending.isEmpty()) {
+                Map<String, Object> error = new HashMap<>();
+                error.put("error", "No pending registration found for this username");
+                return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+            }
+
+            OtpVerification pending = optPending.get();
+
+            // Verify email matches
+            if (!pending.getEmail().equalsIgnoreCase(email)) {
+                Map<String, Object> error = new HashMap<>();
+                error.put("error", "Email does not match registration details");
+                return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+            }
+
+            // Verify OTP matches
+            if (!pending.getOtp().equals(otp)) {
+                Map<String, Object> error = new HashMap<>();
+                error.put("error", "Invalid OTP code");
+                return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+            }
+
+            // Verify not expired
+            if (pending.isExpired()) {
+                otpVerificationRepository.delete(pending);
+                Map<String, Object> error = new HashMap<>();
+                error.put("error", "OTP code has expired. Please sign up again.");
+                return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+            }
+
+            // OTP is valid! Let's create the user
+            User newUser = new User(
+                    pending.getUsername(),
+                    pending.getSecret(), // already hashed!
+                    pending.getEmail(),
+                    pending.getFirstName(),
+                    pending.getLastName()
+            );
             userRepository.save(newUser);
+
+            // Clean up the verification record
+            otpVerificationRepository.delete(pending);
 
             // Generate JWT token
             String token = jwtUtil.generateToken(newUser.getUsername());
@@ -149,6 +267,7 @@ public class UserController {
                     newUser.getId());
 
             return new ResponseEntity<>(response, HttpStatus.CREATED);
+
         } catch (Exception e) {
             e.printStackTrace();
             Map<String, Object> error = new HashMap<>();

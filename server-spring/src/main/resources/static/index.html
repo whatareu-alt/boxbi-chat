@@ -81,6 +81,21 @@
                     Have an account? <a href="#" id="show-login">Sign in</a>
                 </div>
 
+                <!-- OTP Verification Form -->
+                <form id="otp-form" class="hidden">
+                    <div class="form-instructions" style="margin-bottom: 15px; color: var(--text-muted); font-size: 14px; text-align: center; line-height: 1.4;">
+                        We sent a 6-digit OTP verification code to your email. Please enter it below to complete signup.
+                    </div>
+                    <div class="form-group">
+                        <input type="text" id="otp-code" placeholder="6-digit OTP" required maxlength="6" pattern="\d{6}" style="text-align: center; letter-spacing: 5px; font-size: 20px; font-weight: bold; padding: 12px;">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Verify & Create Account</button>
+                    <div class="error hidden" id="otp-error"></div>
+                    <div class="toggle-auth" style="margin-top: 15px; font-size: 13px;">
+                        Didn't get code? <a href="#" id="otp-resend">Resend OTP</a> or <a href="#" id="show-signup-from-otp">Change Details</a>
+                    </div>
+                </form>
+
                 <div class="admin-reset-container">
                     <button onclick="showAdminReset()" class="btn btn-ghost">Admin Reset</button>
                 </div>
@@ -343,6 +358,8 @@
         let lastMessages = {};
         let typingTimeout = null;
         let typingHideTimeout = null;
+        let tempSignupUsername = null;
+        let tempSignupEmail = null;
 
         function switchSidebarTab(mode) {
             sidebarMode = mode;
@@ -440,10 +457,25 @@
                 });
 
                 if (response.ok) {
-                    currentUser = await response.json();
-                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
-                    showError('signup', '');
-                    enterChat();
+                    const data = await response.json();
+                    if (data.otpRequired) {
+                        // Show OTP verification form
+                        document.getElementById('signup-form').classList.add('hidden');
+                        document.getElementById('show-login-link').classList.add('hidden');
+                        document.getElementById('otp-form').classList.remove('hidden');
+                        document.getElementById('otp-error').classList.add('hidden');
+                        document.getElementById('otp-code').value = '';
+                        
+                        // Keep track of registration details for validation
+                        tempSignupUsername = data.username;
+                        tempSignupEmail = data.email;
+                        showError('signup', '');
+                    } else {
+                        currentUser = data;
+                        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                        showError('signup', '');
+                        enterChat();
+                    }
                 } else {
                     const error = await response.json();
                     showError('signup', error.error || 'Signup failed');
@@ -451,6 +483,93 @@
             } catch (e) {
                 console.error(e);
                 showError('signup', 'Server connection failed');
+            }
+        });
+
+        // OTP Verification Submission
+        document.getElementById('otp-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const otpCode = document.getElementById('otp-code').value.trim();
+            const errorDiv = document.getElementById('otp-error');
+
+            try {
+                const response = await fetch(`${API_URL}/signup/verify`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: tempSignupUsername,
+                        email: tempSignupEmail,
+                        otp: otpCode
+                    })
+                });
+
+                if (response.ok) {
+                    currentUser = await response.json();
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    errorDiv.classList.add('hidden');
+                    
+                    // Hide OTP Form and Enter Chat
+                    document.getElementById('otp-form').classList.add('hidden');
+                    enterChat();
+                } else {
+                    const error = await response.json();
+                    errorDiv.textContent = error.error || 'Verification failed';
+                    errorDiv.classList.remove('hidden');
+                }
+            } catch (e) {
+                console.error(e);
+                errorDiv.textContent = 'Server connection failed';
+                errorDiv.classList.remove('hidden');
+            }
+        });
+
+        // OTP "Change Details" (Back to Signup)
+        document.getElementById('show-signup-from-otp').addEventListener('click', (e) => {
+            e.preventDefault();
+            document.getElementById('otp-form').classList.add('hidden');
+            document.getElementById('signup-form').classList.remove('hidden');
+            document.getElementById('show-login-link').classList.remove('hidden');
+        });
+
+        // OTP "Resend OTP"
+        document.getElementById('otp-resend').addEventListener('click', async (e) => {
+            e.preventDefault();
+            const errorDiv = document.getElementById('otp-error');
+            const resendLink = document.getElementById('otp-resend');
+            const originalText = resendLink.textContent;
+            
+            resendLink.textContent = 'Sending...';
+            resendLink.style.pointerEvents = 'none';
+
+            try {
+                // Re-trigger signup submit
+                const username = document.getElementById('signup-username').value.trim();
+                const email = document.getElementById('signup-email').value.trim();
+                const firstName = document.getElementById('signup-firstname').value.trim();
+                const lastName = document.getElementById('signup-lastname').value.trim();
+                const password = document.getElementById('signup-password').value;
+
+                const response = await fetch(`${API_URL}/signup`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, email, firstName, lastName, secret: password })
+                });
+
+                if (response.ok) {
+                    alert('✅ A new OTP verification code has been sent to your email.');
+                    errorDiv.classList.add('hidden');
+                } else {
+                    const error = await response.json();
+                    errorDiv.textContent = error.error || 'Resend failed';
+                    errorDiv.classList.remove('hidden');
+                }
+            } catch (err) {
+                console.error(err);
+                errorDiv.textContent = 'Server connection failed';
+                errorDiv.classList.remove('hidden');
+            } finally {
+                resendLink.textContent = originalText;
+                resendLink.style.pointerEvents = 'auto';
             }
         });
 

@@ -96,6 +96,12 @@
 			<version>1.2.3</version>
 		</dependency>
 
+		<!-- Email Service -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-mail</artifactId>
+		</dependency>
+
 	</dependencies>
 
 	<build>
