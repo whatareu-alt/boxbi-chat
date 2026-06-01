@@ -218,6 +218,33 @@ app.get('/ws', async (c) => {
     return durableObject.fetch(c.req.raw);
 });
 
+// Admin Database Reset
+app.post('/admin/reset', async (c) => {
+    const { secret } = await c.req.json();
+    const ADMIN_SECRET = "boxbi@#$%&123";
+
+    if (!secret || secret !== ADMIN_SECRET) {
+        return c.json({ error: 'Invalid admin secret code' }, 401);
+    }
+
+    try {
+        // Delete all group members
+        await c.env.DB.prepare('DELETE FROM group_members').run();
+        // Delete all chat groups
+        await c.env.DB.prepare('DELETE FROM chat_groups').run();
+        // Delete all messages
+        await c.env.DB.prepare('DELETE FROM messages').run();
+        // Delete all friend requests
+        await c.env.DB.prepare('DELETE FROM friend_requests').run();
+        // Delete all users
+        await c.env.DB.prepare('DELETE FROM users').run();
+
+        return c.json({ message: 'Database reset successful' });
+    } catch (e: any) {
+        return c.json({ error: 'Reset failed: ' + e.message }, 500);
+    }
+});
+
 export default app;
 
 // Durable Object class definition would go in a separate file or here.
