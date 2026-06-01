@@ -15,13 +15,12 @@
 </head>
 
 <body>
-    <!-- Admin Button in Top-Right Corner -->
-    <button class="admin-menu-btn" onclick="showAdminReset()" title="Admin Reset Panel">🛡️</button>
-
     <!-- Global UI Elements -->
 
     <!-- Auth Page -->
     <div id="auth-page" class="auth-page">
+        <!-- Admin Button in Top-Right Corner -->
+        <button class="admin-menu-btn" onclick="showAdminReset()" title="Admin Reset Panel">🛡️</button>
 
         <!-- LEFT: Branding -->
         <div class="auth-left">
@@ -468,6 +467,8 @@
 
         function enterChat() {
             document.getElementById('auth-page').style.display = 'none';
+            const adminBtn = document.querySelector('.admin-menu-btn');
+            if (adminBtn) adminBtn.style.display = 'none';
             document.getElementById('chat-app').classList.add('active');
             document.getElementById('current-username').textContent = currentUser.username;
 
@@ -1242,6 +1243,8 @@
             currentUser = null;
             document.getElementById('chat-app').classList.remove('active');
             document.getElementById('auth-page').style.display = 'block';
+            const adminBtn = document.querySelector('.admin-menu-btn');
+            if (adminBtn) adminBtn.style.display = 'flex';
             document.getElementById('login-form').reset();
 
             // Clear location reload to prevent re-login
