@@ -19,64 +19,73 @@
 
     <!-- Auth Page -->
     <div id="auth-page" class="auth-page">
-        <div class="auth-container">
+
+        <!-- LEFT: Branding -->
+        <div class="auth-left">
             <img src="logo.png" alt="Boxbi Logo" class="auth-logo">
-            <p id="slogan-text" class="slogan-text">CONNECT YOUR WORLD</p>
+            <h1 class="auth-brand-name">Boxbi</h1>
+            <p class="auth-tagline">Connect with friends and the world around you on Boxbi.</p>
+        </div>
 
-            <!-- Login Form -->
-            <form id="login-form">
-                <div class="form-group">
-                    <input type="text" id="login-username" placeholder="Username" required autocomplete="username">
-                </div>
-                <div class="form-group">
-                    <input type="password" id="login-password" placeholder="Password" required
-                        autocomplete="current-password">
+        <!-- RIGHT: Login Card -->
+        <div class="auth-right">
+            <div class="auth-container">
+
+                <!-- Login Form -->
+                <form id="login-form">
+                    <div class="form-group">
+                        <input type="text" id="login-username" placeholder="Username" required autocomplete="username">
+                    </div>
+                    <div class="form-group">
+                        <input type="password" id="login-password" placeholder="Password" required
+                            autocomplete="current-password">
+                    </div>
+                    <div class="form-checkbox-group">
+                        <input type="checkbox" id="remember-me" checked>
+                        <label for="remember-me">Remember me</label>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Sign In</button>
+                    <div class="error hidden" id="login-error"></div>
+                </form>
+
+                <div class="auth-divider">or</div>
+
+                <div class="toggle-auth">
+                    Don't have an account? <a href="#" id="show-signup">Create one</a>
                 </div>
 
-                <div class="form-checkbox-group">
-                    <input type="checkbox" id="remember-me" checked>
-                    <label for="remember-me">Remember me</label>
+                <!-- Signup Form -->
+                <form id="signup-form" class="hidden">
+                    <div class="form-group">
+                        <input type="text" id="signup-username" placeholder="Username" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="email" id="signup-email" placeholder="Email" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="text" id="signup-firstname" placeholder="First Name" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="text" id="signup-lastname" placeholder="Last Name" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="password" id="signup-password" placeholder="Password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Create Account</button>
+                    <div class="error hidden" id="signup-error"></div>
+                </form>
+
+                <div class="toggle-auth hidden" id="show-login-link">
+                    Have an account? <a href="#" id="show-login">Sign in</a>
                 </div>
 
-                <button type="submit" class="btn btn-primary">Sign In</button>
-                <div class="error hidden" id="login-error"></div>
-            </form>
-
-            <div class="auth-divider">or</div>
-
-            <div class="toggle-auth">
-                Don't have an account? <a href="#" id="show-signup">Create one</a>
-            </div>
-
-            <!-- Signup Form -->
-            <form id="signup-form" class="hidden">
-                <div class="form-group">
-                    <input type="text" id="signup-username" placeholder="Username" required>
+                <div class="admin-reset-container">
+                    <button onclick="showAdminReset()" class="btn btn-ghost">Admin Reset</button>
                 </div>
-                <div class="form-group">
-                    <input type="email" id="signup-email" placeholder="Email" required>
-                </div>
-                <div class="form-group">
-                    <input type="text" id="signup-firstname" placeholder="First Name" required>
-                </div>
-                <div class="form-group">
-                    <input type="text" id="signup-lastname" placeholder="Last Name" required>
-                </div>
-                <div class="form-group">
-                    <input type="password" id="signup-password" placeholder="Password" required>
-                </div>
-                <button type="submit" class="btn btn-primary">Create Account</button>
-                <div class="error hidden" id="signup-error"></div>
-            </form>
 
-            <div class="toggle-auth hidden" id="show-login-link">
-                Have an account? <a href="#" id="show-login">Sign in</a>
-            </div>
-
-            <div class="admin-reset-container">
-                <button onclick="showAdminReset()" class="btn btn-ghost">Admin Reset</button>
             </div>
         </div>
+
     </div>
 
     <!-- Admin Reset Modal -->
@@ -88,7 +97,7 @@
             <div id="admin-error" class="admin-error"></div>
             <div class="modal-actions-row">
                 <button onclick="hideAdminReset()" class="btn-secondary">Cancel</button>
-                <button onclick="executeAdminReset()" class="btn-danger-action">Reset All Data</button>
+                <button onclick="executeAdminReset('db')" class="btn-danger-action">Reset All Data</button>
             </div>
         </div>
     </div>
@@ -107,7 +116,6 @@
                     <div class="sidebar-avatar" id="sidebar-avatar-initials">?</div>
                     <div class="sidebar-user-info">
                         <span id="current-username" class="sidebar-username">Loading...</span>
-                        <span class="sidebar-status">🟢 Online</span>
                     </div>
                 </button>
                 <div class="chat-header-actions">
@@ -186,13 +194,21 @@
                     <span class="material-symbols-outlined">arrow_back</span>
                 </button>
                 <span>Profile</span>
+                <button class="profile-edit-btn" id="profile-edit-toggle" onclick="toggleProfileEdit()">
+                    <span class="material-symbols-outlined">edit</span>
+                </button>
             </div>
 
             <div class="profile-cover">
-                <div class="profile-avatar-lg" id="profile-avatar-lg">?</div>
+                <div class="profile-avatar-lg" id="profile-avatar-lg"
+                    onclick="document.getElementById('profile-pic-input').click()" style="cursor: pointer;"
+                    title="Click to change profile picture">?</div>
+                <input type="file" id="profile-pic-input" accept="image/*" style="display: none;"
+                    onchange="handleProfilePicChange(event)">
             </div>
 
-            <div class="profile-body">
+            <!-- View Mode -->
+            <div id="profile-view-mode" class="profile-body">
                 <div class="profile-field">
                     <span class="profile-field-label">
                         <span class="material-symbols-outlined">person</span> Your Name
@@ -209,14 +225,52 @@
                     <span class="profile-field-label">
                         <span class="material-symbols-outlined">circle</span> Status
                     </span>
-                    <span class="profile-field-value profile-status-online">🟢 Online</span>
+                    <span class="profile-field-value profile-status-online">Active</span>
                 </div>
             </div>
 
-            <div class="profile-actions">
+            <!-- Edit Mode -->
+            <div id="profile-edit-mode" class="profile-body profile-edit-form hidden">
+                <div class="profile-field">
+                    <span class="profile-field-label">
+                        <span class="material-symbols-outlined">person</span> First Name
+                    </span>
+                    <input type="text" id="edit-firstname" class="profile-edit-input" placeholder="First Name">
+                </div>
+                <div class="profile-field">
+                    <span class="profile-field-label">
+                        <span class="material-symbols-outlined">person</span> Last Name
+                    </span>
+                    <input type="text" id="edit-lastname" class="profile-edit-input" placeholder="Last Name">
+                </div>
+                <div class="profile-field">
+                    <span class="profile-field-label">
+                        <span class="material-symbols-outlined">image</span> Profile Picture
+                    </span>
+                    <input type="file" id="edit-profile-pic" class="profile-pic-upload-input" accept="image/*"
+                        onchange="previewProfilePic(event)">
+                    <div id="pic-preview" class="profile-pic-preview hidden"></div>
+                </div>
+                <div class="profile-field">
+                    <span class="profile-field-label">
+                        <span class="material-symbols-outlined">alternate_email</span> Email
+                    </span>
+                    <input type="email" id="edit-email" class="profile-edit-input" placeholder="Email">
+                </div>
+                <div class="profile-edit-actions">
+                    <button class="btn btn-primary" onclick="saveProfileChanges()">Save Changes</button>
+                    <button class="btn btn-secondary" onclick="toggleProfileEdit()">Cancel</button>
+                </div>
+            </div>
+
+            <div class="profile-actions" id="profile-actions-logout">
                 <button class="btn btn-primary" onclick="closeProfile(); logout();">
                     <span class="material-symbols-outlined profile-logout-icon">logout</span>
                     Logout
+                </button>
+                <button class="btn btn-delete-account" onclick="deleteAccount()">
+                    <span class="material-symbols-outlined profile-logout-icon">delete_forever</span>
+                    Delete Account
                 </button>
             </div>
         </div>
@@ -231,7 +285,6 @@
                     <div class="user-avatar" id="chat-avatar">?</div>
                     <div>
                         <h3 id="chat-name">Select a user to chat</h3>
-                        <div class="status" id="chat-status"></div>
                     </div>
                 </div>
                 <div class="chat-header-actions">
@@ -286,7 +339,6 @@
         let sidebarMode = 'friends'; // 'friends' or 'discover'
         let unreadCounts = {};
         let lastMessages = {};
-        let lastMessageDates = {};
         let typingTimeout = null;
         let typingHideTimeout = null;
 
@@ -435,6 +487,39 @@
             stompClient.connect({}, onConnected, onError);
         }
 
+        let globalRefreshInterval = null;
+        let requestRefreshInterval = null;
+
+        function startAutoRefresh() {
+            // Refresh user list + last message previews every 10s
+            globalRefreshInterval = setInterval(async () => {
+                if (!currentUser) return;
+                try {
+                    await loadFriendsList();
+                    const r = await fetch(`${API_URL}/users/search?username=`);
+                    if (!r.ok) return;
+                    const users = await r.json();
+                    allUsers = users.filter(u => u.username !== currentUser.username);
+                    // Only update previews for existing items without full re-render (prevent flicker)
+                    // Full re-render only if count changed
+                    const currentItems = document.querySelectorAll('.user-item').length;
+                    if (currentItems !== allUsers.length) {
+                        displayUsers(allUsers);
+                    }
+                } catch (e) { /* silent */ }
+            }, 10000);
+
+            // Refresh friend request badge every 30s
+            requestRefreshInterval = setInterval(() => {
+                if (currentUser) loadPendingRequests();
+            }, 30000);
+        }
+
+        function stopAutoRefresh() {
+            if (globalRefreshInterval) { clearInterval(globalRefreshInterval); globalRefreshInterval = null; }
+            if (requestRefreshInterval) { clearInterval(requestRefreshInterval); requestRefreshInterval = null; }
+        }
+
         function onConnected() {
             console.log('✅ Connected to WebSocket');
             stompClient.subscribe('/user/queue/private', onMessageReceived);
@@ -442,6 +527,8 @@
             // Load users and pending requests
             loadUsers();
             loadPendingRequests();
+            // Start background auto-refresh
+            startAutoRefresh();
         }
 
         function onMessageReceived(payload) {
@@ -452,7 +539,7 @@
             const otherUser = message.sender;
 
             // Update last message preview in sidebar
-            updateLastMessage(otherUser, message.content, message.timestamp);
+            updateLastMessage(otherUser, message.content);
 
             if (selectedRecipient === otherUser) {
                 displayMessage(message);
@@ -468,17 +555,7 @@
         }
 
         function onTypingReceived(payload) {
-            const data = JSON.parse(payload.body);
-            if (data.sender === selectedRecipient) {
-                const statusEl = document.getElementById('chat-status');
-                statusEl.textContent = 'typing...';
-                statusEl.style.color = 'var(--accent)';
-                clearTimeout(typingHideTimeout);
-                typingHideTimeout = setTimeout(() => {
-                    statusEl.textContent = 'Online';
-                    statusEl.style.color = '';
-                }, 2000);
-            }
+            // status indicator removed
         }
 
         function sendTypingEvent() {
@@ -490,8 +567,8 @@
             }
         }
 
-        function updateLastMessage(username, content, timestamp) {
-            lastMessages[username] = { content, timestamp };
+        function updateLastMessage(username, content) {
+            lastMessages[username] = { content };
             const previewEl = document.getElementById(`preview-${username}`);
             if (previewEl) {
                 previewEl.textContent = content.length > 28 ? content.slice(0, 28) + '…' : content;
@@ -650,7 +727,8 @@
                 list.forEach(user => {
                     const isFriend = friendsList.includes(user.username);
                     let statusHtml = isFriend
-                        ? '<span style="color: var(--success); font-size: 12px; font-weight: 600;">Friend ✅</span>'
+                        ? `<span style="color: var(--success); font-size: 12px; font-weight: 600;">Friend ✅</span>
+                           <button onclick="unfriend('${user.username}'); event.stopPropagation();" class="btn-unfriend" title="Remove friend">✕ Unfriend</button>`
                         : `<button onclick="sendFriendRequest('${user.username}'); event.stopPropagation();" class="btn btn-primary" style="padding:3px 10px; font-size:11px;">Add Friend</button>`;
 
                     const gradient = avatarColor(user.username);
@@ -663,7 +741,6 @@
                     userItem.innerHTML = `
     <div class="user-avatar-wrap">
         <div class="user-avatar" style="background:${gradient}">${user.username[0].toUpperCase()}</div>
-        <div class="status-dot"></div>
     </div>
     <div class="user-info">
         <div class="user-name-row">
@@ -672,7 +749,6 @@
         </div>
         <div class="user-last-preview" id="preview-${user.username}">${isFriend ? '👋 Say hi!' : 'Send a friend request'}</div>
         <div class="status-row">
-            <div class="user-status">🟢 Online</div>
             <div>${statusHtml}</div>
         </div>
     </div>
@@ -690,8 +766,11 @@
         }
 
         function exitChatView() {
+            stopChatPolling();
             document.getElementById('chat-app').classList.remove('mobile-chat-active');
             selectedRecipient = null;
+            // Deselect active user
+            document.querySelectorAll('.user-item').forEach(el => el.classList.remove('active'));
         }
 
         async function selectUser(username) {
@@ -726,9 +805,8 @@
                 btn.style.cursor = "not-allowed";
             }
 
-            // Clear messages + reset date dividers for this conversation
+            // Clear messages for this conversation
             document.getElementById('messages').innerHTML = '';
-            lastMessageDates[username] = null;
 
             // Clear unread badge
             unreadCounts[username] = 0;
@@ -742,6 +820,9 @@
 
             // Load chat history
             loadChatHistory(username);
+
+            // Mobile: switch to chat view
+            document.getElementById('chat-app').classList.add('mobile-chat-active');
         }
 
         async function deleteChat() {
@@ -760,9 +841,9 @@
                             <p>Conversation deleted</p>
                         </div>
                     `;
-                    // Refresh last message preview in list
                     lastMessages[selectedRecipient] = null;
-                    refreshData();
+                    const previewEl = document.getElementById(`preview-${selectedRecipient}`);
+                    if (previewEl) previewEl.textContent = '👋 Say hi!';
                 } else {
                     alert('Failed to delete chat');
                 }
@@ -772,13 +853,40 @@
             }
         }
 
+        let chatPollInterval = null;
+        let dbMsgCount = 0; // tracks how many DB messages are currently rendered
+
+        function startChatPolling(contact) {
+            stopChatPolling();
+            chatPollInterval = setInterval(async () => {
+                if (!selectedRecipient || selectedRecipient !== contact) return stopChatPolling();
+                try {
+                    const r = await fetch(`${API_URL}/messages/${contact}?currentUser=${currentUser.username}`);
+                    if (!r.ok) return;
+                    const msgs = await r.json();
+                    if (msgs.length > dbMsgCount) {
+                        // Only render the truly new messages from DB
+                        const newMsgs = msgs.slice(dbMsgCount);
+                        newMsgs.forEach(displayMessage);
+                        dbMsgCount = msgs.length;
+                    }
+                } catch (e) { /* silent */ }
+            }, 2000);
+        }
+
+        function stopChatPolling() {
+            if (chatPollInterval) { clearInterval(chatPollInterval); chatPollInterval = null; }
+        }
+
         async function loadChatHistory(contact) {
+            dbMsgCount = 0; // Reset count BEFORE fetching and rendering
             try {
                 const response = await fetch(`${API_URL}/messages/${contact}?currentUser=${currentUser.username}`);
                 if (response.ok) {
                     const messages = await response.json();
-                    console.log(`Loaded ${messages.length} messages`);
                     messages.forEach(displayMessage);
+                    dbMsgCount = messages.length; // remember where DB ends
+                    startChatPolling(contact);
                 }
             } catch (e) {
                 console.error('Error loading history:', e);
@@ -812,40 +920,20 @@
             }
         });
 
-        function getDateLabel(timestamp) {
-            const date = new Date(timestamp);
-            const today = new Date();
-            const yesterday = new Date();
-            yesterday.setDate(today.getDate() - 1);
-            if (date.toDateString() === today.toDateString()) return 'Today';
-            if (date.toDateString() === yesterday.toDateString()) return 'Yesterday';
-            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-        }
+
 
         function displayMessage(message) {
             const messagesDiv = document.getElementById('messages');
-            const conversationKey = selectedRecipient;
 
-            // Date divider
-            const dateLabel = getDateLabel(message.timestamp);
-            if (lastMessageDates[conversationKey] !== dateLabel) {
-                lastMessageDates[conversationKey] = dateLabel;
-                const divider = document.createElement('div');
-                divider.className = 'date-divider';
-                divider.innerHTML = `<span>${dateLabel}</span>`;
-                messagesDiv.appendChild(divider);
-            }
+            // Clear welcome screen on first message
+            const welcome = messagesDiv.querySelector('.welcome-screen');
+            if (welcome) welcome.remove();
 
             const messageDiv = document.createElement('div');
             messageDiv.className = 'message';
             if (message.sender === currentUser.username) {
                 messageDiv.classList.add('own');
             }
-
-            const ts = message.timestamp ? new Date(message.timestamp) : new Date();
-            const time = isNaN(ts.getTime())
-                ? new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-                : ts.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
             const safeContent = escapeHtml(message.content);
             messageDiv.innerHTML = `
@@ -855,18 +943,19 @@
         </div>
         <div class="message-sender">${message.sender}</div>
         ${safeContent}
-        <div class="message-time">${time}</div>
     </div>
     `;
 
             messagesDiv.appendChild(messageDiv);
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
 
+            // Increment count to avoid duplication during polling
+            dbMsgCount++;
+
             // Update last message preview
             updateLastMessage(
                 message.sender === currentUser.username ? message.recipient : message.sender,
-                message.content,
-                message.timestamp
+                message.content
             );
         }
 
@@ -926,8 +1015,32 @@
                 : currentUser.username;
             const initials = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
 
-            document.getElementById('profile-avatar-lg').textContent = initials;
-            document.getElementById('sidebar-avatar-initials').textContent = initials;
+            const profileAvatar = document.getElementById('profile-avatar-lg');
+            const sidebarAvatar = document.getElementById('sidebar-avatar-initials');
+
+            // Check if user has a profile picture
+            if (currentUser.profilePicture) {
+                profileAvatar.style.backgroundImage = `url('${currentUser.profilePicture}')`;
+                profileAvatar.style.backgroundSize = 'cover';
+                profileAvatar.style.backgroundPosition = 'center';
+                profileAvatar.textContent = '';
+
+                if (sidebarAvatar) {
+                    sidebarAvatar.style.backgroundImage = `url('${currentUser.profilePicture}')`;
+                    sidebarAvatar.style.backgroundSize = 'cover';
+                    sidebarAvatar.style.backgroundPosition = 'center';
+                    sidebarAvatar.textContent = '';
+                }
+            } else {
+                profileAvatar.style.backgroundImage = '';
+                profileAvatar.textContent = initials;
+
+                if (sidebarAvatar) {
+                    sidebarAvatar.style.backgroundImage = '';
+                    sidebarAvatar.textContent = initials;
+                }
+            }
+
             document.getElementById('profile-fullname').textContent = name;
             document.getElementById('profile-username').textContent = '@' + currentUser.username;
 
@@ -940,7 +1053,183 @@
             document.getElementById('profile-backdrop').classList.remove('open');
         }
 
+        function toggleProfileEdit() {
+            const viewMode = document.getElementById('profile-view-mode');
+            const editMode = document.getElementById('profile-edit-mode');
+            const logoutBtn = document.getElementById('profile-actions-logout');
+
+            if (editMode.classList.contains('hidden')) {
+                // Switch to edit mode
+                editMode.classList.remove('hidden');
+                viewMode.style.display = 'none';
+                logoutBtn.style.display = 'none';
+
+                // Populate edit fields
+                if (currentUser) {
+                    document.getElementById('edit-firstname').value = currentUser.firstName || '';
+                    document.getElementById('edit-lastname').value = currentUser.lastName || '';
+                    document.getElementById('edit-email').value = currentUser.email || '';
+                }
+            } else {
+                // Switch back to view mode
+                editMode.classList.add('hidden');
+                viewMode.style.display = 'block';
+                logoutBtn.style.display = 'block';
+            }
+        }
+
+        async function saveProfileChanges() {
+            if (!currentUser) return;
+
+            const firstName = document.getElementById('edit-firstname').value.trim();
+            const lastName = document.getElementById('edit-lastname').value.trim();
+            const email = document.getElementById('edit-email').value.trim();
+
+            if (!firstName || !lastName || !email) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            const saveBtn = document.querySelector('#profile-edit-mode .btn-primary');
+            const originalText = saveBtn.textContent;
+            saveBtn.textContent = 'Saving...';
+            saveBtn.disabled = true;
+
+            try {
+                const response = await fetch(`${API_URL}/users/${currentUser.username}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ firstName, lastName, email })
+                });
+
+                if (!response.ok) throw new Error('Server error');
+
+                // Update local user object
+                currentUser.firstName = firstName;
+                currentUser.lastName = lastName;
+                currentUser.email = email;
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+
+                // Update UI
+                const name = `${firstName} ${lastName}`;
+                const initials = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+                const avatarEl = document.getElementById('profile-avatar-lg');
+                if (!avatarEl.style.backgroundImage) avatarEl.textContent = initials;
+                const sidebarAv = document.getElementById('sidebar-avatar-initials');
+                if (sidebarAv && !sidebarAv.style.backgroundImage) sidebarAv.textContent = initials;
+                document.getElementById('profile-fullname').textContent = name;
+                const usernameEl = document.getElementById('sidebar-username');
+                if (usernameEl) usernameEl.textContent = firstName;
+
+                toggleProfileEdit();
+                alert('Profile updated successfully!');
+            } catch (err) {
+                console.error('Profile update failed:', err);
+                alert('Failed to update profile. Please try again.');
+            } finally {
+                saveBtn.textContent = originalText;
+                saveBtn.disabled = false;
+            }
+        }
+
+        function previewProfilePic(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const preview = document.getElementById('pic-preview');
+                preview.innerHTML = `<img src="${e.target.result}" alt="Profile Picture Preview">`;
+                preview.classList.remove('hidden');
+
+                // Store the image data in currentUser
+                if (!currentUser) currentUser = {};
+                currentUser.profilePicture = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function handleProfilePicChange(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                // Update avatar with profile picture
+                const profileAvatar = document.getElementById('profile-avatar-lg');
+                profileAvatar.style.backgroundImage = `url('${e.target.result}')`;
+                profileAvatar.style.backgroundSize = 'cover';
+                profileAvatar.style.backgroundPosition = 'center';
+                profileAvatar.textContent = '';
+
+                // Store in currentUser
+                if (!currentUser) currentUser = {};
+                currentUser.profilePicture = e.target.result;
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+
+                // Also update sidebar avatar
+                const sidebarAvatar = document.getElementById('sidebar-avatar-initials');
+                if (sidebarAvatar) {
+                    sidebarAvatar.style.backgroundImage = `url('${e.target.result}')`;
+                    sidebarAvatar.style.backgroundSize = 'cover';
+                    sidebarAvatar.style.backgroundPosition = 'center';
+                    sidebarAvatar.textContent = '';
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function deleteAccount() {
+            if (!currentUser) return;
+            if (!confirm(`⚠️ Are you sure you want to permanently delete your account "@${currentUser.username}"? This will delete all your messages and friend connections. This CANNOT be undone.`)) return;
+            if (!confirm('Last warning: all your data will be deleted forever. Continue?')) return;
+
+            try {
+                const response = await fetch(`${API_URL}/users/${currentUser.username}`, {
+                    method: 'DELETE'
+                });
+                if (response.ok) {
+                    if (stompClient) stompClient.disconnect();
+                    localStorage.clear();
+                    sessionStorage.clear();
+                    alert('Your account has been deleted.');
+                    window.location.reload();
+                } else {
+                    alert('Failed to delete account. Please try again.');
+                }
+            } catch (err) {
+                console.error('Delete account error:', err);
+                alert('Connection error. Please try again.');
+            }
+        }
+
+        async function unfriend(friendUsername) {
+            if (!currentUser) return;
+            if (!confirm(`Remove ${friendUsername} from your friends?`)) return;
+
+            try {
+                const response = await fetch(`${API_URL}/friends/${friendUsername}?currentUser=${currentUser.username}`, {
+                    method: 'DELETE'
+                });
+                if (response.ok) {
+                    // If we were chatting with this person, exit chat
+                    if (selectedRecipient === friendUsername) exitChatView();
+                    await loadFriendsList();
+                    await loadUsers();
+                } else {
+                    alert('Failed to unfriend. Please try again.');
+                }
+            } catch (err) {
+                console.error('Unfriend error:', err);
+                alert('Connection error.');
+            }
+        }
+
         function logout() {
+            // Stop all background timers
+            stopAutoRefresh();
+            stopChatPolling();
             // Disconnect WebSocket
             if (stompClient) {
                 stompClient.disconnect();
@@ -1034,7 +1323,7 @@
             let hash = 0;
             for (let i = 0; i < username.length; i++) hash = username.charCodeAt(i) + ((hash << 5) - hash);
             const h = Math.abs(hash) % 360;
-            return `linear - gradient(135deg, hsl(${h}, 70 %, 55 %) 0 %, hsl(${(h + 40) % 360}, 80 %, 65 %) 100 %)`;
+            return `linear-gradient(135deg, hsl(${h},70%,55%) 0%, hsl(${(h + 40) % 360},80%,65%) 100%)`;
         }
 
         // ===== SCROLL TO BOTTOM BUTTON =====
