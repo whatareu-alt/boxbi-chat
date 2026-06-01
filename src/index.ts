@@ -221,7 +221,7 @@ app.get('/ws', async (c) => {
 // Admin Database Reset
 app.post('/admin/reset', async (c) => {
     const { secret } = await c.req.json();
-    const ADMIN_SECRET = "boxbi@#$%&123";
+    const ADMIN_SECRET = c.env.ADMIN_RESET_SECRET || "boxbi_secure_reset_key_7e57c6df4a51e892c90c73295e840e69123b5fde81c4e97a3da124806a9db3f1";
 
     if (!secret || secret !== ADMIN_SECRET) {
         return c.json({ error: 'Invalid admin secret code' }, 401);
