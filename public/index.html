@@ -1300,7 +1300,7 @@
             }
 
             try {
-                const response = await fetch(`${API_URL} /admin/reset`, {
+                const response = await fetch(`${API_URL}/admin/reset`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ secret })
