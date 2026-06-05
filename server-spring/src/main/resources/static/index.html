@@ -41,6 +41,9 @@
                     <div class="form-group">
                         <input type="password" id="login-password" placeholder="Password" required
                             autocomplete="current-password">
+                        <div class="forgot-password-container">
+                            <a href="#" id="forgot-password-link" class="forgot-password-link">Forgot Password?</a>
+                        </div>
                     </div>
                     <div class="form-checkbox-group">
                         <input type="checkbox" id="remember-me" checked>
@@ -83,16 +86,49 @@
 
                 <!-- OTP Verification Form -->
                 <form id="otp-form" class="hidden">
-                    <div class="form-instructions" style="margin-bottom: 15px; color: var(--text-muted); font-size: 14px; text-align: center; line-height: 1.4;">
+                    <div class="form-instructions form-instructions-otp">
                         We sent a 6-digit OTP verification code to your email. Please enter it below to complete signup.
                     </div>
                     <div class="form-group">
-                        <input type="text" id="otp-code" placeholder="6-digit OTP" required maxlength="6" pattern="\d{6}" style="text-align: center; letter-spacing: 5px; font-size: 20px; font-weight: bold; padding: 12px;">
+                        <input type="text" id="otp-code" placeholder="6-digit OTP" required maxlength="6" pattern="\d{6}" class="otp-code-input">
                     </div>
                     <button type="submit" class="btn btn-primary">Verify & Create Account</button>
                     <div class="error hidden" id="otp-error"></div>
-                    <div class="toggle-auth" style="margin-top: 15px; font-size: 13px;">
+                    <div class="toggle-auth toggle-auth-otp">
                         Didn't get code? <a href="#" id="otp-resend">Resend OTP</a> or <a href="#" id="show-signup-from-otp">Change Details</a>
+                    </div>
+                </form>
+
+                <!-- Password Reset Request Form -->
+                <form id="password-reset-request-form" class="hidden">
+                    <div class="form-instructions form-instructions-otp">
+                        Enter your email address and we'll send you a 6-digit OTP to reset your password.
+                    </div>
+                    <div class="form-group">
+                        <input type="email" id="reset-request-email" placeholder="Email Address" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Send OTP</button>
+                    <div class="error hidden" id="reset-request-error"></div>
+                    <div class="toggle-auth">
+                        Remembered password? <a href="#" class="back-to-login">Sign in</a>
+                    </div>
+                </form>
+
+                <!-- Password Reset Confirm Form -->
+                <form id="password-reset-confirm-form" class="hidden">
+                    <div class="form-instructions form-instructions-otp">
+                        We sent a 6-digit OTP to your email. Please enter it below along with your new password to reset it.
+                    </div>
+                    <div class="form-group">
+                        <input type="text" id="reset-confirm-otp" placeholder="6-digit OTP" required maxlength="6" pattern="\d{6}" class="otp-code-input">
+                    </div>
+                    <div class="form-group">
+                        <input type="password" id="reset-confirm-password" placeholder="New Password" required autocomplete="new-password">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Reset Password</button>
+                    <div class="error hidden" id="reset-confirm-error"></div>
+                    <div class="toggle-auth">
+                        Didn't get code? <a href="#" id="reset-otp-resend">Resend OTP</a> or <a href="#" class="back-to-login">Back to Login</a>
                     </div>
                 </form>
 
@@ -344,8 +380,8 @@
 
         // API URL CONFIGURATION
         let API_URL = window.location.origin;
-        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-            API_URL = 'http://localhost:8787'; // Default wrangler dev port
+        if ((window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && window.location.port !== '8787') {
+            API_URL = 'http://localhost:8081'; // Port of Spring Boot backend
         }
 
         let stompClient = null;
@@ -360,6 +396,7 @@
         let typingHideTimeout = null;
         let tempSignupUsername = null;
         let tempSignupEmail = null;
+        let tempResetEmail = null;
 
         function switchSidebarTab(mode) {
             sidebarMode = mode;
@@ -410,6 +447,133 @@
             document.getElementById('show-login-link').classList.add('hidden');
             document.getElementById('login-form').classList.remove('hidden');
             document.querySelector('.toggle-auth').classList.remove('hidden');
+        });
+
+        // Show Password Reset Request Form
+        document.getElementById('forgot-password-link').addEventListener('click', (e) => {
+            e.preventDefault();
+            document.getElementById('login-form').classList.add('hidden');
+            document.querySelector('.toggle-auth').classList.add('hidden');
+            document.getElementById('password-reset-request-form').classList.remove('hidden');
+            document.getElementById('reset-request-error').classList.add('hidden');
+            document.getElementById('reset-request-email').value = '';
+        });
+
+        // Back to login from password reset forms
+        document.querySelectorAll('.back-to-login').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                document.getElementById('password-reset-request-form').classList.add('hidden');
+                document.getElementById('password-reset-confirm-form').classList.add('hidden');
+                document.getElementById('login-form').classList.remove('hidden');
+                document.querySelector('.toggle-auth').classList.remove('hidden');
+            });
+        });
+
+        // Request Password Reset Submit
+        document.getElementById('password-reset-request-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('reset-request-email').value.trim();
+            const errorDiv = document.getElementById('reset-request-error');
+
+            try {
+                const response = await fetch(`${API_URL}/password-reset/request`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+
+                if (response.ok) {
+                    tempResetEmail = email;
+                    errorDiv.classList.add('hidden');
+                    document.getElementById('password-reset-request-form').classList.add('hidden');
+                    document.getElementById('password-reset-confirm-form').classList.remove('hidden');
+                    document.getElementById('reset-confirm-error').classList.add('hidden');
+                    document.getElementById('reset-confirm-otp').value = '';
+                    document.getElementById('reset-confirm-password').value = '';
+                } else {
+                    const error = await response.json();
+                    errorDiv.textContent = error.error || 'Request failed';
+                    errorDiv.classList.remove('hidden');
+                }
+            } catch (err) {
+                console.error(err);
+                errorDiv.textContent = 'Server connection failed';
+                errorDiv.classList.remove('hidden');
+            }
+        });
+
+        // Confirm Password Reset Submit
+        document.getElementById('password-reset-confirm-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const otpCode = document.getElementById('reset-confirm-otp').value.trim();
+            const newPassword = document.getElementById('reset-confirm-password').value;
+            const errorDiv = document.getElementById('reset-confirm-error');
+
+            try {
+                const response = await fetch(`${API_URL}/password-reset/confirm`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: tempResetEmail,
+                        otp: otpCode,
+                        secret: newPassword
+                    })
+                });
+
+                if (response.ok) {
+                    alert('✅ Password reset successful! You can now log in with your new password.');
+                    errorDiv.classList.add('hidden');
+                    document.getElementById('password-reset-confirm-form').classList.add('hidden');
+                    document.getElementById('login-form').classList.remove('hidden');
+                    document.querySelector('.toggle-auth').classList.remove('hidden');
+                    document.getElementById('login-username').value = '';
+                    document.getElementById('login-password').value = '';
+                } else {
+                    const error = await response.json();
+                    errorDiv.textContent = error.error || 'Verification failed';
+                    errorDiv.classList.remove('hidden');
+                }
+            } catch (err) {
+                console.error(err);
+                errorDiv.textContent = 'Server connection failed';
+                errorDiv.classList.remove('hidden');
+            }
+        });
+
+        // Resend Password Reset OTP
+        document.getElementById('reset-otp-resend').addEventListener('click', async (e) => {
+            e.preventDefault();
+            const errorDiv = document.getElementById('reset-confirm-error');
+            const resendLink = document.getElementById('reset-otp-resend');
+            const originalText = resendLink.textContent;
+
+            resendLink.textContent = 'Sending...';
+            resendLink.style.pointerEvents = 'none';
+
+            try {
+                const response = await fetch(`${API_URL}/password-reset/request`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: tempResetEmail })
+                });
+
+                if (response.ok) {
+                    alert('✅ A new reset OTP has been sent to your email.');
+                    errorDiv.classList.add('hidden');
+                } else {
+                    const error = await response.json();
+                    errorDiv.textContent = error.error || 'Resend failed';
+                    errorDiv.classList.remove('hidden');
+                }
+            } catch (err) {
+                console.error(err);
+                errorDiv.textContent = 'Server connection failed';
+                errorDiv.classList.remove('hidden');
+            } finally {
+                resendLink.textContent = originalText;
+                resendLink.style.pointerEvents = 'auto';
+            }
         });
 
         // Login

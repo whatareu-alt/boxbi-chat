@@ -11,16 +11,14 @@ import java.util.Map;
 @RestController
 @CrossOrigin(origins = {
         "http://localhost:*",
-        "http://127.0.0.1:*",
-        "https://boxbichat.netlify.app",
         "https://boxbi.online"
 })
 public class AdminController {
 
     // Secret admin code - CHANGE THIS TO YOUR OWN SECRET!
-    private static final String ADMIN_SECRET = System.getenv("ADMIN_RESET_SECRET") != null 
-        ? System.getenv("ADMIN_RESET_SECRET") 
-        : "boxbi_secure_reset_key_7e57c6df4a51e892c90c73295e840e69123b5fde81c4e97a3da124806a9db3f1";
+    private static final String ADMIN_SECRET = System.getenv("ADMIN_RESET_SECRET") != null
+            ? System.getenv("ADMIN_RESET_SECRET")
+            : "boxbi_secure_reset_key_7e57c6df4a51e892c90c73295e840e69123b5fde81c4e97a3da124806a9db3f1";
 
     @Autowired
     private UserRepository userRepository;

@@ -308,6 +308,25 @@ body {
     text-decoration: underline;
 }
 
+.forgot-password-container {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 8px;
+}
+
+.forgot-password-link {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--accent);
+    text-decoration: none;
+    transition: var(--transition-smooth);
+}
+
+.forgot-password-link:hover {
+    text-decoration: underline;
+    color: #8b1139;
+}
+
 .admin-reset-container {
     display: none;
 }
@@ -2731,4 +2750,26 @@ body {
     #delete-chat-btn span.material-symbols-outlined {
         font-size: 18px;
     }
+}
+
+/* ===== OTP Verification Styles ===== */
+.form-instructions-otp {
+    margin-bottom: 15px;
+    color: var(--text-muted);
+    font-size: 14px;
+    text-align: center;
+    line-height: 1.4;
+}
+
+.otp-code-input {
+    text-align: center;
+    letter-spacing: 5px;
+    font-size: 20px;
+    font-weight: bold;
+    padding: 12px;
+}
+
+.toggle-auth-otp {
+    margin-top: 15px;
+    font-size: 13px;
 }

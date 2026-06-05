@@ -10,6 +10,11 @@ binding = "DB"
 database_name = "boxbi-db"
 database_id = "821b47d1-16c3-4760-8590-d276d01ad085"
 
+[[r2_buckets]]
+binding  = "R2_BUCKET"
+bucket_name = "boxbi-assets"
+# Create the bucket first:  wrangler r2 bucket create boxbi-assets
+
 [[durable_objects.bindings]]
 name = "CHAT_DO"
 class_name = "ChatDO"
@@ -18,5 +23,14 @@ class_name = "ChatDO"
 tag = "v1"
 new_sqlite_classes = ["ChatDO"]
 
+# --- Secrets ---
+# Do NOT put real secrets in this file - it is committed to git.
+# Set them with the Cloudflare Workers CLI:
+#
+#   wrangler secret put JWT_SECRET          (random 32+ char string)
+#   wrangler secret put ADMIN_RESET_SECRET  (random 32+ char string)
+#   wrangler secret put RESEND_API_KEY      (from resend.com - for real emails)
+#
+# R2_BUCKET is a binding (above), not a secret.
+# The [vars] section is intentionally left empty.
 [vars]
-JWT_SECRET = "super-secret-key"

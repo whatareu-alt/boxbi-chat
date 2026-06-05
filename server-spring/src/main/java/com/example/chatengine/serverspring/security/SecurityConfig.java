@@ -16,67 +16,94 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.Arrays;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
-        @Autowired
-        private JwtAuthenticationFilter jwtAuthenticationFilter;
+    @Autowired
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
 
-        @Bean
-        public PasswordEncoder passwordEncoder() {
-                return new BCryptPasswordEncoder();
-        }
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        // BCrypt with cost factor 12 — strong and future-proof
+        return new BCryptPasswordEncoder(12);
+    }
 
-        @Bean
-        public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration)
-                        throws Exception {
-                return authenticationConfiguration.getAuthenticationManager();
-        }
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration cfg) throws Exception {
+        return cfg.getAuthenticationManager();
+    }
 
-        @Bean
-        public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-                http
-                                .csrf(csrf -> csrf.disable())
-                                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                                .authorizeHttpRequests(auth -> auth
-                                                .requestMatchers("/login", "/signup", "/signup/verify", "/ws/**", "/h2-console/**",
-                                                                "/users/**", "/friends/**", "/groups/**", "/admin/**",
-                                                                "/messages/**",
-                                                                "/", "/index.html", "/local_test.html", "/static/**",
-                                                                "/*.html")
-                                                .permitAll()
-                                                .anyRequest().authenticated())
-                                .sessionManagement(session -> session
-                                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                                .headers(headers -> headers
-                                                .frameOptions(frame -> frame.sameOrigin()) // For H2 console
-                                );
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+            .csrf(csrf -> csrf.disable())
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .headers(headers -> headers
+                // Prevent clickjacking
+                .frameOptions(frame -> frame.deny())
+                // Enforce HTTPS
+                .httpStrictTransportSecurity(hsts -> hsts.includeSubDomains(true).maxAgeInSeconds(31536000))
+                // Block MIME sniffing
+                .contentTypeOptions(ct -> {})
+                // Basic XSS protection header
+                .xssProtection(xss -> {})
+            )
+            .authorizeHttpRequests(auth -> auth
+                // ── Public endpoints (no token required) ──────────────────────
+                .requestMatchers(
+                    "/login",
+                    "/signup",
+                    "/signup/verify",
+                    "/password-reset/request",
+                    "/password-reset/confirm",
+                    "/ws/**",
+                    // Static frontend assets
+                    "/",
+                    "/index.html",
+                    "/static/**",
+                    "/*.html",
+                    "/*.css",
+                    "/*.js",
+                    "/*.svg",
+                    "/*.png",
+                    "/*.ico"
+                ).permitAll()
+                // ── Everything else requires a valid JWT ───────────────────────
+                .anyRequest().authenticated()
+            );
 
-                http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
-                return http.build();
-        }
+        return http.build();
+    }
 
-        @Bean
-        public CorsConfigurationSource corsConfigurationSource() {
-                CorsConfiguration configuration = new CorsConfiguration();
-                configuration.setAllowedOriginPatterns(Arrays.asList(
-                                "*",
-                                "http://localhost:*",
-                                "http://127.0.0.1:*",
-                                "https://boxbichat.netlify.app",
-                                "https://boxbi.online",
-                                "http://boxbi.online"));
-                configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-                configuration.setAllowedHeaders(Arrays.asList("*"));
-                configuration.setAllowCredentials(true);
-                configuration.setMaxAge(3600L);
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
 
-                UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-                source.registerCorsConfiguration("/**", configuration);
-                return source;
-        }
+        // Explicit allow-list — wildcard "*" is intentionally removed
+        config.setAllowedOrigins(List.of(
+            "http://localhost:3000",
+            "http://localhost:8080",
+            "http://localhost:8081",
+            "http://127.0.0.1:3000",
+            "http://127.0.0.1:8080",
+            "https://boxbichat.netlify.app",
+            "https://boxbi.online",
+            "https://www.boxbi.online"
+        ));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(List.of("Content-Type", "Authorization"));
+        config.setExposedHeaders(List.of("Authorization"));
+        config.setAllowCredentials(true);
+        config.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
+    }
 }
