@@ -1025,7 +1025,7 @@ app.get('/ws', async (c) => {
 
     let username: string;
     try {
-        const payload = await verify(token, c.env.JWT_SECRET) as JWTPayload;
+        const payload = await verify(token, c.env.JWT_SECRET, 'HS256') as JWTPayload;
         username = payload.sub;
     } catch { return c.text('Invalid or expired token', 401); }
 
