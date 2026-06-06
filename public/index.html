@@ -1235,7 +1235,7 @@
                     </div>
                     <div class="user-info">
                         <div class="user-name-row">
-                            <div class="user-name">${group.name}</div>
+                            <div class="user-name">${escapeHtml(group.name)}</div>
                             <div class="unread-badge" id="${unreadId}" style="display:none;">0</div>
                         </div>
                         <div class="user-last-preview" id="${previewId}">Group chat</div>
