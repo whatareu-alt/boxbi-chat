@@ -85,13 +85,13 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
-        // Explicit allow-list — wildcard "*" is intentionally removed
-        config.setAllowedOrigins(List.of(
-            "http://localhost:3000",
-            "http://localhost:8080",
-            "http://localhost:8081",
-            "http://127.0.0.1:3000",
-            "http://127.0.0.1:8080",
+        // Single source of truth for CORS (controllers carry no @CrossOrigin).
+        // Wildcard localhost ports for dev; explicit https origins for prod.
+        // setAllowedOriginPatterns (not setAllowedOrigins) is required to combine
+        // wildcard patterns with allowCredentials(true).
+        config.setAllowedOriginPatterns(List.of(
+            "http://localhost:*",
+            "http://127.0.0.1:*",
             "https://boxbichat.netlify.app",
             "https://boxbi.online",
             "https://www.boxbi.online"

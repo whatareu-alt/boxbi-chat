@@ -34,6 +34,9 @@ public class OtpVerification {
     @Column(name = "expiry_time", nullable = false)
     private LocalDateTime expiryTime;
 
+    @Column(nullable = false)
+    private int attempts = 0;
+
     public OtpVerification() {
     }
 
@@ -109,6 +112,14 @@ public class OtpVerification {
 
     public void setExpiryTime(LocalDateTime expiryTime) {
         this.expiryTime = expiryTime;
+    }
+
+    public int getAttempts() {
+        return attempts;
+    }
+
+    public void setAttempts(int attempts) {
+        this.attempts = attempts;
     }
 
     public boolean isExpired() {

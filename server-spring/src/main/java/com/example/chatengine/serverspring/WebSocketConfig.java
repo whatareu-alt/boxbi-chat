@@ -11,6 +11,12 @@ import org.springframework.lang.NonNull;
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
+    private final CustomHandshakeHandler handshakeHandler;
+
+    public WebSocketConfig(CustomHandshakeHandler handshakeHandler) {
+        this.handshakeHandler = handshakeHandler;
+    }
+
     @Override
     public void configureMessageBroker(@NonNull MessageBrokerRegistry config) {
         // Enable a simple in-memory message broker
@@ -27,7 +33,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         // Allow origins for Railway deployment and local development
         registry.addEndpoint("/ws")
                 .setAllowedOriginPatterns("*")
-                .setHandshakeHandler(new CustomHandshakeHandler())
+                .setHandshakeHandler(handshakeHandler)
                 .withSockJS();
     }
 }

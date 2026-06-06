@@ -1,48 +1,66 @@
 package com.example.chatengine.serverspring;
 
+import com.example.chatengine.serverspring.security.JwtUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.lang.NonNull;
+import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.server.support.DefaultHandshakeHandler;
 
-import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.security.Principal;
 import java.util.Map;
 
+@Component
 public class CustomHandshakeHandler extends DefaultHandshakeHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(CustomHandshakeHandler.class);
+
+    private final JwtUtil jwtUtil;
+
+    public CustomHandshakeHandler(JwtUtil jwtUtil) {
+        this.jwtUtil = jwtUtil;
+    }
+
     @Override
     protected Principal determineUser(@NonNull ServerHttpRequest request, @NonNull WebSocketHandler wsHandler,
             @NonNull Map<String, Object> attributes) {
-        // Parse username from query params (e.g., /ws?username=Alex)
-        String query = request.getURI().getQuery();
-        String username = null;
+        // The identity is taken from a signed JWT (passed as ?token=...), NOT from the username
+        // query param. Returning null leaves the connection unauthenticated; message handlers
+        // reject unauthenticated principals.
+        String token = queryParam(request.getURI().getQuery(), "token");
+        if (token == null || token.isBlank()) {
+            log.warn("WebSocket handshake rejected: missing token");
+            return null;
+        }
 
-        System.out.println("🔌 WebSocket Handshake - Query: " + query);
+        try {
+            String username = jwtUtil.extractUsername(token);
+            if (username == null || !jwtUtil.validateToken(token, username)) {
+                log.warn("WebSocket handshake rejected: invalid token");
+                return null;
+            }
+            return new StompPrincipal(username);
+        } catch (Exception e) {
+            log.warn("WebSocket handshake rejected: token validation failed ({})", e.getMessage());
+            return null;
+        }
+    }
 
-        if (query != null && query.contains("username=")) {
-            String[] params = query.split("&");
-            for (String param : params) {
-                if (param.startsWith("username=")) {
-                    try {
-                        username = URLDecoder.decode(param.split("=")[1], "UTF-8");
-                        System.out.println("✅ Extracted username: " + username);
-                    } catch (UnsupportedEncodingException e) {
-                        username = param.split("=")[1];
-                        System.err.println("⚠️ URL decode failed, using raw: " + username);
-                    }
-                    break;
-                }
+    /** Extracts a single query-string parameter value, URL-decoded. */
+    private static String queryParam(String query, String key) {
+        if (query == null) {
+            return null;
+        }
+        for (String param : query.split("&")) {
+            int eq = param.indexOf('=');
+            if (eq > 0 && param.substring(0, eq).equals(key)) {
+                return URLDecoder.decode(param.substring(eq + 1), StandardCharsets.UTF_8);
             }
         }
-
-        if (username == null || username.isEmpty()) {
-            // Fallback for anonymous or connection without username
-            username = "Anonymous";
-            System.out.println("⚠️ No username found, using: " + username);
-        }
-
-        System.out.println("👤 Setting WebSocket Principal: " + username);
-        return new StompPrincipal(username);
+        return null;
     }
 }

@@ -28,4 +28,14 @@ public interface MessageRepository extends JpaRepository<ChatMessage, Long> {
     @jakarta.transaction.Transactional
     @Query("DELETE FROM ChatMessage m WHERE m.groupId = :groupId")
     void deleteByGroupId(@Param("groupId") Long groupId);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @jakarta.transaction.Transactional
+    void deleteBySenderOrRecipient(String sender, String recipient);
+
+    @Query("SELECT m FROM ChatMessage m WHERE m.isDeleted = false AND m.content LIKE :query ESCAPE '\\' AND " +
+           "(m.sender = :username OR m.recipient = :username OR " +
+           "m.groupId IN (SELECT gm.group.id FROM GroupMember gm WHERE gm.username = :username)) " +
+           "ORDER BY m.timestamp DESC")
+    List<ChatMessage> searchMessages(@Param("query") String query, @Param("username") String username);
 }

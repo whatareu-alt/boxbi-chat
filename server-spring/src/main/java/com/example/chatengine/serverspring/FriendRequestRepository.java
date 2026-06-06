@@ -33,4 +33,8 @@ public interface FriendRequestRepository extends JpaRepository<FriendRequest, Lo
                         "WHERE (f.senderUsername = :username OR f.receiverUsername = :username) " +
                         "AND f.status = 'ACCEPTED'")
         List<FriendRequest> findAcceptedFriends(@Param("username") String username);
+
+        @org.springframework.data.jpa.repository.Modifying
+        @jakarta.transaction.Transactional
+        void deleteBySenderUsernameOrReceiverUsername(String sender, String receiver);
 }

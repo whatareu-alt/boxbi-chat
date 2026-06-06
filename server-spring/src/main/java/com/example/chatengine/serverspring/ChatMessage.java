@@ -31,6 +31,18 @@ public class ChatMessage {
     @Column(name = "group_id")
     private Long groupId;
 
+    @Column(name = "reply_to_id")
+    private Long replyToId;
+
+    @Column(name = "is_edited", nullable = false)
+    private boolean isEdited = false;
+
+    @Column(name = "is_deleted", nullable = false)
+    private boolean isDeleted = false;
+
+    @Column(name = "edited_at")
+    private Long editedAt;
+
     @Column(nullable = false)
     private long timestamp;
 
@@ -43,6 +55,7 @@ public class ChatMessage {
         this.sender = sender;
         this.recipient = null;
         this.groupId = null;
+        this.replyToId = null;
         this.timestamp = System.currentTimeMillis();
     }
 
@@ -92,6 +105,38 @@ public class ChatMessage {
 
     public void setGroupId(Long groupId) {
         this.groupId = groupId;
+    }
+
+    public Long getReplyToId() {
+        return replyToId;
+    }
+
+    public void setReplyToId(Long replyToId) {
+        this.replyToId = replyToId;
+    }
+
+    public boolean getIsEdited() {
+        return isEdited;
+    }
+
+    public void setIsEdited(boolean isEdited) {
+        this.isEdited = isEdited;
+    }
+
+    public boolean getIsDeleted() {
+        return isDeleted;
+    }
+
+    public void setIsDeleted(boolean isDeleted) {
+        this.isDeleted = isDeleted;
+    }
+
+    public Long getEditedAt() {
+        return editedAt;
+    }
+
+    public void setEditedAt(Long editedAt) {
+        this.editedAt = editedAt;
     }
 
     public long getTimestamp() {
