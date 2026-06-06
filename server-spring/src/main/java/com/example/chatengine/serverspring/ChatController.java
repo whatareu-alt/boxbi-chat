@@ -2,7 +2,6 @@ package com.example.chatengine.serverspring;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
-import org.owasp.encoder.Encode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -74,9 +73,7 @@ public class ChatController {
             java.security.Principal principal) {
         // Sender identity comes from the authenticated WebSocket principal, not the payload.
         chatMessage.setSender(principal != null ? principal.getName() : ANONYMOUS);
-        if (chatMessage.getContent() != null) {
-            chatMessage.setContent(Encode.forHtml(chatMessage.getContent()));
-        }
+        // Content is stored raw; the frontend escapes at render (escapeHtml).
         chatMessage.setTimestamp(System.currentTimeMillis());
         return chatMessage;
     }
@@ -106,9 +103,8 @@ public class ChatController {
             return;
         }
 
-        if (chatMessage.getContent() != null) {
-            chatMessage.setContent(Objects.requireNonNullElse(Encode.forHtml(chatMessage.getContent()), ""));
-        }
+        // Content is stored raw; the frontend escapes at render (escapeHtml).
+        chatMessage.setContent(Objects.requireNonNullElse(chatMessage.getContent(), ""));
         chatMessage.setTimestamp(System.currentTimeMillis());
 
         try {
@@ -167,9 +163,7 @@ public class ChatController {
             return;
         }
 
-        if (chatMessage.getContent() != null) {
-            chatMessage.setContent(Encode.forHtml(chatMessage.getContent()));
-        }
+        // Content is stored raw; the frontend escapes at render (escapeHtml).
         chatMessage.setTimestamp(System.currentTimeMillis());
 
         try {
@@ -266,7 +260,7 @@ public class ChatController {
                 return ResponseEntity.badRequest().body(Map.of(KEY_ERROR, "Cannot edit a deleted message"));
             }
 
-            msg.setContent(Encode.forHtml(content.trim()));
+            msg.setContent(content.trim());
             msg.setIsEdited(true);
             msg.setEditedAt(System.currentTimeMillis());
             messageRepository.save(msg);

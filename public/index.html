@@ -1682,7 +1682,7 @@
                         ${actionButtons}
                     </div>
                     ${replyQuoteHtml}
-                    <div class="message-sender">${message.sender}</div>
+                    <div class="message-sender">${escapeHtml(message.sender)}</div>
                     <div class="msg-body">${safeContent}</div>
                     ${message.isEdited || message.edited ? '<span class="msg-edited-badge"> (edited)</span>' : ''}
                     <div class="reactions-list" id="reactions-${message.id || 'temp'}"></div>
@@ -1748,10 +1748,11 @@
                 inputForm.insertBefore(replyBar, inputForm.firstChild);
             }
 
+            const previewBody = body.length > 40 ? body.slice(0, 40) + '...' : body;
             replyBar.innerHTML = `
                 <div class="reply-preview-content">
-                    <span class="reply-preview-title">Replying to ${sender}</span>
-                    <span class="reply-preview-body">${body.length > 40 ? body.slice(0, 40) + '...' : body}</span>
+                    <span class="reply-preview-title">Replying to ${escapeHtml(sender)}</span>
+                    <span class="reply-preview-body">${escapeHtml(previewBody)}</span>
                 </div>
                 <button onclick="cancelReply()" class="reply-preview-close">✕</button>
             `;

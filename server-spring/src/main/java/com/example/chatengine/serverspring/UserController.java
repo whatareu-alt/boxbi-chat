@@ -114,8 +114,9 @@ public class UserController {
         try {
             String username  = Encode.forHtml(request.getUsername().trim());
             String email     = Encode.forHtml(request.getEmail().trim().toLowerCase());
-            String firstName = request.getFirstName() != null ? Encode.forHtml(request.getFirstName().trim()) : "";
-            String lastName  = request.getLastName()  != null ? Encode.forHtml(request.getLastName().trim())  : "";
+            // Names are stored raw; the frontend escapes at render (escapeHtml/textContent).
+            String firstName = request.getFirstName() != null ? request.getFirstName().trim() : "";
+            String lastName  = request.getLastName()  != null ? request.getLastName().trim()  : "";
             String password  = request.getSecret();
 
             if (username.isEmpty())  return error("Username is required", HttpStatus.BAD_REQUEST);
