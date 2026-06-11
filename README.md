@@ -86,13 +86,12 @@ npm install
 npm run dev        # wrangler dev — Worker + D1 + DO locally
 ```
 
-## Database migrations
+## Database
 
-Fresh DB: run `schema.sql`. Existing DBs: apply `schema_migration_v2.sql` →
-`v3` → `v4` in order:
+[`schema.sql`](schema.sql) is the full, current schema. For a fresh database:
 
 ```bash
-npx wrangler d1 execute boxbi-db --remote --file=schema_migration_v4.sql
+npx wrangler d1 execute boxbi-db --remote --file=schema.sql
 ```
 
 ## Deploy

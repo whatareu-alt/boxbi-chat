@@ -73,7 +73,7 @@ messages.post('/msg/:id/react', async (c) => {
     const authUser = getAuthUser(c);
     const id       = c.req.param('id');
     const { emoji } = await c.req.json();
-    if (!emoji || typeof emoji !== 'string' || emoji.length > 8)
+    if (!emoji || typeof emoji !== 'string' || emoji.length > 8 || /[<>&"'`=\\/]/.test(emoji))
         return c.json({ error: 'Valid emoji required (max 8 chars)' }, 400);
 
     const msg = await c.env.DB.prepare('SELECT sender, recipient, group_id, is_deleted FROM messages WHERE id=?').bind(id).first() as any;

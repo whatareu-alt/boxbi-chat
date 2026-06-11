@@ -1,21 +1,16 @@
 # Security Policy
 
-## Supported Versions
+## Reporting a vulnerability
 
-Use this section to tell people about which versions of your project are
-currently being supported with security updates.
+If you find a security issue in Boxbi, please email **whatareu357@gmail.com**
+with details. Please do not open a public issue for security reports.
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 5.1.x   | :white_check_mark: |
-| 5.0.x   | :x:                |
-| 4.0.x   | :white_check_mark: |
-| < 4.0   | :x:                |
+## Security measures in place
 
-## Reporting a Vulnerability
-
-Use this section to tell people how to report a vulnerability.
-
-Tell them where to go, how often they can expect to get an update on a
-reported vulnerability, what to expect if the vulnerability is accepted or
-declined, etc.
+- PBKDF2-SHA256 password hashing (100k iterations, per-user salt)
+- JWT access tokens (24h) + rotating refresh tokens stored as SHA-256 hashes
+- OTP brute-force protection and per-user email rate limiting
+- Login lockout keyed by username + IP
+- Server-side group membership checks on every WebSocket subscribe/send
+- Timing-safe comparisons for OTPs and admin secrets
+- Ephemeral data: messages auto-delete after 24h, accounts after 7 days

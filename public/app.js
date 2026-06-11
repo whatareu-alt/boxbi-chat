@@ -31,6 +31,22 @@
             return fetch(url, options);
         }
 
+        // Normalize API auth responses ({token, refreshToken, user:{snake_case}})
+        // into the flat camelCase shape the UI uses everywhere.
+        function setSession(data) {
+            const u = data.user || data;
+            currentUser = {
+                username: u.username,
+                email: u.email || '',
+                firstName: u.first_name ?? u.firstName ?? '',
+                lastName: u.last_name ?? u.lastName ?? '',
+                bio: u.bio ?? '',
+                token: data.token ?? (currentUser && currentUser.token) ?? null,
+                refreshToken: data.refreshToken ?? (currentUser && currentUser.refreshToken) ?? null,
+            };
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        }
+
         function switchSidebarTab(mode) {
             sidebarMode = mode;
             document.getElementById('tab-btn-friends').classList.toggle('active', mode === 'friends');
@@ -223,8 +239,7 @@
                 });
 
                 if (response.ok) {
-                    currentUser = await response.json();
-                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    setSession(await response.json());
                     showError('login', '');
                     enterChat();
                 } else {
@@ -268,8 +283,7 @@
                         tempSignupEmail = data.email;
                         showError('signup', '');
                     } else {
-                        currentUser = data;
-                        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                        setSession(data);
                         showError('signup', '');
                         enterChat();
                     }
@@ -301,10 +315,9 @@
                 });
 
                 if (response.ok) {
-                    currentUser = await response.json();
-                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    setSession(await response.json());
                     errorDiv.classList.add('hidden');
-                    
+
                     // Hide OTP Form and Enter Chat
                     document.getElementById('otp-form').classList.add('hidden');
                     enterChat();
@@ -1383,7 +1396,12 @@
                     e.stopPropagation();
                     toggleReaction(messageId, react.emoji);
                 };
-                bubble.innerHTML = `${react.emoji} <span class="count">${react.count}</span>`;
+                const emojiText = document.createTextNode(`${react.emoji} `);
+                const countSpan = document.createElement('span');
+                countSpan.className = 'count';
+                countSpan.textContent = react.count;
+                bubble.appendChild(emojiText);
+                bubble.appendChild(countSpan);
                 container.appendChild(bubble);
             });
         }
@@ -1447,15 +1465,30 @@
             const bodyEl = msgEl.querySelector('.msg-body');
             const originalText = bodyEl.textContent;
 
-            bodyEl.innerHTML = `
-                <div class="inline-edit-container">
-                    <input type="text" class="inline-edit-input" id="edit-input-${messageId}" value="${originalText}">
-                    <div class="inline-edit-actions">
-                        <button onclick="saveEdit(${messageId})" class="btn-save-edit">Save</button>
-                        <button onclick="cancelEdit(${messageId}, '${escapeHtml(originalText)}')" class="btn-cancel-edit">Cancel</button>
-                    </div>
-                </div>
-            `;
+            // Build via DOM APIs — innerHTML with raw text breaks on quotes (and is an XSS risk)
+            bodyEl.innerHTML = '';
+            const editWrap = document.createElement('div');
+            editWrap.className = 'inline-edit-container';
+            const editInput = document.createElement('input');
+            editInput.type = 'text';
+            editInput.className = 'inline-edit-input';
+            editInput.id = `edit-input-${messageId}`;
+            editInput.value = originalText;
+            const actions = document.createElement('div');
+            actions.className = 'inline-edit-actions';
+            const saveBtn = document.createElement('button');
+            saveBtn.className = 'btn-save-edit';
+            saveBtn.textContent = 'Save';
+            saveBtn.onclick = () => saveEdit(messageId);
+            const cancelBtn = document.createElement('button');
+            cancelBtn.className = 'btn-cancel-edit';
+            cancelBtn.textContent = 'Cancel';
+            cancelBtn.onclick = () => cancelEdit(messageId, originalText);
+            actions.appendChild(saveBtn);
+            actions.appendChild(cancelBtn);
+            editWrap.appendChild(editInput);
+            editWrap.appendChild(actions);
+            bodyEl.appendChild(editWrap);
             const inp = document.getElementById(`edit-input-${messageId}`);
             inp.focus();
             inp.onkeyup = (e) => {
@@ -1536,10 +1569,10 @@
                     }
                     blocked.forEach(u => {
                         const item = document.createElement('div');
-                        item.style = 'display:flex; justify-content:space-between; align-items:center; background:#f3f4f6; padding:6px 10px; border-radius:6px;';
+                        item.style = 'display:flex; justify-content:space-between; align-items:center; background:var(--bg-section); padding:6px 10px; border-radius:6px;';
                         item.innerHTML = `
                             <span style="font-weight:600; font-size:13px; color:var(--text-primary);">${u.username}</span>
-                            <button onclick="unblockUserAction('${u.username}')" style="background:var(--accent); color:white; border:none; padding:3px 8px; border-radius:4px; font-size:11px; cursor:pointer;">Unblock</button>
+                            <button onclick="unblockUserAction('${u.username}')" style="background:var(--accent); color:#0F0F0E; border:none; padding:3px 8px; border-radius:4px; font-size:11px; cursor:pointer;">Unblock</button>
                         `;
                         list.appendChild(item);
                     });
@@ -1568,7 +1601,7 @@
                 searchContainer.id = 'chat-header-search-container';
                 searchContainer.style = 'display:flex; align-items:center; gap:6px; margin-left:12px;';
                 searchContainer.innerHTML = `
-                    <input type="text" id="chat-message-search-input" placeholder="Search in chat..." style="padding:6px 10px; border-radius:var(--radius-sm); border:1px solid rgba(0,0,0,0.1); font-size:13px; outline:none;" onkeyup="searchChatMessages(this.value)">
+                    <input type="text" id="chat-message-search-input" placeholder="Search in chat..." style="padding:6px 10px; border-radius:var(--radius-sm); border:1px solid rgba(255,255,255,0.15); font-size:13px; outline:none;" onkeyup="searchChatMessages(this.value)">
                     <button onclick="toggleChatSearch(false)" style="background:none; border:none; cursor:pointer; font-size:16px; color:var(--text-secondary);">✕</button>
                 `;
                 const infoDiv = document.querySelector('.chat-header-info');
@@ -1867,6 +1900,14 @@
             stopGroupPolling();
             if (stompClient) {
                 stompClient.disconnect();
+            }
+            // Revoke refresh token server-side (fire-and-forget)
+            if (currentUser && currentUser.token) {
+                authFetch(`${API_URL}/logout`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ refreshToken: currentUser.refreshToken || null })
+                }).catch(() => { });
             }
             localStorage.removeItem('currentUser');
             sessionStorage.removeItem('currentUser');

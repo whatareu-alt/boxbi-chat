@@ -36,8 +36,16 @@ auth.post('/signup', async (c) => {
 
         const newUser = await c.env.DB.prepare(
             'SELECT id,username,email,first_name,last_name,created_at FROM users WHERE username=?'
-        ).bind(username).first();
-        return c.json(newUser, 201);
+        ).bind(username).first() as any;
+
+        // Auto-login: issue tokens right away (same shape as /login)
+        const now = Math.floor(Date.now() / 1000);
+        const accessToken = await sign({ sub: username as string, iat: now, exp: now + ACCESS_TOKEN_TTL_SEC }, c.env.JWT_SECRET);
+        const { token: refreshToken, hash: rtHash } = await generateRefreshToken();
+        const rtExpiry = new Date(Date.now() + REFRESH_TOKEN_TTL_DAYS * 86_400_000).toISOString();
+        await c.env.DB.prepare('INSERT INTO refresh_tokens (username, token_hash, expires_at) VALUES (?,?,?)').bind(username, rtHash, rtExpiry).run();
+
+        return c.json({ token: accessToken, refreshToken, expiresIn: ACCESS_TOKEN_TTL_SEC, user: newUser }, 201);
     } catch { return c.json({ error: 'Internal server error' }, 500); }
 });
 
