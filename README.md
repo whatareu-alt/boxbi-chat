@@ -11,7 +11,6 @@ password reset.
 | Backend / API | **Cloudflare Worker** — [`src/`](src/) (Hono) |
 | Realtime | **Durable Object** `CHAT_DO` (WebSockets) — [`src/ChatDO.ts`](src/ChatDO.ts) |
 | Database | **D1** (binding `DB`) — [`schema.sql`](schema.sql) |
-| Asset storage | **R2** (binding `R2_BUCKET`) |
 | Frontend | [`public/`](public/) — served as Worker static assets |
 
 ### Code layout
@@ -61,13 +60,4 @@ npm run deploy     # wrangler deploy
 
 ## Secrets (production)
 
-Set via Wrangler — never commit these:
-
-```bash
-wrangler secret put JWT_SECRET          # 32+ random chars
-wrangler secret put ADMIN_RESET_SECRET  # 32+ random chars
-wrangler secret put RESEND_API_KEY      # from resend.com, for real emails
-```
-
-For real email delivery the sending domain (`boxbi.online`) must be verified
-in the Resend dashboard, otherwise sends fail silently (check Worker logs).
+Set via Wrangler — ne
