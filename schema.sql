@@ -90,7 +90,9 @@ CREATE TABLE IF NOT EXISTS otp_verifications (
     first_name  TEXT DEFAULT '',
     last_name   TEXT DEFAULT '',
     otp         TEXT NOT NULL,
-    expiry_time DATETIME NOT NULL
+    expiry_time DATETIME NOT NULL,
+    attempts    INTEGER DEFAULT 0,
+    created_at  DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Password Reset OTPs
@@ -98,7 +100,9 @@ CREATE TABLE IF NOT EXISTS password_reset_otps (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
     email       TEXT UNIQUE NOT NULL,
     otp         TEXT NOT NULL,
-    expiry_time DATETIME NOT NULL
+    expiry_time DATETIME NOT NULL,
+    attempts    INTEGER DEFAULT 0,
+    created_at  DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Refresh Tokens (multi-device JWT refresh)
@@ -111,7 +115,7 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
     FOREIGN KEY(username) REFERENCES users(username)
 );
 
--- Login Attempts (account lockout)
+-- Login Attempts (account lockout, keyed by "username|ip")
 CREATE TABLE IF NOT EXISTS login_attempts (
     id           INTEGER PRIMARY KEY AUTOINCREMENT,
     username     TEXT UNIQUE NOT NULL,

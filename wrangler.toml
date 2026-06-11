@@ -10,10 +10,13 @@ binding = "DB"
 database_name = "boxbi-db"
 database_id = "821b47d1-16c3-4760-8590-d276d01ad085"
 
-[[r2_buckets]]
-binding  = "R2_BUCKET"
-bucket_name = "boxbi-assets"
-# Create the bucket first:  wrangler r2 bucket create boxbi-assets
+# R2 (avatar uploads) — disabled until R2 is enabled on the account.
+# To enable: Cloudflare Dashboard > R2 > Enable, then:
+#   npx wrangler r2 bucket create boxbi-assets
+# and uncomment these lines:
+# [[r2_buckets]]
+# binding  = "R2_BUCKET"
+# bucket_name = "boxbi-assets"
 
 [[durable_objects.bindings]]
 name = "CHAT_DO"

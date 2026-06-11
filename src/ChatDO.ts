@@ -26,6 +26,25 @@ export class ChatDO {
         return true;
     }
 
+    /** Verified group membership check against D1 */
+    private async isGroupMember(groupId: number, username: string): Promise<boolean> {
+        if (!Number.isInteger(groupId) || groupId <= 0) return false;
+        try {
+            const row = await this.env.DB.prepare(
+                'SELECT id FROM group_members WHERE group_id=? AND username=?'
+            ).bind(groupId, username).first();
+            return !!row;
+        } catch { return false; }
+    }
+
+    /** True if the user has at least one other open WebSocket session */
+    private hasOtherSessions(username: string, except: WebSocket): boolean {
+        for (const [ws, info] of this.sessions.entries()) {
+            if (ws !== except && info.username === username) return true;
+        }
+        return false;
+    }
+
     async fetch(request: Request): Promise<Response> {
         const url = new URL(request.url);
 
@@ -70,7 +89,18 @@ export class ChatDO {
                 } else if (frame.startsWith('SUBSCRIBE')) {
                     const dest  = this.getHeader(frame, 'destination:');
                     const subId = this.getHeader(frame, 'id:');
-                    if (dest && subId) this.sessions.get(ws)?.subscriptions.set(dest, subId);
+                    if (dest && subId) {
+                        // Group topics require verified membership — never trust the client
+                        const groupMatch = dest.match(/^\/topic\/group\.(\d+)$/);
+                        if (groupMatch) {
+                            const isMember = await this.isGroupMember(Number(groupMatch[1]), username);
+                            if (!isMember) {
+                                ws.send('ERROR\nmessage:Not a member of this group\n\n\0');
+                                return;
+                            }
+                        }
+                        this.sessions.get(ws)?.subscriptions.set(dest, subId);
+                    }
 
                 } else if (frame.startsWith('SEND')) {
                     const bodyStart = frame.indexOf('\n\n') + 2;
@@ -86,6 +116,14 @@ export class ChatDO {
                             if (!this.checkRateLimit(username)) {
                                 ws.send('ERROR\nmessage:Rate limit exceeded. Slow down.\n\n\0');
                                 return;
+                            }
+                            // Group messages require verified membership
+                            if (message.groupId) {
+                                const isMember = await this.isGroupMember(Number(message.groupId), username);
+                                if (!isMember) {
+                                    ws.send('ERROR\nmessage:Not a member of this group\n\n\0');
+                                    return;
+                                }
                             }
                             // Block check — don't deliver if recipient has blocked sender
                             if (message.recipient) {
@@ -116,14 +154,18 @@ export class ChatDO {
         });
 
         ws.addEventListener('close', async () => {
+            const stillOnline = this.hasOtherSessions(username, ws);
             this.sessions.delete(ws);
-            await this.setOnlineStatus(username, false);
-            this.broadcastPresence(username, false);
+            if (!stillOnline) {
+                await this.setOnlineStatus(username, false);
+                this.broadcastPresence(username, false);
+            }
         });
 
         ws.addEventListener('error', async () => {
+            const stillOnline = this.hasOtherSessions(username, ws);
             this.sessions.delete(ws);
-            await this.setOnlineStatus(username, false);
+            if (!stillOnline) await this.setOnlineStatus(username, false);
         });
     }
 
@@ -218,58 +260,4 @@ export class ChatDO {
     broadcastPresence(username: string, online: boolean): void {
         const payload = JSON.stringify({
             type: 'ONLINE_STATUS',
-            sender: username,
-            isOnline: online,
-            timestamp: Date.now(),
-        });
-
-        for (const [ws, info] of this.sessions.entries()) {
-            if (info.username === username) continue;
-            const subId = info.subscriptions.get('/user/queue/private');
-            if (subId) this.sendStomp(ws, '/user/queue/private', subId, payload);
-        }
-    }
-
-    broadcastTyping(message: any): void {
-        const payload = JSON.stringify({ ...message, timestamp: Date.now() });
-
-        for (const [ws, info] of this.sessions.entries()) {
-            if (info.username === message.sender) continue; // don't echo back
-
-            const isTarget = message.recipient === info.username;
-
-            if (isTarget) {
-                const subId = info.subscriptions.get('/user/queue/private');
-                if (subId) this.sendStomp(ws, '/user/queue/private', subId, payload);
-            }
-
-            if (message.groupId) {
-                const topic = `/topic/group.${message.groupId}`;
-                const subId = info.subscriptions.get(topic);
-                if (subId) this.sendStomp(ws, topic, subId, payload);
-            }
-        }
-    }
-
-    // ── STOMP utilities ───────────────────────────────────────────────────────
-
-    getHeader(frame: string, name: string): string | null {
-        for (const line of frame.split('\n')) {
-            if (line.startsWith(name)) {
-                const idx = line.indexOf(':');
-                return idx !== -1 ? line.slice(idx + 1).trim() : null;
-            }
-        }
-        return null;
-    }
-
-    sendStomp(ws: WebSocket, destination: string, subscriptionId: string, body: string): void {
-        const frame = `MESSAGE\ndestination:${destination}\nsubscription:${subscriptionId}\ncontent-type:application/json\n\n${body}\0`;
-        try {
-            ws.send(frame);
-        } catch {
-            // Socket closed — purge stale session
-            this.sessions.delete(ws);
-        }
-    }
-}
+            se
