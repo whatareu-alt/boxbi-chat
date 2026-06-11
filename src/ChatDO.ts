@@ -260,4 +260,58 @@ export class ChatDO {
     broadcastPresence(username: string, online: boolean): void {
         const payload = JSON.stringify({
             type: 'ONLINE_STATUS',
-            se
+            sender: username,
+            isOnline: online,
+            timestamp: Date.now(),
+        });
+
+        for (const [ws, info] of this.sessions.entries()) {
+            if (info.username === username) continue;
+            const subId = info.subscriptions.get('/user/queue/private');
+            if (subId) this.sendStomp(ws, '/user/queue/private', subId, payload);
+        }
+    }
+
+    broadcastTyping(message: any): void {
+        const payload = JSON.stringify({ ...message, timestamp: Date.now() });
+
+        for (const [ws, info] of this.sessions.entries()) {
+            if (info.username === message.sender) continue; // don't echo back
+
+            const isTarget = message.recipient === info.username;
+
+            if (isTarget) {
+                const subId = info.subscriptions.get('/user/queue/private');
+                if (subId) this.sendStomp(ws, '/user/queue/private', subId, payload);
+            }
+
+            if (message.groupId) {
+                const topic = `/topic/group.${message.groupId}`;
+                const subId = info.subscriptions.get(topic);
+                if (subId) this.sendStomp(ws, topic, subId, payload);
+            }
+        }
+    }
+
+    // ── STOMP utilities ───────────────────────────────────────────────────────
+
+    getHeader(frame: string, name: string): string | null {
+        for (const line of frame.split('\n')) {
+            if (line.startsWith(name)) {
+                const idx = line.indexOf(':');
+                return idx !== -1 ? line.slice(idx + 1).trim() : null;
+            }
+        }
+        return null;
+    }
+
+    sendStomp(ws: WebSocket, destination: string, subscriptionId: string, body: string): void {
+        const frame = `MESSAGE\ndestination:${destination}\nsubscription:${subscriptionId}\ncontent-type:application/json\n\n${body}\0`;
+        try {
+            ws.send(frame);
+        } catch {
+            // Socket closed — purge stale session
+            this.sessions.delete(ws);
+        }
+    }
+}

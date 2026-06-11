@@ -60,4 +60,13 @@ npm run deploy     # wrangler deploy
 
 ## Secrets (production)
 
-Set via Wrangler — ne
+Set via Wrangler — never commit these:
+
+```bash
+wrangler secret put JWT_SECRET          # 32+ random chars
+wrangler secret put ADMIN_RESET_SECRET  # 32+ random chars
+wrangler secret put RESEND_API_KEY      # from resend.com, for real emails
+```
+
+For real email delivery the sending domain (`boxbi.online`) must be verified
+in the Resend dashboard, otherwise sends fail silently (check Worker logs).
