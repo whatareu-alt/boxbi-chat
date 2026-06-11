@@ -8,13 +8,13 @@ import {
 import {
     hashPassword, verifyPassword, timingSafeEqual,
     generateOtp, generateRefreshToken, hashRefreshToken,
-} from '../lib/crypto';
+} from '../lib/crypto'; // generateOtp still used by password reset
 import { sendEmail, otpEmailHtml } from '../lib/email';
 import { safeUser, getAuthUser, requireAuth } from '../lib/util';
 
 const auth = new Hono<{ Bindings: Bindings }>();
 
-// ─── Signup ───────────────────────────────────────────────────────────────────
+// ─── Signup (direct — email OTP verification planned, see README roadmap) ─────
 
 auth.post('/signup', async (c) => {
     const { username, email, firstName, lastName, secret } = await c.req.json();
@@ -29,59 +29,14 @@ auth.post('/signup', async (c) => {
         ).bind(username.toLowerCase(), email.toLowerCase()).first();
         if (existing) return c.json({ error: 'Username or email already exists' }, 409);
 
-        // Cooldown — don't let one user trigger an OTP email more than once a minute
-        const recent = await c.env.DB.prepare(
-            'SELECT created_at FROM otp_verifications WHERE LOWER(username)=? OR LOWER(email)=?'
-        ).bind(username.toLowerCase(), email.toLowerCase()).first() as any;
-        if (recent?.created_at && Date.now() - new Date(recent.created_at).getTime() < OTP_RESEND_COOLDOWN_MS)
-            return c.json({ error: 'Please wait a minute before requesting another code.' }, 429);
-
-        const otp = generateOtp();
         const hashed = await hashPassword(secret);
-        const expiry = new Date(Date.now() + 5 * 60 * 1000).toISOString();
-
-        await c.env.DB.prepare('DELETE FROM otp_verifications WHERE LOWER(username)=? OR LOWER(email)=?')
-            .bind(username.toLowerCase(), email.toLowerCase()).run();
-        await c.env.DB.prepare(
-            'INSERT INTO otp_verifications (username, email, secret, first_name, last_name, otp, expiry_time, attempts, created_at) VALUES (?,?,?,?,?,?,?,0,?)'
-        ).bind(username, email.toLowerCase(), hashed, firstName || '', lastName || '', otp, expiry, new Date().toISOString()).run();
-
-        await sendEmail(c.env, email, 'Boxbi - Verify your account', otpEmailHtml(otp, 'Your signup verification code:'));
-        return c.json({ otpRequired: true, email: email.toLowerCase(), username }, 200);
-    } catch { return c.json({ error: 'Internal server error' }, 500); }
-});
-
-auth.post('/signup/verify', async (c) => {
-    try {
-        const { username, email, otp } = await c.req.json();
-        if (!username || !email || !otp) return c.json({ error: 'Username, email, and OTP are required' }, 400);
-
-        const pending = await c.env.DB.prepare('SELECT * FROM otp_verifications WHERE username=?').bind(username.trim()).first() as any;
-        if (!pending) return c.json({ error: 'No pending registration found' }, 400);
-        if (pending.email.toLowerCase() !== email.trim().toLowerCase()) return c.json({ error: 'Email does not match' }, 400);
-        if (new Date() > new Date(pending.expiry_time)) {
-            await c.env.DB.prepare('DELETE FROM otp_verifications WHERE id=?').bind(pending.id).run();
-            return c.json({ error: 'OTP expired. Please sign up again.' }, 400);
-        }
-        if (!timingSafeEqual(String(pending.otp), otp.trim())) {
-            // Brute-force protection — invalidate the code after too many wrong tries
-            const attempts = (pending.attempts ?? 0) + 1;
-            if (attempts >= MAX_OTP_ATTEMPTS) {
-                await c.env.DB.prepare('DELETE FROM otp_verifications WHERE id=?').bind(pending.id).run();
-                return c.json({ error: 'Too many wrong attempts. Please sign up again.' }, 429);
-            }
-            await c.env.DB.prepare('UPDATE otp_verifications SET attempts=? WHERE id=?').bind(attempts, pending.id).run();
-            return c.json({ error: 'Invalid OTP code' }, 400);
-        }
-
         await c.env.DB.prepare(
             'INSERT INTO users (username, email, password_hash, first_name, last_name) VALUES (?,?,?,?,?)'
-        ).bind(pending.username, pending.email, pending.secret, pending.first_name, pending.last_name).run();
-        await c.env.DB.prepare('DELETE FROM otp_verifications WHERE id=?').bind(pending.id).run();
+        ).bind(username, email.toLowerCase(), hashed, (firstName || '').trim(), (lastName || '').trim()).run();
 
         const newUser = await c.env.DB.prepare(
             'SELECT id,username,email,first_name,last_name,created_at FROM users WHERE username=?'
-        ).bind(pending.username).first();
+        ).bind(username).first();
         return c.json(newUser, 201);
     } catch { return c.json({ error: 'Internal server error' }, 500); }
 });
