@@ -5,6 +5,10 @@ compatibility_date = "2024-11-01"
 [assets]
 directory = "./public"
 
+# Auto-cleanup: runs hourly, deletes messages older than 24h (see src/index.ts scheduled handler)
+[triggers]
+crons = ["0 * * * *"]
+
 [[d1_databases]]
 binding = "DB"
 database_name = "boxbi-db"

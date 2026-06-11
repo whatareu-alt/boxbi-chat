@@ -91,4 +91,64 @@ app.post('/admin/reset', async (c) => {
     } catch { return c.json({ error: 'Reset failed' }, 500); }
 });
 
-export default app;
+// ─── Scheduled cleanup (cron) ─────────────────────────────────────────────────
+// 1. Disappearing messages: anything older than MESSAGE_RETENTION is wiped,
+//    along with its reads/reactions/pins.
+// 2. Rolling account expiry: accounts older than USER_RETENTION are fully
+//    deleted with all their data. Groups left with zero members are removed.
+// 3. Housekeeping: expired tokens, OTPs, and stale lockouts.
+
+const MESSAGE_RETENTION = '-1 day';  // messages live 24 hours
+const USER_RETENTION    = '-7 days'; // accounts live 7 days
+
+async function cleanupOldData(env: Bindings): Promise<void> {
+    const oldMsgIds = `SELECT id FROM messages WHERE timestamp < datetime('now', ?)`;
+    const eu        = `SELECT username FROM users WHERE created_at < datetime('now', ?)`;
+    const euMsgIds  = `SELECT id FROM messages WHERE sender IN (${eu}) OR recipient IN (${eu})`;
+    const emptyGroups = `SELECT g.id FROM chat_groups g WHERE NOT EXISTS (SELECT 1 FROM group_members m WHERE m.group_id = g.id)`;
+    const R = MESSAGE_RETENTION, U = USER_RETENTION;
+
+    await env.DB.batch([
+        // ── 1. Messages older than 24h ──
+        env.DB.prepare(`DELETE FROM message_reads WHERE message_id IN (${oldMsgIds})`).bind(R),
+        env.DB.prepare(`DELETE FROM message_reactions WHERE message_id IN (${oldMsgIds})`).bind(R),
+        env.DB.prepare(`DELETE FROM pinned_messages WHERE message_id IN (${oldMsgIds})`).bind(R),
+        env.DB.prepare(`DELETE FROM messages WHERE timestamp < datetime('now', ?)`).bind(R),
+
+        // ── 2. Accounts older than 7 days (full cascade) ──
+        env.DB.prepare(`DELETE FROM message_reads WHERE username IN (${eu}) OR message_id IN (${euMsgIds})`).bind(U, U, U),
+        env.DB.prepare(`DELETE FROM message_reactions WHERE username IN (${eu}) OR message_id IN (${euMsgIds})`).bind(U, U, U),
+        env.DB.prepare(`DELETE FROM pinned_messages WHERE pinned_by IN (${eu}) OR message_id IN (${euMsgIds})`).bind(U, U, U),
+        env.DB.prepare(`DELETE FROM messages WHERE sender IN (${eu}) OR recipient IN (${eu})`).bind(U, U),
+        env.DB.prepare(`DELETE FROM friend_requests WHERE sender_username IN (${eu}) OR receiver_username IN (${eu})`).bind(U, U),
+        env.DB.prepare(`DELETE FROM blocked_users WHERE blocker IN (${eu}) OR blocked IN (${eu})`).bind(U, U),
+        env.DB.prepare(`DELETE FROM group_members WHERE username IN (${eu})`).bind(U),
+        env.DB.prepare(`DELETE FROM refresh_tokens WHERE username IN (${eu})`).bind(U),
+        env.DB.prepare(`DELETE FROM unread_counts WHERE username IN (${eu})`).bind(U),
+        env.DB.prepare(`DELETE FROM otp_verifications WHERE username IN (${eu})`).bind(U),
+        env.DB.prepare(`DELETE FROM password_reset_otps WHERE email IN (SELECT email FROM users WHERE created_at < datetime('now', ?))`).bind(U),
+        env.DB.prepare(`DELETE FROM login_attempts WHERE EXISTS (SELECT 1 FROM users u WHERE u.created_at < datetime('now', ?) AND (login_attempts.username = u.username OR login_attempts.username LIKE u.username || '|%'))`).bind(U),
+        env.DB.prepare(`DELETE FROM users WHERE created_at < datetime('now', ?)`).bind(U),
+
+        // ── Groups left with no members ──
+        env.DB.prepare(`DELETE FROM message_reads WHERE message_id IN (SELECT id FROM messages WHERE group_id IN (${emptyGroups}))`),
+        env.DB.prepare(`DELETE FROM message_reactions WHERE message_id IN (SELECT id FROM messages WHERE group_id IN (${emptyGroups}))`),
+        env.DB.prepare(`DELETE FROM pinned_messages WHERE group_id IN (${emptyGroups})`),
+        env.DB.prepare(`DELETE FROM unread_counts WHERE chat_id IN (SELECT 'group:' || g.id FROM chat_groups g WHERE NOT EXISTS (SELECT 1 FROM group_members m WHERE m.group_id = g.id))`),
+        env.DB.prepare(`DELETE FROM messages WHERE group_id IN (${emptyGroups})`),
+        env.DB.prepare(`DELETE FROM chat_groups WHERE NOT EXISTS (SELECT 1 FROM group_members m WHERE m.group_id = chat_groups.id)`),
+
+        // ── 3. Housekeeping ──
+        env.DB.prepare(`DELETE FROM refresh_tokens WHERE expires_at < datetime('now')`),
+        env.DB.prepare(`DELETE FROM password_reset_otps WHERE expiry_time < datetime('now')`),
+        env.DB.prepare(`DELETE FROM otp_verifications WHERE expiry_time < datetime('now')`),
+        env.DB.prepare(`DELETE FROM login_attempts WHERE locked_until IS NOT NULL AND locked_until < datetime('now')`),
+    ]);
+}
+
+export default {
+    fetch: app.fetch,
+    scheduled(_event: ScheduledController, env: Bindings, ctx: ExecutionContext) {
+        ctx.waitUntil(cleanupOldData(env));
+    },
+};

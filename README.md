@@ -21,6 +21,8 @@ backend.
 - **Groups** — roles (admin/member), shareable invite links with enable/disable/reset, pinned messages, member management
 - **Messages** — replies, edit/soft-delete, emoji reactions, full-text search, cursor-based pagination, per-chat unread counts
 - **Safety** — user blocking, login lockout, per-user message rate limiting
+- **Disappearing messages** — hourly cron auto-deletes anything older than 24 hours (plus expired tokens/OTPs)
+- **Ephemeral accounts** — every account fully expires 7 days after signup (rolling), with complete data cascade and empty-group cleanup
 
 ## Security
 

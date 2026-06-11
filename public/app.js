@@ -1950,10 +1950,21 @@
         }
 
         function avatarColor(username) {
+            // Warm, muted palette to match the Claude-inspired theme
+            const palette = [
+                ['#D97757', '#C96442'], // terracotta
+                ['#B8860B', '#96690a'], // ochre
+                ['#7D8F69', '#5e7050'], // sage
+                ['#A5708E', '#8a5a76'], // dusty rose
+                ['#6E8CA0', '#577386'], // slate blue
+                ['#C0975C', '#a37d49'], // sand
+                ['#8A6FA8', '#715a8c'], // muted violet
+                ['#5F9E8F', '#4c8273'], // teal clay
+            ];
             let hash = 0;
             for (let i = 0; i < username.length; i++) hash = username.charCodeAt(i) + ((hash << 5) - hash);
-            const h = Math.abs(hash) % 360;
-            return `linear-gradient(135deg, hsl(${h},70%,55%) 0%, hsl(${(h + 40) % 360},80%,65%) 100%)`;
+            const [a, b] = palette[Math.abs(hash) % palette.length];
+            return `linear-gradient(135deg, ${a} 0%, ${b} 100%)`;
         }
 
         function scrollToBottom() {
