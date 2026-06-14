@@ -23,6 +23,14 @@ auth.post('/signup', async (c) => {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return c.json({ error: 'Invalid email address' }, 400);
     if (secret.length < 8) return c.json({ error: 'Password must be at least 8 characters' }, 400);
 
+    // Fail fast with a clear message if the JWT secret was never configured on
+    // this deployment (otherwise sign() throws and we'd return a generic 500
+    // *after* having already created the user row — an orphaned account).
+    if (!c.env.JWT_SECRET) {
+        console.error('[signup] JWT_SECRET is not set on this Worker. Run: wrangler secret put JWT_SECRET');
+        return c.json({ error: 'Server is misconfigured (authentication unavailable). Please contact the administrator.' }, 500);
+    }
+
     try {
         const existing = await c.env.DB.prepare(
             'SELECT id FROM users WHERE LOWER(username) = ? OR LOWER(email) = ?'
@@ -30,20 +38,29 @@ auth.post('/signup', async (c) => {
         if (existing) return c.json({ error: 'Username or email already exists' }, 409);
 
         const hashed = await hashPassword(secret);
-        await c.env.DB.prepare(
-            'INSERT INTO users (username, email, password_hash, first_name, last_name) VALUES (?,?,?,?,?)'
-        ).bind(username, email.toLowerCase(), hashed, (firstName || '').trim(), (lastName || '').trim()).run();
 
-        const newUser = await c.env.DB.prepare(
-            'SELECT id,username,email,first_name,last_name,created_at FROM users WHERE username=?'
-        ).bind(username).first() as any;
-
-        // Auto-login: issue tokens right away (same shape as /login)
+        // Mint the tokens BEFORE writing the user, so a signing failure can't
+        // leave an orphaned account that blocks re-signup.
         const now = Math.floor(Date.now() / 1000);
         const accessToken = await sign({ sub: username as string, iat: now, exp: now + ACCESS_TOKEN_TTL_SEC }, c.env.JWT_SECRET);
         const { token: refreshToken, hash: rtHash } = await generateRefreshToken();
         const rtExpiry = new Date(Date.now() + REFRESH_TOKEN_TTL_DAYS * 86_400_000).toISOString();
-        await c.env.DB.prepare('INSERT INTO refresh_tokens (username, token_hash, expires_at) VALUES (?,?,?)').bind(username, rtHash, rtExpiry).run();
+
+        await c.env.DB.prepare(
+            'INSERT INTO users (username, email, password_hash, first_name, last_name) VALUES (?,?,?,?,?)'
+        ).bind(username, email.toLowerCase(), hashed, (firstName || '').trim(), (lastName || '').trim()).run();
+
+        try {
+            await c.env.DB.prepare('INSERT INTO refresh_tokens (username, token_hash, expires_at) VALUES (?,?,?)').bind(username, rtHash, rtExpiry).run();
+        } catch (e) {
+            // Roll back the just-created account so signup can be retried cleanly.
+            await c.env.DB.prepare('DELETE FROM users WHERE username=?').bind(username).run();
+            throw e;
+        }
+
+        const newUser = await c.env.DB.prepare(
+            'SELECT id,username,email,first_name,last_name,created_at FROM users WHERE username=?'
+        ).bind(username).first() as any;
 
         return c.json({ token: accessToken, refreshToken, expiresIn: ACCESS_TOKEN_TTL_SEC, user: newUser }, 201);
     } catch { return c.json({ error: 'Internal server error' }, 500); }
