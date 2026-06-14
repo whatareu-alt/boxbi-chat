@@ -7,40 +7,40 @@
 }
 
 :root {
-    /* Urbane-inspired — near-black monochrome, editorial minimalism */
-    --bg-main: #0F0F0E;
-    --bg-sidebar: #141413;
-    --bg-card: #1A1A19;
-    --bg-section: #1E1E1C;
-    --accent: #F2F2F0;
-    /* Off-white — monochrome accent */
-    --accent-glow: rgba(255, 255, 255, 0.08);
-    --accent-secondary: #D6D6D0;
+    /* Comfortable dark — lifted charcoal backgrounds, soft (not glaring) text */
+    --bg-main: #1A1A18;
+    --bg-sidebar: #1F1F1D;
+    --bg-card: #252523;
+    --bg-section: #2B2B28;
+    --accent: #EAE9E4;
+    /* Soft off-white — monochrome accent */
+    --accent-glow: rgba(255, 255, 255, 0.07);
+    --accent-secondary: #CFCEC8;
     --success: #8FBF9F;
     --warning: #D9B36C;
     --danger: #D97B6E;
 
-    --text-primary: #F2F2F0;
-    --text-secondary: #A6A6A0;
-    --text-muted: #6F6F69;
+    --text-primary: #E3E2DD;
+    --text-secondary: #ABAAA2;
+    --text-muted: #7C7B73;
 
     /* Geometry — sharper, editorial */
     --radius-sm: 6px;
     --radius-md: 10px;
     --radius-lg: 14px;
-    --border-thin: 1px solid rgba(255, 255, 255, 0.1);
+    --border-thin: 1px solid rgba(255, 255, 255, 0.08);
     --border-focus: 2px solid var(--accent);
 
-    /* Elevation */
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
-    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5);
-    --shadow-lg: 0 24px 60px -16px rgba(0, 0, 0, 0.7);
-    --accent-shadow: 0 8px 24px -8px rgba(255, 255, 255, 0.18);
+    /* Elevation — softer on the lifted background */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 24px 60px -16px rgba(0, 0, 0, 0.55);
+    --accent-shadow: 0 8px 24px -8px rgba(255, 255, 255, 0.14);
 
     /* Motion & glass */
     --transition-smooth: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    --glass-bg: rgba(15, 15, 14, 0.78);
-    --glass-border: 1px solid rgba(255, 255, 255, 0.1);
+    --glass-bg: rgba(26, 26, 24, 0.8);
+    --glass-border: 1px solid rgba(255, 255, 255, 0.08);
     --glass-blur: blur(16px);
 }
 
@@ -194,7 +194,7 @@ body {
     font-weight: 500;
     border: var(--border-thin);
     border-radius: var(--radius-md);
-    background-color: #1E1E1C;
+    background-color: var(--bg-section);
     color: var(--text-primary);
     transition: var(--transition-smooth);
 }
@@ -319,7 +319,7 @@ body {
 }
 
 .toggle-auth a:hover {
-    color: #F2F2F0;
+    color: var(--text-primary);
     text-decoration: underline;
 }
 
@@ -438,7 +438,7 @@ body {
     font-size: 16px;
     font-weight: 500;
     margin-bottom: 24px;
-    background-color: #1E1E1C;
+    background-color: var(--bg-section);
     transition: var(--transition-smooth);
 }
 
@@ -481,7 +481,7 @@ body {
     max-height: 250px;
     overflow-y: auto;
     margin: 16px 0;
-    background: #1E1E1C;
+    background: var(--bg-section);
 }
 
 .select-item {
@@ -662,7 +662,7 @@ body {
 
 .tab-btn {
     flex: 1;
-    background: #1E1E1C;
+    background: var(--bg-section);
     border: none;
     border-radius: var(--radius-sm);
     padding: 10px 0;
@@ -824,7 +824,7 @@ body {
 }
 
 .profile-field:hover {
-    background: #1E1E1C;
+    background: var(--bg-section);
 }
 
 .profile-field-label {
@@ -957,7 +957,7 @@ body {
     padding: 12px 16px;
     border: none;
     border-bottom: 2px solid #2C2C2A;
-    background: #1E1E1C;
+    background: var(--bg-section);
     color: var(--text-primary);
     font-weight: 500;
     transition: var(--transition-smooth);
@@ -979,7 +979,7 @@ body {
     gap: 12px;
     padding: 20px 24px;
     border-top: var(--border-thin);
-    background: #1E1E1C;
+    background: var(--bg-section);
 }
 
 .profile-edit-actions .btn {
@@ -995,7 +995,7 @@ body {
     padding: 12px 16px;
     border: 2px dashed var(--accent);
     border-radius: var(--radius-md);
-    background: #1E1E1C;
+    background: var(--bg-section);
     color: var(--text-primary);
     font-size: 14px;
     cursor: pointer;
@@ -1004,7 +1004,7 @@ body {
 
 .profile-pic-upload-input:hover {
     background: var(--bg-card);
-    border-color: #F2F2F0;
+    border-color: var(--text-primary);
 }
 
 .profile-pic-upload-input::file-selector-button {
@@ -1243,7 +1243,7 @@ body {
     display: none;
     padding: 14px 20px;
     border-bottom: var(--border-thin);
-    background: linear-gradient(135deg, #1E1E1C 0%, #242422 100%);
+    background: linear-gradient(135deg, var(--bg-section) 0%, #242422 100%);
 }
 
 .panel-title {
@@ -1479,7 +1479,7 @@ body {
     border-radius: 30px;
     font-size: 15px;
     font-weight: 500;
-    background-color: #1E1E1C;
+    background-color: var(--bg-section);
     transition: var(--transition-smooth);
 }
 
@@ -2771,7 +2771,7 @@ body {
     border: var(--border-thin);
     border-radius: var(--radius-sm);
     padding: 8px 12px;
-    background: #1E1E1C;
+    background: var(--bg-section);
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -2977,7 +2977,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: #1E1E1C;
+    background: var(--bg-section);
     border-left: 4px solid var(--accent);
     padding: 8px 16px;
     border-radius: var(--radius-sm);
@@ -3226,7 +3226,7 @@ input::placeholder, textarea::placeholder {
 
 /* Selection color */
 ::selection {
-    background: #F2F2F0;
+    background: var(--accent);
     color: #0F0F0E;
 }
 
