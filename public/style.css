@@ -45,7 +45,7 @@
 }
 
 body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'Sora', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     background-color: var(--bg-main);
     color: var(--text-primary);
     line-height: 1.5;
@@ -101,7 +101,7 @@ body {
 }
 
 .auth-brand-name {
-    font-family: 'Space Grotesk', 'Inter', sans-serif;
+    font-family: 'Sora', sans-serif;
     font-style: normal;
     text-transform: uppercase;
     font-weight: 700;
@@ -116,7 +116,7 @@ body {
 }
 
 .auth-tagline {
-    font-family: 'Space Grotesk', 'Inter', sans-serif;
+    font-family: 'Sora', sans-serif;
     font-style: normal;
     text-transform: uppercase;
     letter-spacing: 0.18em;
@@ -838,7 +838,7 @@ body {
     gap: 6px;
 }
 
-.profile-field-label .material-symbols-outlined {
+.profile-field-label .material-symbols-rounded {
     font-size: 16px;
 }
 
@@ -1508,7 +1508,7 @@ body {
     cursor: pointer;
     transition: var(--transition-smooth);
     box-shadow: var(--accent-shadow);
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: 'Sora', sans-serif;
     text-transform: uppercase;
     letter-spacing: 0.08em;
     font-size: 13px;
@@ -2374,7 +2374,7 @@ body {
     margin-right: 10px;
 }
 
-#delete-chat-btn .material-symbols-outlined {
+#delete-chat-btn .material-symbols-rounded {
     font-size: 18px;
     vertical-align: middle;
 }
@@ -2617,7 +2617,7 @@ body {
         justify-content: center;
     }
 
-    #delete-chat-btn .material-symbols-outlined {
+    #delete-chat-btn .material-symbols-rounded {
         font-size: 20px;
     }
 
@@ -2735,7 +2735,7 @@ body {
         padding: 8px;
     }
 
-    #delete-chat-btn span.material-symbols-outlined {
+    #delete-chat-btn span.material-symbols-rounded {
         font-size: 18px;
     }
 }
@@ -3183,7 +3183,7 @@ h1, h2, h3,
 .profile-name,
 .no-chat-selected,
 .empty-state {
-    font-family: 'Space Grotesk', 'Inter', sans-serif;
+    font-family: 'Sora', sans-serif;
     font-style: normal;
 }
 
@@ -3199,7 +3199,7 @@ button[type="submit"] {
     background: var(--accent);
     color: #0F0F0E;
     border: none;
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: 'Sora', sans-serif;
     text-transform: uppercase;
     letter-spacing: 0.08em;
     font-size: 13px;

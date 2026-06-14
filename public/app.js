@@ -868,7 +868,7 @@
             createCard.className = 'create-group-btn-card';
             createCard.innerHTML = `
                 <button onclick="openCreateGroupModal()" class="btn btn-primary" style="width:100%; display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:12px; border-radius:var(--radius-sm);">
-                    <span class="material-symbols-outlined">group_add</span> Create New Group
+                    <span class="material-symbols-rounded">group_add</span> Create New Group
                 </button>
             `;
             list.appendChild(createCard);
@@ -1034,7 +1034,7 @@
             // Show delete and block buttons
             const deleteBtn = document.getElementById('delete-chat-btn');
             deleteBtn.style.display = 'inline-flex';
-            deleteBtn.innerHTML = '<span class="material-symbols-outlined">delete</span> Delete Chat';
+            deleteBtn.innerHTML = '<span class="material-symbols-rounded">delete</span> Delete Chat';
             deleteBtn.onclick = () => deleteChat();
 
             let blockBtn = document.getElementById('block-user-header-btn');
@@ -1045,7 +1045,7 @@
                 document.querySelector('.chat-header-actions').insertBefore(blockBtn, deleteBtn);
             }
             blockBtn.style.display = 'inline-flex';
-            blockBtn.innerHTML = '<span class="material-symbols-outlined">block</span> Block User';
+            blockBtn.innerHTML = '<span class="material-symbols-rounded">block</span> Block User';
             blockBtn.onclick = () => blockUserAction(username);
 
             let searchBtn = document.getElementById('search-chat-header-btn');
@@ -1054,7 +1054,7 @@
                 searchBtn.id = 'search-chat-header-btn';
                 searchBtn.className = 'icon-btn';
                 searchBtn.title = 'Search Messages';
-                searchBtn.innerHTML = '<span class="material-symbols-outlined">search</span>';
+                searchBtn.innerHTML = '<span class="material-symbols-rounded">search</span>';
                 document.querySelector('.chat-header-actions').insertBefore(searchBtn, blockBtn);
             }
             searchBtn.style.display = 'inline-flex';
@@ -1108,7 +1108,7 @@
 
             const deleteBtn = document.getElementById('delete-chat-btn');
             deleteBtn.style.display = 'inline-flex';
-            deleteBtn.innerHTML = '<span class="material-symbols-outlined">logout</span> Leave Group';
+            deleteBtn.innerHTML = '<span class="material-symbols-rounded">logout</span> Leave Group';
             deleteBtn.onclick = () => leaveGroup(groupId);
 
             // Hide block user btn in groups
@@ -1121,7 +1121,7 @@
                 searchBtn.id = 'search-chat-header-btn';
                 searchBtn.className = 'icon-btn';
                 searchBtn.title = 'Search Messages';
-                searchBtn.innerHTML = '<span class="material-symbols-outlined">search</span>';
+                searchBtn.innerHTML = '<span class="material-symbols-rounded">search</span>';
                 document.querySelector('.chat-header-actions').insertBefore(searchBtn, deleteBtn);
             }
             searchBtn.style.display = 'inline-flex';
@@ -1166,7 +1166,7 @@
                 if (response.ok) {
                     document.getElementById('messages').innerHTML = `
                         <div class="empty-state-chat">
-                            <span class="material-symbols-outlined" style="font-size:48px; color: var(--text-muted);">delete_sweep</span>
+                            <span class="material-symbols-rounded" style="font-size:48px; color: var(--text-muted);">delete_sweep</span>
                             <p>Conversation deleted</p>
                         </div>
                     `;
