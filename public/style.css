@@ -3342,3 +3342,49 @@ hr {
     -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
 }
+
+
+/* ===== Glass + responsive corrections for tablet / mobile ===== */
+
+/* Below 900px the chat panel slides OVER the sidebar, so it must be opaque
+   (a transparent chat area would let the sidebar show through). Give it the
+   same ambient violet scene as the app shell, but solid. */
+@media (max-width: 900px) {
+    .chat-area {
+        background-color: var(--bg-main);
+        background-image:
+            radial-gradient(700px 520px at 12% 6%, rgba(155, 140, 240, 0.16), transparent 60%),
+            radial-gradient(640px 560px at 88% 16%, rgba(110, 150, 214, 0.10), transparent 60%),
+            radial-gradient(600px 520px at 72% 96%, rgba(155, 140, 240, 0.12), transparent 62%);
+    }
+    /* .messages-container stays transparent so bubbles float over this scene */
+
+    /* fixed attachment is janky on iOS; lighten blur so phones/tablets stay smooth */
+    .chat-app,
+    .auth-page {
+        background-attachment: scroll;
+    }
+    .users-sidebar,
+    .chat-header,
+    .chat-input,
+    .modal-content,
+    .modal-content-admin,
+    .auth-container,
+    .profile-panel,
+    .requests-panel {
+        -webkit-backdrop-filter: blur(14px) saturate(130%);
+        backdrop-filter: blur(14px) saturate(130%);
+    }
+    .message:not(.own) .message-content,
+    .chat-input-form input {
+        -webkit-backdrop-filter: blur(8px);
+        backdrop-filter: blur(8px);
+    }
+}
+
+/* Comfortable two-pane on tablets (901-1024px) */
+@media (min-width: 901px) and (max-width: 1024px) {
+    .chat-app {
+        grid-template-columns: 300px 1fr;
+    }
+}
