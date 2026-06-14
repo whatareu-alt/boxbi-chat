@@ -11,7 +11,14 @@ const users = new Hono<{ Bindings: Bindings }>();
 // Search by username OR first/last name
 users.get('/search', async (c) => {
     const q = (c.req.query('q') ?? c.req.query('username') ?? '').trim();
-    if (q.length < 1) return c.json([]);
+    if (q.length < 1) {
+        // Empty query -> "Discover" list: return recent users (the client filters out self)
+        const all = await c.env.DB.prepare(
+            `SELECT id, username, first_name, last_name, bio, profile_picture_url, is_online
+             FROM users ORDER BY last_active DESC LIMIT 50`
+        ).all();
+        return c.json(all.results);
+    }
     const like = `%${escapeLike(q)}%`;
     const rows = await c.env.DB.prepare(
         `SELECT id, username, first_name, last_name, bio, profile_picture_url, is_online
