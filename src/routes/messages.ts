@@ -43,7 +43,7 @@ messages.delete('/msg/:id', async (c) => {
     if (!msg) return c.json({ error: 'Message not found' }, 404);
     if (msg.sender !== authUser) return c.json({ error: 'Forbidden' }, 403);
 
-    await c.env.DB.prepare('UPDATE messages SET is_deleted=1, content="This message was deleted" WHERE id=?').bind(id).run();
+    await c.env.DB.prepare("UPDATE messages SET is_deleted=1, content='This message was deleted' WHERE id=?").bind(id).run();
 
     // Broadcast deletion via WebSocket (non-critical — don't fail if no one connected)
     try { await wsBroadcast(c.env, { type: 'MESSAGE_DELETED', id: Number(id), sender: authUser, recipient: msg.recipient, groupId: msg.group_id, timestamp: Date.now() }); } catch { /* ignore */ }
@@ -157,8 +157,11 @@ messages.get('/:contact', async (c) => {
     const limit    = Math.min(Number(c.req.query('limit') ?? 50), 100);
     const before   = c.req.query('before');
 
-    const binds: unknown[] = [authUser, contact, contact, authUser];
-    let sql = 'SELECT id, sender, recipient, content, type, reply_to_id, is_edited, edited_at, is_deleted, timestamp FROM messages WHERE ((sender=? AND recipient=?) OR (sender=? AND recipient=?))';
+    const binds: unknown[] = [authUser, contact, contact, authUser, authUser, contact];
+    // Hide anything cleared by THIS user (per-user "delete chat"); the other party still sees the history.
+    let sql = `SELECT id, sender, recipient, content, type, reply_to_id, is_edited, edited_at, is_deleted, timestamp FROM messages
+        WHERE ((sender=? AND recipient=?) OR (sender=? AND recipient=?))
+        AND timestamp > COALESCE((SELECT cleared_at FROM chat_clears WHERE username=? AND contact=?), '')`;
     if (before) { sql += ' AND id<?'; binds.push(Number(before)); }
     sql += ' ORDER BY id DESC LIMIT ?';
     binds.push(limit);
@@ -169,10 +172,14 @@ messages.get('/:contact', async (c) => {
 
 messages.delete('/:contact', async (c) => {
     const authUser = getAuthUser(c);
-    await c.env.DB.prepare(
-        'DELETE FROM messages WHERE (sender=? AND recipient=?) OR (sender=? AND recipient=?)'
-    ).bind(authUser, c.req.param('contact'), c.req.param('contact'), authUser).run();
-    await c.env.DB.prepare('DELETE FROM unread_counts WHERE username=? AND chat_id=?').bind(authUser, `user:${c.req.param('contact')}`).run();
+    const contact  = c.req.param('contact');
+    // Per-user clear: record a cutoff timestamp instead of hard-deleting shared rows,
+    // so the conversation disappears for the caller but remains for the other party.
+    await c.env.DB.prepare(`
+        INSERT INTO chat_clears (username, contact, cleared_at) VALUES (?,?,CURRENT_TIMESTAMP)
+        ON CONFLICT(username, contact) DO UPDATE SET cleared_at=CURRENT_TIMESTAMP
+    `).bind(authUser, contact).run();
+    await c.env.DB.prepare('DELETE FROM unread_counts WHERE username=? AND chat_id=?').bind(authUser, `user:${contact}`).run();
     return c.json({ message: 'Chat deleted' });
 });
 

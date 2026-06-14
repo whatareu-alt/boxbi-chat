@@ -472,11 +472,39 @@
             loadPendingRequests();
             // Start background auto-refresh
             startAutoRefresh();
+
+            // Honour a pending group invite link (?join=<token>)
+            processPendingInvite();
+        }
+
+        async function processPendingInvite() {
+            const token = new URLSearchParams(window.location.search).get('join');
+            if (!token) return;
+            // Strip the token from the URL so a refresh doesn't re-trigger it
+            try { history.replaceState(null, '', window.location.pathname); } catch (e) { /* ignore */ }
+
+            try {
+                const response = await authFetch(`${API_URL}/groups/join/${encodeURIComponent(token)}`, { method: 'POST' });
+                const data = await response.json().catch(() => ({}));
+                if (response.ok) {
+                    await loadGroups();
+                    if (data.groupId && stompClient && stompClient.connected) {
+                        stompClient.subscribe(`/topic/group.${data.groupId}`, onGroupMessageReceived);
+                    }
+                    if (data.groupId) selectGroup(data.groupId, data.groupName || 'Group');
+                    alert(`✅ ${data.message || 'Joined group'}`);
+                } else {
+                    alert(`❌ ${data.error || 'Could not join group'}`);
+                }
+            } catch (e) {
+                console.error('Invite join failed:', e);
+            }
         }
 
         function onMessageReceived(payload) {
             const message = JSON.parse(payload.body);
-            
+
+            if (message.type === 'TYPING') return; // typing has its own queue/handler
             if (message.type === 'MESSAGE_EDITED') {
                 updateMessageInDOM(message.id, message.content, true);
                 return;
@@ -514,7 +542,13 @@
 
         function onGroupMessageReceived(payload) {
             const message = JSON.parse(payload.body);
-            
+
+            if (message.type === 'TYPING') {
+                if (message.sender !== currentUser.username && selectedGroupId === message.groupId) {
+                    showTypingIndicator(message.sender);
+                }
+                return;
+            }
             if (message.type === 'MESSAGE_EDITED') {
                 updateMessageInDOM(message.id, message.content, true);
                 return;
@@ -579,14 +613,45 @@
         }
 
         function onTypingReceived(payload) {
-            // status indicator removed
+            const message = JSON.parse(payload.body);
+            if (!message || message.type !== 'TYPING') return;
+            if (message.sender === currentUser.username) return;
+            // Private typing arrives here; only show it for the chat that's open
+            if (message.groupId) {
+                if (selectedGroupId === message.groupId) showTypingIndicator(message.sender);
+            } else if (selectedRecipient && message.sender === selectedRecipient) {
+                showTypingIndicator(message.sender);
+            }
+        }
+
+        function showTypingIndicator(name) {
+            const el = document.getElementById('chat-typing-indicator');
+            if (!el) return;
+            el.textContent = `${name} is typing…`;
+            el.style.display = 'block';
+            clearTimeout(typingHideTimeout);
+            typingHideTimeout = setTimeout(hideTypingIndicator, 3000);
+        }
+
+        function hideTypingIndicator() {
+            const el = document.getElementById('chat-typing-indicator');
+            if (el) { el.style.display = 'none'; el.textContent = ''; }
+            clearTimeout(typingHideTimeout);
         }
 
         function sendTypingEvent() {
-            if (stompClient && selectedRecipient) {
+            if (!stompClient) return;
+            if (selectedRecipient) {
                 stompClient.send('/app/chat.typing', {}, JSON.stringify({
+                    type: 'TYPING',
                     sender: currentUser.username,
                     recipient: selectedRecipient
+                }));
+            } else if (selectedGroupId) {
+                stompClient.send('/app/chat.typing', {}, JSON.stringify({
+                    type: 'TYPING',
+                    sender: currentUser.username,
+                    groupId: selectedGroupId
                 }));
             }
         }
@@ -937,6 +1002,7 @@
         function exitChatView() {
             stopChatPolling();
             stopGroupPolling();
+            hideTypingIndicator();
             document.getElementById('chat-app').classList.remove('mobile-chat-active');
             selectedRecipient = null;
             selectedGroupId = null;
@@ -1014,6 +1080,7 @@
             }
 
             document.getElementById('messages').innerHTML = '';
+            hideTypingIndicator();
 
             unreadCounts[username] = 0;
             const badge = document.getElementById(`unread-${username}`);
@@ -1076,6 +1143,7 @@
             if (unreadBadge) unreadBadge.style.display = 'none';
 
             document.getElementById('messages').innerHTML = '';
+            hideTypingIndicator();
 
             loadGroupHistory(groupId);
         }
@@ -1232,6 +1300,8 @@
 
         function displayMessage(message) {
             const messagesDiv = document.getElementById('messages');
+
+            hideTypingIndicator();
 
             const welcome = messagesDiv.querySelector('.welcome-screen');
             if (welcome) welcome.remove();
@@ -1932,33 +2002,27 @@
         }
 
         async function executeAdminReset(type) {
-            const secret = document.getElementById('admin-secret').value.trim();
             const errorDiv = document.getElementById('admin-error');
 
-            if (!secret) {
-                errorDiv.textContent = 'Please enter admin secret code';
-                errorDiv.style.display = 'block';
-                return;
-            }
-
-            const EXPECTED_SECRET = "boxbi_secure_reset_key_7e57c6df4a51e892c90c73295e840e69123b5fde81c4e97a3da124806a9db3f1";
-
             if (type === 'local') {
-                if (secret !== EXPECTED_SECRET) {
-                    errorDiv.textContent = 'Invalid secret code';
-                    errorDiv.style.display = 'block';
+                // Local reset only clears THIS browser's data — no secret required,
+                // and no secret should ever live in client-side code.
+                if (!confirm('⚠️ This will delete all saved login sessions and local preferences on this device. Are you sure?')) {
                     return;
                 }
-
-                if (!confirm('⚠️ This will delete all saved login sessions and local preferences. Are you sure?')) {
-                    return;
-                }
-
                 localStorage.clear();
                 sessionStorage.clear();
                 hideAdminReset();
                 alert('✅ Local app data has been cleared.');
                 location.reload();
+                return;
+            }
+
+            // Remote (database) reset — the secret is verified server-side only.
+            const secret = document.getElementById('admin-secret').value.trim();
+            if (!secret) {
+                errorDiv.textContent = 'Please enter admin secret code';
+                errorDiv.style.display = 'block';
                 return;
             }
 
@@ -1979,7 +2043,6 @@
                     sessionStorage.removeItem('currentUser');
                     location.reload();
                 } else {
-                    const error = await response.text();
                     errorDiv.textContent = 'Invalid secret code';
                     errorDiv.style.display = 'block';
                 }

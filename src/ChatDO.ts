@@ -281,8 +281,9 @@ export class ChatDO {
             const isTarget = message.recipient === info.username;
 
             if (isTarget) {
-                const subId = info.subscriptions.get('/user/queue/private');
-                if (subId) this.sendStomp(ws, '/user/queue/private', subId, payload);
+                // Typing rides its own queue so it never collides with real messages
+                const subId = info.subscriptions.get('/user/queue/typing');
+                if (subId) this.sendStomp(ws, '/user/queue/typing', subId, payload);
             }
 
             if (message.groupId) {

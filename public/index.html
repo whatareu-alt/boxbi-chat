@@ -371,6 +371,7 @@
                     <div class="user-avatar" id="chat-avatar">?</div>
                     <div>
                         <h3 id="chat-name">Select a user to chat</h3>
+                        <div id="chat-typing-indicator" style="display:none; font-size:12px; color:var(--accent, #6366f1); font-style:italic;"></div>
                     </div>
                 </div>
                 <div class="chat-header-actions">
@@ -399,4 +400,18 @@
 
             <div class="chat-input">
                 <form class="chat-input-form" id="message-form">
-                    <input type="text" id="message-input" placeholder="Type a message..." autocomplete="off" disabled
+                    <input type="text" id="message-input" placeholder="Type a message..." autocomplete="off" disabled>
+                    <button type="submit" class="send-btn" id="send-btn" disabled>
+                        <span class="material-symbols-outlined">send</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>

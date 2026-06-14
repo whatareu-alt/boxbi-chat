@@ -162,6 +162,16 @@ CREATE TABLE IF NOT EXISTS unread_counts (
     UNIQUE(username, chat_id)
 );
 
+-- Per-user conversation clears ("delete chat" for me only).
+-- Private history older than cleared_at is hidden from `username`; the other party is unaffected.
+CREATE TABLE IF NOT EXISTS chat_clears (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    username   TEXT NOT NULL,
+    contact    TEXT NOT NULL,
+    cleared_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(username, contact)
+);
+
 -- ============================================================
 -- Indexes
 -- ============================================================
@@ -179,5 +189,6 @@ CREATE INDEX IF NOT EXISTS idx_reactions_msg         ON message_reactions(messag
 CREATE INDEX IF NOT EXISTS idx_pins_group            ON pinned_messages(group_id);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_invite_token   ON chat_groups(invite_token) WHERE invite_token IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_unread_username       ON unread_counts(username);
+CREATE INDEX IF NOT EXISTS idx_chat_clears_user      ON chat_clears(username);
 CREATE INDEX IF NOT EXISTS idx_message_reads_msg     ON message_reads(message_id);
 CREATE INDEX IF NOT EXISTS idx_login_attempts        ON login_attempts(username);

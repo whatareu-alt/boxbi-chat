@@ -145,7 +145,7 @@ groups.delete('/:groupId/members/:username', async (c) => {
     if (!target) return c.json({ error: 'Member not found' }, 404);
 
     if (target.role === 'ADMIN') {
-        const adminCount = await c.env.DB.prepare('SELECT COUNT(*) as n FROM group_members WHERE group_id=? AND role="ADMIN"').bind(groupId).first() as any;
+        const adminCount = await c.env.DB.prepare("SELECT COUNT(*) as n FROM group_members WHERE group_id=? AND role='ADMIN'").bind(groupId).first() as any;
         if (adminCount.n <= 1) return c.json({ error: 'Cannot remove the last admin. Promote another member first.' }, 400);
     }
     await c.env.DB.prepare('DELETE FROM group_members WHERE group_id=? AND username=?').bind(groupId, targetUser).run();
@@ -173,11 +173,11 @@ groups.post('/:groupId/leave', async (c) => {
     if (!membership) return c.json({ error: 'You are not in this group' }, 400);
 
     if (membership.role === 'ADMIN') {
-        const adminCount = await c.env.DB.prepare('SELECT COUNT(*) as n FROM group_members WHERE group_id=? AND role="ADMIN"').bind(groupId).first() as any;
+        const adminCount = await c.env.DB.prepare("SELECT COUNT(*) as n FROM group_members WHERE group_id=? AND role='ADMIN'").bind(groupId).first() as any;
         if (adminCount.n <= 1) {
             // Auto-promote next joined member
             const next = await c.env.DB.prepare('SELECT username FROM group_members WHERE group_id=? AND username!=? ORDER BY joined_at ASC LIMIT 1').bind(groupId, authUser).first() as any;
-            if (next) await c.env.DB.prepare('UPDATE group_members SET role="ADMIN" WHERE group_id=? AND username=?').bind(groupId, next.username).run();
+            if (next) await c.env.DB.prepare("UPDATE group_members SET role='ADMIN' WHERE group_id=? AND username=?").bind(groupId, next.username).run();
         }
     }
 
@@ -213,7 +213,7 @@ groups.get('/:groupId/invite', async (c) => {
         token = bufToHex(crypto.getRandomValues(new Uint8Array(16)));
         await c.env.DB.prepare('UPDATE chat_groups SET invite_token=? WHERE id=?').bind(token, groupId).run();
     }
-    return c.json({ inviteLink: `https://boxbi.online/join/${token}`, token, enabled: group.invite_enabled === 1 });
+    return c.json({ inviteLink: `https://boxbi.online/?join=${token}`, token, enabled: group.invite_enabled === 1 });
 });
 
 // Reset invite link (generates new token, old one stops working)
@@ -225,7 +225,7 @@ groups.post('/:groupId/invite/reset', async (c) => {
 
     const token = bufToHex(crypto.getRandomValues(new Uint8Array(16)));
     await c.env.DB.prepare('UPDATE chat_groups SET invite_token=? WHERE id=?').bind(token, groupId).run();
-    return c.json({ inviteLink: `https://boxbi.online/join/${token}`, token });
+    return c.json({ inviteLink: `https://boxbi.online/?join=${token}`, token });
 });
 
 // Toggle invite link enabled/disabled
